@@ -1,0 +1,77 @@
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h3 class="mb-0"><i class="bi bi-building"></i> <%= @provider.name %></h3>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Contacto:</strong>
+            <p><%= @provider.contact_name %></p>
+          </div>
+          <div class="col-md-6">
+            <strong>Email:</strong>
+            <p><%= @provider.email %></p>
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Teléfono:</strong>
+            <p><%= @provider.phone %></p>
+          </div>
+          <div class="col-md-6">
+            <strong>Estado:</strong>
+            <p>
+              <% if @provider.active %>
+                <span class="badge bg-success">Activo</span>
+              <% else %>
+                <span class="badge bg-secondary">Inactivo</span>
+              <% end %>
+            </p>
+          </div>
+        </div>
+        
+        <% if @provider.notes.present? %>
+          <div class="row">
+            <div class="col-md-12">
+              <strong>Notas:</strong>
+              <p class="text-muted"><%= simple_format(@provider.notes) %></p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <div class="card-footer">
+        <%= link_to edit_provider_path(@provider), class: "btn btn-warning" do %>
+          <i class="bi bi-pencil"></i> Editar
+        <% end %>
+        <%= link_to providers_path, class: "btn btn-secondary" do %>
+          <i class="bi bi-arrow-left"></i> Volver
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Variantes Asociadas</h5>
+      </div>
+      <div class="card-body">
+        <% if @provider.variants.any? %>
+          <ul class="list-group">
+            <% @provider.variants.each do |variant| %>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <%= variant.name %>
+                <span class="badge bg-primary rounded-pill"><%= variant.code %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-muted">No hay variantes asociadas a este proveedor.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

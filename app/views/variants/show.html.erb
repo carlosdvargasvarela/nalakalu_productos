@@ -1,0 +1,63 @@
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h3 class="mb-0"><i class="bi bi-palette"></i> <%= @variant.name %></h3>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Tipo de Variante:</strong>
+            <p><span class="badge bg-secondary"><%= @variant.variant_type.name %></span></p>
+          </div>
+          <div class="col-md-6">
+            <strong>Código:</strong>
+            <p><code class="bg-light p-2 d-inline-block"><%= @variant.code %></code></p>
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Proveedor:</strong>
+            <p><%= link_to @variant.provider.name, @variant.provider, class: "text-decoration-none" %></p>
+          </div>
+          <div class="col-md-6">
+            <strong>SKU del Proveedor:</strong>
+            <p><%= @variant.provider_sku || "-" %></p>
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Costo:</strong>
+            <p>
+              <% if @variant.cost.present? %>
+                <%= number_to_currency(@variant.cost, unit: "$") %>
+              <% else %>
+                <span class="text-muted">No especificado</span>
+              <% end %>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <strong>Estado:</strong>
+            <p>
+              <% if @variant.active %>
+                <span class="badge bg-success">Activo</span>
+              <% else %>
+                <span class="badge bg-secondary">Inactivo</span>
+              <% end %>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <%= link_to edit_variant_path(@variant), class: "btn btn-warning" do %>
+          <i class="bi bi-pencil"></i> Editar
+        <% end %>
+        <%= link_to variants_path, class: "btn btn-secondary" do %>
+          <i class="bi bi-arrow-left"></i> Volver
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

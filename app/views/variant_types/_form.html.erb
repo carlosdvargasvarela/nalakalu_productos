@@ -1,0 +1,23 @@
+<%= form_with(model: variant_type, class: "needs-validation") do |form| %>
+  <% if variant_type.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(variant_type.errors.count, "error") %> impidieron guardar:</h4>
+      <ul>
+        <% variant_type.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :name, "Nombre del Tipo", class: "form-label" %>
+    <%= form.text_field :name, class: "form-control", placeholder: "Ej: Tela, Madera, Base", required: true %>
+    <div class="form-text">Este nombre se usará para categorizar las variantes.</div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= form.submit "Guardar", class: "btn btn-primary" %>
+    <%= link_to "Cancelar", variant_types_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>

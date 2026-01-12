@@ -1,0 +1,55 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="jumbotron bg-light p-5 rounded">
+      <h1 class="display-4"><i class="bi bi-box-seam"></i> Sistema de Códigos de Productos</h1>
+      <p class="lead">Herramienta interna para generar códigos de productos con variantes de forma rápida y precisa.</p>
+      <hr class="my-4">
+      <% if user_signed_in? %>
+        <div class="alert alert-success">
+          <strong><i class="bi bi-check-circle"></i> Sesión activa:</strong> <%= current_user.email %>
+          <span class="badge bg-primary"><%= current_user.role %></span>
+        </div>
+        <% if current_user.role == 'admin' %>
+          <h4 class="mt-4">Accesos Rápidos:</h4>
+          <div class="row mt-3">
+            <div class="col-md-4 mb-3">
+              <%= link_to providers_path, class: "text-decoration-none" do %>
+                <div class="card text-center">
+                  <div class="card-body">
+                    <i class="bi bi-building display-4 text-primary"></i>
+                    <h5 class="card-title mt-2">Proveedores</h5>
+                    <p class="text-muted"><%= Provider.count %> registrados</p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            <div class="col-md-4 mb-3">
+              <%= link_to variant_types_path, class: "text-decoration-none" do %>
+                <div class="card text-center">
+                  <div class="card-body">
+                    <i class="bi bi-tags display-4 text-success"></i>
+                    <h5 class="card-title mt-2">Tipos de Variante</h5>
+                    <p class="text-muted"><%= VariantType.count %> tipos</p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            <div class="col-md-4 mb-3">
+              <%= link_to variants_path, class: "text-decoration-none" do %>
+                <div class="card text-center">
+                  <div class="card-body">
+                    <i class="bi bi-palette display-4 text-warning"></i>
+                    <h5 class="card-title mt-2">Variantes</h5>
+                    <p class="text-muted"><%= Variant.count %> opciones</p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p>Por favor, <%= link_to "inicia sesión", new_user_session_path, class: "btn btn-primary btn-lg" %> para continuar.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,52 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h3 class="mb-0"><i class="bi bi-tag"></i> <%= @variant_type.name %></h3>
+      </div>
+      <div class="card-body">
+        <h5>Variantes de este tipo:</h5>
+        <% if @variant_type.variants.any? %>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Código</th>
+                  <th>Proveedor</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @variant_type.variants.each do |variant| %>
+                  <tr>
+                    <td><%= variant.name %></td>
+                    <td><code><%= variant.code %></code></td>
+                    <td><%= variant.provider.name %></td>
+                    <td>
+                      <% if variant.active %>
+                        <span class="badge bg-success">Activo</span>
+                      <% else %>
+                        <span class="badge bg-secondary">Inactivo</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-muted">No hay variantes de este tipo.</p>
+        <% end %>
+      </div>
+      <div class="card-footer">
+        <%= link_to edit_variant_type_path(@variant_type), class: "btn btn-warning" do %>
+          <i class="bi bi-pencil"></i> Editar
+        <% end %>
+        <%= link_to variant_types_path, class: "btn btn-secondary" do %>
+          <i class="bi bi-arrow-left"></i> Volver
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,54 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1><i class="bi bi-building"></i> Proveedores</h1>
+  <%= link_to new_provider_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-circle"></i> Nuevo Proveedor
+  <% end %>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Nombre</th>
+            <th>Contacto</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @providers.each do |provider| %>
+            <tr>
+              <td><strong><%= provider.name %></strong></td>
+              <td><%= provider.contact_name %></td>
+              <td><%= provider.email %></td>
+              <td><%= provider.phone %></td>
+              <td>
+                <% if provider.active %>
+                  <span class="badge bg-success">Activo</span>
+                <% else %>
+                  <span class="badge bg-secondary">Inactivo</span>
+                <% end %>
+              </td>
+              <td class="text-end">
+                <%= link_to provider, class: "btn btn-sm btn-info" do %>
+                  <i class="bi bi-eye"></i>
+                <% end %>
+                <%= link_to edit_provider_path(provider), class: "btn btn-sm btn-warning" do %>
+                  <i class="bi bi-pencil"></i>
+                <% end %>
+                <%= button_to provider, method: :delete, class: "btn btn-sm btn-danger", 
+                    data: { turbo_confirm: "¿Está seguro de eliminar este proveedor?" } do %>
+                  <i class="bi bi-trash"></i>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
