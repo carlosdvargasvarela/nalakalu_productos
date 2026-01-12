@@ -1,0 +1,57 @@
+<div class="row justify-content-center">
+  <div class="col-md-8">
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">
+          <i class="bi bi-upc-scan"></i>
+          Generador de Código de Producto
+        </h3>
+      </div>
+
+      <div class="card-body"
+           data-controller="code-generator"
+           data-code-generator-url-value="<%= variants_for_product_sales_path %>">
+
+        <!-- PASO 1: PRODUCTO -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">
+            1️⃣ Producto
+          </label>
+          <select class="form-select form-select-lg"
+                  data-action="change->code-generator#loadProduct"
+                  data-code-generator-target="productSelect">
+            <option value="">Seleccione un producto...</option>
+            <% @products.each do |product| %>
+              <option value="<%= product.id %>">
+                <%= product.name %>
+              </option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- PASO 2: VARIANTES -->
+        <div data-code-generator-target="variantsContainer"></div>
+
+        <!-- RESULTADO -->
+        <div class="card bg-light mt-4">
+          <div class="card-body text-center">
+            <h5 class="text-muted mb-2">Código generado</h5>
+            <div class="display-6 fw-bold mb-3">
+              <code data-code-generator-target="result">—</code>
+            </div>
+            <button class="btn btn-success btn-lg"
+                    data-action="code-generator#copy"
+                    disabled
+                    data-code-generator-target="copyButton">
+              <i class="bi bi-clipboard"></i>
+              Copiar Código
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
