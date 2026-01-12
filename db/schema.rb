@@ -10,7 +10,27 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_12_181626) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_12_182619) do
+  create_table "product_variant_rules", force: :cascade do |t|
+    t.integer "product_id", null: false
+    t.integer "variant_type_id", null: false
+    t.integer "position"
+    t.boolean "required", default: true
+    t.string "separator", default: "-"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_product_variant_rules_on_product_id"
+    t.index ["variant_type_id"], name: "index_product_variant_rules_on_variant_type_id"
+  end
+
+  create_table "products", force: :cascade do |t|
+    t.string "name"
+    t.string "base_code"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "providers", force: :cascade do |t|
     t.string "name"
     t.string "contact_name"
@@ -55,6 +75,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_12_181626) do
     t.index ["variant_type_id"], name: "index_variants_on_variant_type_id"
   end
 
+  add_foreign_key "product_variant_rules", "products"
+  add_foreign_key "product_variant_rules", "variant_types"
   add_foreign_key "variants", "providers"
   add_foreign_key "variants", "variant_types"
 end

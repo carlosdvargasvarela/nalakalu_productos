@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  product: one
+  variant_type: one
+  position: 1
+  required: false
+  separator: MyString
+
+two:
+  product: two
+  variant_type: two
+  position: 1
+  required: false
+  separator: MyString
