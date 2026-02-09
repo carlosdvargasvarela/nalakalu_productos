@@ -1,36 +1,35 @@
-<div class="nested-form-wrapper mb-3 p-3 border rounded bg-white shadow-sm" data-new-record="<%= f.object.new_record? %>">
+<div class="nested-form-wrapper mb-3 p-3 border rounded bg-white shadow-sm" data-new-record="<​%= f.object.new_record? %>">
   <div class="row align-items-center">
     <div class="col-auto">
       <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
         <i class="bi bi-list"></i>
       </div>
     </div>
-    
-    <div class="col">
+    <div class="col-md-4">
       <%= f.label :variant_type_id, "Tipo de Variante", class: "small fw-bold text-muted mb-1 d-block" %>
       <%= f.collection_select :variant_type_id, VariantType.all, :id, :name, { prompt: "Seleccione..." }, { class: "form-select" } %>
     </div>
-
+    <div class="col-md-3">
+      <%= f.label :label, "Etiqueta (opcional)", class: "small fw-bold text-muted mb-1 d-block" %>
+      <%= f.text_field :label, class: "form-control", placeholder: "Ej: Frente, Respaldo" %>
+      <small class="text-muted">Para diferenciar usos del mismo tipo</small>
+    </div>
     <div class="col-md-2">
       <%= f.label :separator, "Separador", class: "small fw-bold text-muted mb-1 d-block" %>
       <%= f.text_field :separator, class: "form-control", placeholder: "Ej: -" %>
     </div>
-
     <div class="col-auto">
       <div class="form-check form-switch mt-4">
         <%= f.check_box :required, class: "form-check-input" %>
         <%= f.label :required, "Obligatorio", class: "form-check-label small" %>
       </div>
     </div>
-
     <div class="col-auto text-end mt-4">
       <%= f.hidden_field :_destroy %>
       <button type="button" class="btn btn-outline-danger btn-sm border-0" data-action="nested-form#remove">
         <i class="bi bi-trash3"></i>
       </button>
     </div>
-    
-    <%# Campo oculto para la posición que Stimulus actualizará %>
     <%= f.hidden_field :position, data: { role: "position" } %>
   </div>
 </div>

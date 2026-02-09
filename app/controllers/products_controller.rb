@@ -1,7 +1,7 @@
 class ProductsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_product, only: %i[ show edit update destroy ]
+  before_action :set_product, only: %i[show edit update destroy]
 
   def index
     @products = Product.all.includes(:product_variant_rules)
@@ -53,24 +53,26 @@ class ProductsController < ApplicationController
   end
 
   private
-    def set_product
-      @product = Product.find(params[:id])
-    end
 
-    def product_params
-      params.require(:product).permit(
-        :name,
-        :base_code,
-        :description,
-        :active,
-        product_variant_rules_attributes: [
-          :id,
-          :variant_type_id,
-          :position,
-          :required,
-          :separator,
-          :_destroy
-        ]
-      )
-    end
+  def set_product
+    @product = Product.find(params[:id])
+  end
+
+  def product_params
+    params.require(:product).permit(
+      :name,
+      :base_code,
+      :description,
+      :active,
+      product_variant_rules_attributes: [
+        :id,
+        :variant_type_id,
+        :position,
+        :required,
+        :separator,
+        :label,
+        :_destroy
+      ]
+    )
+  end
 end

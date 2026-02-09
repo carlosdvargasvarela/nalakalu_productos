@@ -218,9 +218,9 @@ producto_milano = Product.create!(
 )
 
 producto_milano.product_variant_rules.create!([
-  { variant_type: t_tamano, position: 1, required: true, separator: "-" },
-  { variant_type: t_tela, position: 2, required: true, separator: "-" },
-  { variant_type: t_patas, position: 3, required: false, separator: "/" }
+  {variant_type: t_tamano, position: 1, required: true, separator: "-"},
+  {variant_type: t_tela, position: 2, required: true, separator: "-"},
+  {variant_type: t_patas, position: 3, required: false, separator: "/"}
 ])
 
 # Producto 2: Mesa Nórdica
@@ -232,8 +232,8 @@ producto_mesa = Product.create!(
 )
 
 producto_mesa.product_variant_rules.create!([
-  { variant_type: t_madera, position: 1, required: true, separator: "-" },
-  { variant_type: t_tamano, position: 2, required: true, separator: "" }
+  {variant_type: t_madera, position: 1, required: true, separator: "-"},
+  {variant_type: t_tamano, position: 2, required: true, separator: ""}
 ])
 
 # Producto 3: Silla Clásica
@@ -245,15 +245,15 @@ producto_silla = Product.create!(
 )
 
 producto_silla.product_variant_rules.create!([
-  { variant_type: t_tela, position: 1, required: true, separator: "-" },
-  { variant_type: t_madera, position: 2, required: true, separator: "/" }
+  {variant_type: t_tela, position: 1, required: true, separator: "-"},
+  {variant_type: t_madera, position: 2, required: true, separator: "/"}
 ])
 
 puts "✅ #{Product.count} productos creados"
 
-puts "\n" + "="*60
+puts "\n" + "=" * 60
 puts "🎉 SEEDS COMPLETADOS EXITOSAMENTE"
-puts "="*60
+puts "=" * 60
 puts "\n📧 CUENTAS CREADAS:"
 puts "   Admin:      admin@nalakalu.com / 123456"
 puts "   Vendedor 1: vendedor1@nalakalu.com / 123456"
@@ -270,4 +270,23 @@ puts "\n💡 EJEMPLOS DE CÓDIGOS:"
 puts "   Sofá Milano 2 plazas + Lino Gris + Patas Metal: MIL-2P-LG/PMN"
 puts "   Mesa Nórdica Roble 3 plazas: NOR-RB3P"
 puts "   Silla Clásica Cuero Negro + Nogal: CLA-CN/NG"
-puts "="*60
+puts "=" * 60
+
+puts "\n🪑 Creando producto con múltiples telas..."
+
+producto_silla_premium = Product.create!(
+  name: "Silla Premium Bicolor",
+  base_code: "SPB",
+  description: "Silla con tapizado diferenciado",
+  active: true
+)
+
+producto_silla_premium.product_variant_rules.create!([
+  {variant_type: t_tela, position: 1, required: true, separator: "-", label: "Frente"},
+  {variant_type: t_tela, position: 2, required: true, separator: "/", label: "Respaldo"},
+  {variant_type: t_madera, position: 3, required: true, separator: "-"}
+])
+
+puts "✅ Silla Premium creada (permite 2 telas distintas)"
+puts "   Ejemplo de código: SPB-LG/CN-RB"
+puts "   (Lino Gris al frente, Cuero Negro en respaldo, Roble)"

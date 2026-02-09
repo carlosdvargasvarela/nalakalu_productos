@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_12_201019) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_09_093703) do
   create_table "compatibilities", force: :cascade do |t|
     t.integer "variant_id", null: false
     t.integer "compatible_variant_id", null: false
@@ -29,6 +29,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_12_201019) do
     t.string "separator", default: "-"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "label"
     t.index ["product_id"], name: "index_product_variant_rules_on_product_id"
     t.index ["variant_type_id"], name: "index_product_variant_rules_on_variant_type_id"
   end
