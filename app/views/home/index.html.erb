@@ -1,55 +1,105 @@
-<div class="row">
-  <div class="col-md-12">
-    <div class="jumbotron bg-light p-5 rounded">
-      <h1 class="display-4"><i class="bi bi-box-seam"></i> Sistema de Códigos de Productos</h1>
-      <p class="lead">Herramienta interna para generar códigos de productos con variantes de forma rápida y precisa.</p>
-      <hr class="my-4">
-      <% if user_signed_in? %>
-        <div class="alert alert-success">
-          <strong><i class="bi bi-check-circle"></i> Sesión activa:</strong> <%= current_user.email %>
-          <span class="badge bg-primary"><%= current_user.role %></span>
-        </div>
-        <% if current_user.role == 'admin' %>
-          <h4 class="mt-4">Accesos Rápidos:</h4>
-          <div class="row mt-3">
-            <div class="col-md-4 mb-3">
-              <%= link_to providers_path, class: "text-decoration-none" do %>
-                <div class="card text-center">
-                  <div class="card-body">
-                    <i class="bi bi-building display-4 text-primary"></i>
-                    <h5 class="card-title mt-2">Proveedores</h5>
-                    <p class="text-muted"><%= Provider.count %> registrados</p>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-            <div class="col-md-4 mb-3">
-              <%= link_to variant_types_path, class: "text-decoration-none" do %>
-                <div class="card text-center">
-                  <div class="card-body">
-                    <i class="bi bi-tags display-4 text-success"></i>
-                    <h5 class="card-title mt-2">Tipos de Variante</h5>
-                    <p class="text-muted"><%= VariantType.count %> tipos</p>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-            <div class="col-md-4 mb-3">
-              <%= link_to variants_path, class: "text-decoration-none" do %>
-                <div class="card text-center">
-                  <div class="card-body">
-                    <i class="bi bi-palette display-4 text-warning"></i>
-                    <h5 class="card-title mt-2">Variantes</h5>
-                    <p class="text-muted"><%= Variant.count %> opciones</p>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-      <% else %>
-        <p>Por favor, <%= link_to "inicia sesión", new_user_session_path, class: "btn btn-primary btn-lg" %> para continuar.</p>
-      <% end %>
-    </div>
+<div class="row mb-4">
+  <div class="col-12 text-center">
+    <h1 class="display-5 fw-bold">Bienvenido, <%= current_user.email.split('@').first.capitalize %></h1>
+    <p class="lead text-muted">Sistema Interno de Gestión de Productos - Nalakalú</p>
   </div>
 </div>
+<div class="row g-4 justify-content-center">
+  <!-- ACCIÓN PRINCIPAL: GENERADOR (Para todos) -->
+  <div class="col-md-6">
+    <div class="card h-100 border-primary shadow">
+      <div class="card-body text-center p-5">
+        <div class="display-1 text-primary mb-3">
+          <i class="bi bi-upc-scan"></i>
+        </div>
+        <h2 class="card-title">Generador de Códigos</h2>
+        <p class="card-text text-muted">Crea códigos únicos para el CRM seleccionando variantes y productos.</p>
+        <%= link_to new_sale_path, class: "btn btn-primary btn-lg w-100 py-3 fw-bold" do %>
+          IR AL GENERADOR <i class="bi bi-arrow-right-short"></i>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <% if current_user.role == 'admin' %>
+    <!-- ACCIONES DE ADMIN -->
+    <div class="col-md-6">
+      <div class="row g-3">
+        <div class="col-6">
+          <div class="card h-100 shadow-sm border-0 bg-light">
+            <div class="card-body text-center">
+              <i class="bi bi-box-seam fs-2 text-secondary"></i>
+              <h5 class="mt-2">Productos</h5>
+              <%= link_to "Gestionar", products_path, class: "btn btn-sm btn-outline-secondary w-100" %>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card h-100 shadow-sm border-0 bg-light">
+            <div class="card-body text-center">
+              <i class="bi bi-tags fs-2 text-secondary"></i>
+              <h5 class="mt-2">Variantes</h5>
+              <%= link_to "Gestionar", variants_path, class: "btn btn-sm btn-outline-secondary w-100" %>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card h-100 shadow-sm border-0 bg-light">
+            <div class="card-body text-center">
+              <i class="bi bi-truck fs-2 text-secondary"></i>
+              <h5 class="mt-2">Proveedores</h5>
+              <%= link_to "Gestionar", providers_path, class: "btn btn-sm btn-outline-secondary w-100" %>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card h-100 shadow-sm border-0 bg-light">
+            <div class="card-body text-center">
+              <i class="bi bi-diagram-3 fs-2 text-secondary"></i>
+              <h5 class="mt-2">Tipos de Variante</h5>
+              <%= link_to "Gestionar", variant_types_path, class: "btn btn-sm btn-outline-secondary w-100" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+<% if current_user.role == 'admin' %>
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Resumen del Sistema</h5>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3">
+              <div class="p-3">
+                <h2 class="text-primary"><%= Product.count %></h2>
+                <p class="text-muted mb-0">Productos</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3">
+                <h2 class="text-success"><%= Variant.where(active: true).count %></h2>
+                <p class="text-muted mb-0">Variantes Activas</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3">
+                <h2 class="text-info"><%= Provider.where(active: true).count %></h2>
+                <p class="text-muted mb-0">Proveedores Activos</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3">
+                <h2 class="text-warning"><%= VariantType.count %></h2>
+                <p class="text-muted mb-0">Tipos de Variante</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

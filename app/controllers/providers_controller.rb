@@ -1,31 +1,28 @@
 class ProvidersController < ApplicationController
+  before_action :authenticate_user!
+  before_action :authorize_admin!
   before_action :set_provider, only: %i[ show edit update destroy ]
 
-  # GET /providers or /providers.json
   def index
     @providers = Provider.all
   end
 
-  # GET /providers/1 or /providers/1.json
   def show
   end
 
-  # GET /providers/new
   def new
     @provider = Provider.new
   end
 
-  # GET /providers/1/edit
   def edit
   end
 
-  # POST /providers or /providers.json
   def create
     @provider = Provider.new(provider_params)
 
     respond_to do |format|
       if @provider.save
-        format.html { redirect_to @provider, notice: "Provider was successfully created." }
+        format.html { redirect_to @provider, notice: "Proveedor creado exitosamente." }
         format.json { render :show, status: :created, location: @provider }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -34,11 +31,10 @@ class ProvidersController < ApplicationController
     end
   end
 
-  # PATCH/PUT /providers/1 or /providers/1.json
   def update
     respond_to do |format|
       if @provider.update(provider_params)
-        format.html { redirect_to @provider, notice: "Provider was successfully updated.", status: :see_other }
+        format.html { redirect_to @provider, notice: "Proveedor actualizado exitosamente." }
         format.json { render :show, status: :ok, location: @provider }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -47,23 +43,20 @@ class ProvidersController < ApplicationController
     end
   end
 
-  # DELETE /providers/1 or /providers/1.json
   def destroy
     @provider.destroy!
 
     respond_to do |format|
-      format.html { redirect_to providers_path, notice: "Provider was successfully destroyed.", status: :see_other }
+      format.html { redirect_to providers_path, status: :see_other, notice: "Proveedor eliminado." }
       format.json { head :no_content }
     end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
     def set_provider
       @provider = Provider.find(params[:id])
     end
 
-    # Only allow a list of trusted parameters through.
     def provider_params
       params.require(:provider).permit(:name, :contact_name, :email, :phone, :notes, :active)
     end

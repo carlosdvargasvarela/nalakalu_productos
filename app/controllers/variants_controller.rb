@@ -1,31 +1,28 @@
 class VariantsController < ApplicationController
+  before_action :authenticate_user!
+  before_action :authorize_admin!
   before_action :set_variant, only: %i[ show edit update destroy ]
 
-  # GET /variants or /variants.json
   def index
-    @variants = Variant.all
+    @variants = Variant.all.includes(:variant_type, :provider)
   end
 
-  # GET /variants/1 or /variants/1.json
   def show
   end
 
-  # GET /variants/new
   def new
     @variant = Variant.new
   end
 
-  # GET /variants/1/edit
   def edit
   end
 
-  # POST /variants or /variants.json
   def create
     @variant = Variant.new(variant_params)
 
     respond_to do |format|
       if @variant.save
-        format.html { redirect_to @variant, notice: "Variant was successfully created." }
+        format.html { redirect_to @variant, notice: "Variante creada exitosamente." }
         format.json { render :show, status: :created, location: @variant }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -34,11 +31,10 @@ class VariantsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /variants/1 or /variants/1.json
   def update
     respond_to do |format|
       if @variant.update(variant_params)
-        format.html { redirect_to @variant, notice: "Variant was successfully updated.", status: :see_other }
+        format.html { redirect_to @variant, notice: "Variante actualizada exitosamente." }
         format.json { render :show, status: :ok, location: @variant }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -47,24 +43,30 @@ class VariantsController < ApplicationController
     end
   end
 
-  # DELETE /variants/1 or /variants/1.json
   def destroy
     @variant.destroy!
 
     respond_to do |format|
-      format.html { redirect_to variants_path, notice: "Variant was successfully destroyed.", status: :see_other }
+      format.html { redirect_to variants_path, status: :see_other, notice: "Variante eliminada." }
       format.json { head :no_content }
     end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
     def set_variant
       @variant = Variant.find(params[:id])
     end
 
-    # Only allow a list of trusted parameters through.
     def variant_params
-      params.require(:variant).permit(:variant_type_id, :provider_id, :name, :code, :provider_sku, :cost, :active)
+      params.require(:variant).permit(
+        :variant_type_id,
+        :provider_id,
+        :name,
+        :code,
+        :provider_sku,
+        :cost,
+        :active,
+        compatible_variant_ids: []
+      )
     end
 end

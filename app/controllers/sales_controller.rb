@@ -19,7 +19,8 @@ class SalesController < ApplicationController
           {
             id: v.id,
             name: v.name,
-            code: v.code
+            code: v.code,
+            compatible_with: v.compatible_variant_ids
           }
         end
       }
