@@ -1,7 +1,7 @@
 class ProvidersController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_provider, only: %i[ show edit update destroy ]
+  before_action :set_provider, only: %i[show edit update destroy]
 
   def index
     @providers = Provider.all
@@ -52,12 +52,29 @@ class ProvidersController < ApplicationController
     end
   end
 
-  private
-    def set_provider
-      @provider = Provider.find(params[:id])
+  def import
+    unless params[:file].present?
+      redirect_to providers_path, alert: "Por favor, selecciona un archivo CSV."
+      return
     end
 
-    def provider_params
-      params.require(:provider).permit(:name, :contact_name, :email, :phone, :notes, :active)
-    end
+    file = params[:file]
+    tmp_path = Rails.root.join("tmp", "import_providers_#{Time.now.to_i}.csv")
+
+    # Cambio a copia segura
+    FileUtils.cp(file.tempfile.path, tmp_path)
+
+    ImportProvidersJob.perform_later(tmp_path.to_s, current_user.id)
+    redirect_to providers_path, notice: "Importación de proveedores iniciada."
+  end
+
+  private
+
+  def set_provider
+    @provider = Provider.find(params[:id])
+  end
+
+  def provider_params
+    params.require(:provider).permit(:name, :contact_name, :email, :phone, :notes, :active)
+  end
 end

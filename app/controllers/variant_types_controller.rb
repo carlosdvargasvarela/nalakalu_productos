@@ -1,7 +1,7 @@
 class VariantTypesController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_variant_type, only: %i[ show edit update destroy ]
+  before_action :set_variant_type, only: %i[show edit update destroy]
 
   def index
     @variant_types = VariantType.all
@@ -52,12 +52,29 @@ class VariantTypesController < ApplicationController
     end
   end
 
-  private
-    def set_variant_type
-      @variant_type = VariantType.find(params[:id])
+  def import
+    unless params[:file].present?
+      redirect_to variant_types_path, alert: "Por favor, selecciona un archivo CSV."
+      return
     end
 
-    def variant_type_params
-      params.require(:variant_type).permit(:name)
-    end
+    file = params[:file]
+    tmp_path = Rails.root.join("tmp", "import_variant_types_#{Time.now.to_i}.csv")
+
+    # Cambio a copia segura
+    FileUtils.cp(file.tempfile.path, tmp_path)
+
+    ImportVariantTypesJob.perform_later(tmp_path.to_s, current_user.id)
+    redirect_to variant_types_path, notice: "Importación de tipos de variante iniciada."
+  end
+
+  private
+
+  def set_variant_type
+    @variant_type = VariantType.find(params[:id])
+  end
+
+  def variant_type_params
+    params.require(:variant_type).permit(:name)
+  end
 end

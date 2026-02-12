@@ -1,5 +1,10 @@
+require "sidekiq/web"
 Rails.application.routes.draw do
   devise_for :users
+
+  authenticate :user, lambda { |u| u.role == "admin" } do
+    mount Sidekiq::Web => "/sidekiq"
+  end
 
   root "home#index"
 
@@ -9,8 +14,23 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :providers
-  resources :variant_types
+  resources :providers do
+    collection do
+      post :import
+    end
+  end
+
+  resources :variant_types do
+    collection do
+      post :import
+    end
+  end
+
   resources :variants
-  resources :products
+
+  resources :products do
+    collection do
+      post :import
+    end
+  end
 end

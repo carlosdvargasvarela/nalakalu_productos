@@ -4,7 +4,6 @@
     <i class="bi bi-plus-circle"></i> Nuevo Producto
   <% end %>
 </div>
-
 <div class="row">
   <% @products.each do |product| %>
     <div class="col-md-4 mb-4">
@@ -30,4 +29,24 @@
       </div>
     </div>
   <% end %>
+</div>
+<div class="card mt-5 border-warning">
+  <div class="card-body">
+    <h5 class="card-title text-warning">
+      <i class="bi bi-file-earmark-spreadsheet"></i>
+      Importación Masiva de Productos y Variantes
+    </h5>
+    <p class="text-muted small mb-2">
+      Formato CSV recomendado:
+      <code>Producto,Código Base,Tipo Variante,Etiqueta,Separador,Variante Nombre,Variante Código,Proveedor,Costo,SKU Proveedor,Obligatorio,Activo</code>
+    </p>
+    <%= form_with url: import_products_path, multipart: true, local: true do |f| %>
+      <div class="input-group">
+        <%= f.file_field :file, class: "form-control", accept: ".csv" %>
+        <button class="btn btn-warning" type="submit">
+          <i class="bi bi-cloud-upload"></i> Subir e Importar
+        </button>
+      </div>
+    <% end %>
+  </div>
 </div>
