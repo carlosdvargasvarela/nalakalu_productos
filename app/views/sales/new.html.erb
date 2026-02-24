@@ -1,97 +1,70 @@
 <div class="row justify-content-center">
   <div class="col-md-10 col-lg-8">
-    <div class="card shadow border-0 rounded-4 overflow-hidden">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      
       <!-- HEADER -->
-      <div class="bg-gradient-primary text-white py-4 px-4"
-           style="background: linear-gradient(135deg,#0d6efd,#003580);">
-        <h3 class="mb-0 d-flex align-items-center gap-3">
-          <span class="bg-white text-primary rounded-circle d-flex justify-content-center align-items-center"
-                style="width:48px;height:48px;">
+      <div class="p-4 text-white" style="background: linear-gradient(145deg, #0d6efd, #0a4fb4);">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-white text-primary rounded-3 shadow-sm d-flex justify-content-center align-items-center" style="width:50px;height:50px;">
             <i class="bi bi-upc-scan fs-3"></i>
-          </span>
-          <span class="fw-bold">Generador de Código de Producto</span>
-        </h3>
-        <p class="mt-3 mb-0 opacity-75">
-          Seleccione un producto, configure sus variantes y obtenga
-          un código listo para el CRM.
-        </p>
-      </div>
-      <div class="card-body p-4"
-           data-controller="code-generator"
-           data-code-generator-url-value="<%= variants_for_product_sales_path %>">
-        <!-- STEPPER -->
-        <div class="mb-5">
-          <div class="d-flex justify-content-between">
-            <% ["Producto", "Variantes", "Código"].each_with_index do |label, idx| %>
-              <div class="text-center flex-fill">
-                <div class="rounded-circle mx-auto mb-1 d-flex justify-content-center align-items-center
-                            <%= idx == 0 ? 'bg-primary text-white' : 'bg-light text-secondary' %>"
-                     style="width:42px;height:42px;font-weight:600;">
-                  <%= idx + 1 %>
-                </div>
-                <div class="small fw-semibold text-muted"><%= label %></div>
-              </div>
-            <% end %>
           </div>
-          <div class="mt-3">
-            <div class="progress" style="height: 6px;">
-              <div class="progress-bar bg-primary" style="width: 33%;"></div>
-            </div>
+          <div>
+            <h2 class="fw-bold mb-1">Generador de Código</h2>
+            <p class="mb-0 small opacity-75">Configure las variantes para obtener el código del CRM.</p>
           </div>
         </div>
-        <!-- STEP 1: PRODUCTO -->
-        <div class="mb-5">
-          <label class="form-label fw-bold fs-5 mb-2">
-            Seleccione el producto
-          </label>
-          <div class="input-group input-group-lg shadow-sm">
-            <span class="input-group-text bg-white">
-              <i class="bi bi-box"></i>
-            </span>
-            <select class="form-select border-start-0"
-                    data-action="change->code-generator#loadProduct"
-              data-code-generator-target="productSelect">
-              <option value="">— Elegir producto —</option>
+      </div>
+
+      <!-- BODY -->
+      <div class="card-body p-4" data-controller="code-generator" data-code-generator-url-value="<%= variants_for_product_sales_path %>">
+        
+        <!-- STEP 1 -->
+        <section class="mb-5">
+          <h5 class="fw-bold mb-3 text-secondary">1. Producto</h5>
+          <div class="form-floating shadow-sm">
+            <select class="form-select" id="productoSelect" 
+                    data-action="change->code-generator#loadProduct" 
+                    data-code-generator-target="productSelect">
+              <option value="">Seleccione un producto...</option>
               <% @products.each do |product| %>
                 <option value="<%= product.id %>"><%= product.name %></option>
               <% end %>
             </select>
+            <label for="productoSelect"><i class="bi bi-box-seam me-1"></i> Producto Base</label>
           </div>
-        </div>
-        <!-- STEP 2: VARIANTES -->
-        <div class="mb-5" data-code-generator-target="variantsContainer"></div>
-        <!-- STEP 3: RESULTADO -->
-        <div class="card border-0 shadow-sm rounded-4 bg-light px-3 py-4">
-          <h4 class="fw-bold text-center text-primary mb-4">
-            Resultado del Código
-          </h4>
-          <!-- Código completo -->
-          <div class="text-center mb-4">
-            <div class="d-inline-block bg-white shadow-sm border rounded-3 p-3 px-4">
-              <code class="fs-4 fw-bold text-break"
-                    data-code-generator-target="result">—</code>
+        </section>
+
+        <!-- STEP 2 -->
+        <section class="mb-5">
+          <h5 class="fw-bold mb-3 text-secondary">2. Variantes</h5>
+          <div data-code-generator-target="variantsContainer">
+            <div class="text-muted small italic p-3 border rounded bg-light">
+              Seleccione un producto primero para ver las variantes disponibles.
             </div>
           </div>
-          <!-- Warning -->
-          <div class="alert alert-warning d-none mb-3"
-               data-code-generator-target="lineWarning"></div>
-          <!-- Preview CRM -->
-          <div class="mb-4"
-               data-code-generator-target="linePreview"></div>
-          <p class="text-muted small text-center">
-            <i class="bi bi-info-circle"></i>
-            El CRM acepta <strong>máx. 5 líneas</strong> × <strong>30 caracteres</strong>.
-          </p>
-          <div class="text-center mt-4">
-            <button class="btn btn-success btn-lg px-5 shadow-sm"
-                    data-action="code-generator#copy"
-                    disabled
-                    data-code-generator-target="copyButton">
-              <i class="bi bi-clipboard"></i>
-              Copiar en formato CRM
-            </button>
+        </section>
+
+        <!-- STEP 3 -->
+        <section>
+          <h5 class="fw-bold mb-3 text-secondary">3. Código generado</h5>
+          <div class="card bg-light border-0 shadow-sm rounded-4 p-4">
+            <textarea class="form-control font-monospace shadow-sm fs-5 text-center fw-semibold mb-3" 
+                      rows="5" readonly placeholder="Esperando configuración..." 
+                      style="resize:none; letter-spacing:0.04em; background-color: #fff !important;" 
+                      data-code-generator-target="result"></textarea>
+
+            <div class="alert alert-warning d-none py-2 small" data-code-generator-target="lineWarning"></div>
+
+            <div class="text-center mt-3">
+              <button class="btn btn-primary btn-lg px-5 shadow-sm fw-bold" 
+                      data-action="code-generator#copy" disabled 
+                      data-code-generator-target="copyButton">
+                <i class="bi bi-clipboard-check me-2"></i> Copiar código
+              </button>
+            </div>
           </div>
-        </div>
+        </section>
+
       </div>
     </div>
   </div>
