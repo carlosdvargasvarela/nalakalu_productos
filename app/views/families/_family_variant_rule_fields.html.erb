@@ -1,28 +1,34 @@
-<div class="nested-fields mb-3 p-3 border rounded-3 bg-light position-relative shadow-sm" data-new-record="<​%= f.object.new_record? %>">
-  <div class="row g-2 align-items-end">
+<div class="nested-fields mb-3 p-3 border-2 rounded-4 bg-white position-relative shadow-sm transition-all" 
+     data-new-record="<​%= f.object.new_record? %>"
+  style="border-style: solid !important;">
+  <div class="row g-3 align-items-center">
     <%= f.hidden_field :position, data: { role: "position" } %>
+    <!-- Indicador de Orden -->
+    <div class="col-auto">
+      <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
+           style="width: 32px; height: 32px; font-size: 0.8rem;">
+        <span class="pos-label">#</span>
+      </div>
+    </div>
     <div class="col-md-4">
-      <%= f.label :variant_type_id, "Tipo de Variante", class: "small fw-bold text-muted" %>
-      <%= f.collection_select :variant_type_id, VariantType.all, :id, :name, { prompt: "Seleccione..." }, { class: "form-select shadow-sm" } %>
+      <%= f.collection_select :variant_type_id, VariantType.all, :id, :name, { prompt: "Tipo de Variante..." }, { class: "form-select border-0 bg-light fw-bold" } %>
     </div>
     <div class="col-md-3">
-      <%= f.label :label, "Etiqueta (Opcional)", class: "small fw-bold text-muted" %>
-      <%= f.text_field :label, class: "form-control shadow-sm", placeholder: "Ej: Base, Tope..." %>
+      <%= f.text_field :label, class: "form-control border-0 bg-light", placeholder: "Etiqueta (ej: Base)" %>
+    </div>
+    <div class="col-md-1">
+      <%= f.text_field :separator, class: "form-control border-0 bg-light text-center fw-bold", placeholder: "-" %>
     </div>
     <div class="col-md-2">
-      <%= f.label :separator, "Separador", class: "small fw-bold text-muted" %>
-      <%= f.text_field :separator, class: "form-control text-center shadow-sm" %>
-    </div>
-    <div class="col-md-2">
-      <div class="form-check form-switch mb-2">
+      <div class="form-check form-switch">
         <%= f.check_box :required, class: "form-check-input" %>
-        <%= f.label :required, "Obligatorio", class: "form-check-label small fw-bold" %>
+        <%= f.label :required, "Oblig.", class: "form-check-label small fw-bold text-muted" %>
       </div>
     </div>
     <div class="col-md-1 text-end">
       <%= f.hidden_field :_destroy %>
-      <button type="button" class="btn btn-outline-danger btn-sm border-0" data-action="nested-form#remove">
-        <i class="bi bi-trash3 fs-5"></i>
+      <button type="button" class="btn btn-link text-danger p-0" data-action="nested-form#remove">
+        <i class="bi bi-x-circle-fill fs-5"></i>
       </button>
     </div>
   </div>

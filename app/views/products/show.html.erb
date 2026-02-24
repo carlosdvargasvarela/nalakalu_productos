@@ -1,10 +1,156 @@
-<p style="color: green"><%= notice %></p>
-
-<%= render @product %>
-
-<div>
-  <%= link_to "Edit this product", edit_product_path(@product) %> |
-  <%= link_to "Back to products", products_path %>
-
-  <%= button_to "Destroy this product", @product, method: :delete %>
+<div class="container-fluid py-4">
+  <% if notice %>
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% end %>
+  <!-- Header -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+              <li class="breadcrumb-item"><%= link_to "Productos", products_path, class: "text-decoration-none" %></li>
+              <li class="breadcrumb-item active fw-bold"><%= @product.name %></li>
+            </ol>
+          </nav>
+          <div class="d-flex align-items-center gap-3">
+            <h2 class="fw-bold mb-0"><%= @product.name %></h2>
+            <span class="badge <%= @product.active ? 'bg-success' : 'bg-secondary' %> rounded-pill">
+              <%= @product.active ? 'Activo' : 'Inactivo' %>
+            </span>
+          </div>
+          <% if @product.family.present? %>
+            <p class="text-muted mb-0 mt-1">
+              <i class="bi bi-diagram-3 me-1 text-info"></i>
+              Familia: <strong><%= link_to @product.family.name, @product.family, class: "text-decoration-none text-info" %></strong>
+            </p>
+          <% end %>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <div class="d-flex gap-2 justify-content-md-end">
+            <%= link_to edit_product_path(@product), class: "btn btn-white border shadow-sm rounded-pill px-4" do %>
+              <i class="bi bi-pencil-square me-2"></i>Editar
+            <% end %>
+            <%= button_to @product, method: :delete, class: "btn btn-outline-danger rounded-circle p-2",
+                form: { data: { turbo_confirm: "¿Eliminar este producto?" } } do %>
+              <i class="bi bi-trash"></i>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-4">
+    <!-- Columna Izquierda: Info + Estructura -->
+    <div class="col-lg-7">
+      <!-- Estructura del Código -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-diagram-3 me-2 text-primary"></i>Estructura del Código</h5>
+        </div>
+        <div class="card-body p-4">
+          <% rules = @product.effective_rules %>
+          <% if rules.any? %>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+              <span class="badge bg-dark fs-6 rounded-pill px-3"><%= @product.base_code %></span>
+              <% rules.each_with_index do |rule, i| %>
+                <i class="bi bi-plus text-muted"></i>
+                <div class="d-flex align-items-center gap-1">
+                  <span class="badge bg-secondary rounded-pill px-3 fs-6"><%= rule.separator %></span>
+                  <span class="badge bg-primary rounded-pill px-3 fs-6">
+                    <%= rule.display_name %>
+                    <% unless rule.required %>
+                      <span class="opacity-75 ms-1">(opt)</span>
+                    <% end %>
+                  </span>
+                </div>
+              <% end %>
+            </div>
+            <div class="bg-light rounded-3 p-3">
+              <p class="small text-muted mb-1 fw-bold">Ejemplo de código generado:</p>
+              <code class="fs-5 text-dark"><%= @product.code_structure_preview %></code>
+            </div>
+            <% if @product.product_variant_rules.empty? && @product.family.present? %>
+              <div class="alert alert-info border-0 rounded-3 mt-3 mb-0 small">
+                <i class="bi bi-arrow-up-circle me-2"></i>
+                Estas reglas son heredadas de la familia <strong><%= @product.family.name %></strong>.
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-exclamation-circle d-block fs-2 mb-2 opacity-25"></i>
+              Este producto no tiene estructura de código definida.
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <!-- Reglas Detalladas -->
+      <% if rules.any? %>
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-list-ol me-2 text-primary"></i>Pasos del Código</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush rounded-4">
+              <% rules.each_with_index do |rule, i| %>
+                <div class="list-group-item px-4 py-3 d-flex align-items-center gap-3">
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                       style="width: 32px; height: 32px; font-size: 0.8rem;">
+                    <%= i + 1 %>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="fw-bold"><%= rule.display_name %></div>
+                    <div class="small text-muted">Separador: <code><%= rule.separator %></code></div>
+                  </div>
+                  <span class="badge <%= rule.required ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary' %> rounded-pill">
+                    <%= rule.required ? 'Obligatorio' : 'Opcional' %>
+                  </span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <!-- Columna Derecha: Metadata -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Información del Producto</h5>
+        </div>
+        <div class="list-group list-group-flush rounded-4">
+          <div class="list-group-item px-4 py-3">
+            <div class="small text-muted fw-bold mb-1">Código Base</div>
+            <code class="fs-5"><%= @product.base_code %></code>
+          </div>
+          <div class="list-group-item px-4 py-3">
+            <div class="small text-muted fw-bold mb-1">Nombre</div>
+            <div class="fw-bold"><%= @product.name %></div>
+          </div>
+          <div class="list-group-item px-4 py-3">
+            <div class="small text-muted fw-bold mb-1">Familia</div>
+            <% if @product.family.present? %>
+              <%= link_to @product.family.name, @product.family, class: "text-decoration-none fw-bold text-info" %>
+            <% else %>
+              <span class="text-muted">Sin familia asignada</span>
+            <% end %>
+          </div>
+          <div class="list-group-item px-4 py-3">
+            <div class="small text-muted fw-bold mb-1">Estado</div>
+            <span class="badge <%= @product.active ? 'bg-success' : 'bg-secondary' %> rounded-pill px-3">
+              <%= @product.active ? 'Activo' : 'Inactivo' %>
+            </span>
+          </div>
+          <div class="list-group-item px-4 py-3">
+            <div class="small text-muted fw-bold mb-1">Reglas Propias</div>
+            <span class="fw-bold"><%= @product.product_variant_rules.count %></span>
+            <span class="text-muted small ms-1">pasos definidos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

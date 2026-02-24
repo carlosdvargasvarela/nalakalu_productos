@@ -1,64 +1,90 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1><i class="bi bi-palette"></i> Variantes</h1>
-  <%= link_to new_variant_path, class: "btn btn-primary" do %>
-    <i class="bi bi-plus-circle"></i> Nueva Variante
-  <% end %>
-</div>
-
-<div class="card">
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead class="table-dark">
-          <tr>
-            <th>Tipo</th>
-            <th>Nombre</th>
-            <th>Código</th>
-            <th>Proveedor</th>
-            <th>SKU Proveedor</th>
-            <th>Costo</th>
-            <th>Estado</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @variants.each do |variant| %>
-            <tr>
-              <td><span class="badge bg-secondary"><%= variant.variant_type.name %></span></td>
-              <td><strong><%= variant.name %></strong></td>
-              <td><code class="bg-light p-1"><%= variant.code %></code></td>
-              <td><%= variant.provider.name %></td>
-              <td><%= variant.provider_sku %></td>
-              <td>
-                <% if variant.cost.present? %>
-                  <%= number_to_currency(variant.cost, unit: "$") %>
-                <% else %>
-                  <span class="text-muted">-</span>
-                <% end %>
-              </td>
-              <td>
-                <% if variant.active %>
-                  <span class="badge bg-success">Activo</span>
-                <% else %>
-                  <span class="badge bg-secondary">Inactivo</span>
-                <% end %>
-              </td>
-              <td class="text-end">
-                <%= link_to variant, class: "btn btn-sm btn-info" do %>
-                  <i class="bi bi-eye"></i>
-                <% end %>
-                <%= link_to edit_variant_path(variant), class: "btn btn-sm btn-warning" do %>
-                  <i class="bi bi-pencil"></i>
-                <% end %>
-                <%= button_to variant, method: :delete, class: "btn btn-sm btn-danger", 
-                    data: { turbo_confirm: "¿Está seguro?" } do %>
-                  <i class="bi bi-trash"></i>
-                <% end %>
-              </td>
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-bold mb-0">Variantes</h1>
+      <p class="text-muted">Opciones individuales disponibles para configurar productos.</p>
+    </div>
+    <%= link_to new_variant_path, class: "btn btn-primary shadow-sm rounded-pill px-4" do %>
+      <i class="bi bi-plus-lg me-2"></i>Nueva Variante
+    <% end %>
+  </div>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr class="border-bottom">
+              <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Variante</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Tipo</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Código</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Proveedor</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">SKU</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase text-end">Costo</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase text-center">Estado</th>
+              <th class="py-3 pe-4 text-end text-muted small fw-bold text-uppercase">Acciones</th>
             </tr>
-          <% end %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% @variants.each do |variant| %>
+              <tr>
+                <td class="px-4 py-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-purple bg-opacity-10 rounded-3 p-2 flex-shrink-0"
+                         style="background-color: #f0ebff;">
+                      <i class="bi bi-palette text-purple fs-5" style="color: #7c3aed;"></i>
+                    </div>
+                    <div class="fw-bold"><%= variant.name %></div>
+                  </div>
+                </td>
+                <td class="py-3">
+                  <span class="badge bg-secondary-soft text-secondary rounded-pill px-3">
+                    <%= variant.variant_type.name %>
+                  </span>
+                </td>
+                <td class="py-3">
+                  <code class="bg-light px-2 py-1 rounded text-dark fw-bold"><%= variant.code %></code>
+                </td>
+                <td class="py-3">
+                  <%= link_to variant.provider.name, variant.provider, class: "text-decoration-none text-muted small" %>
+                </td>
+                <td class="py-3">
+                  <span class="text-muted small"><%= variant.provider_sku.presence || "—" %></span>
+                </td>
+                <td class="py-3 text-end">
+                  <% if variant.cost.present? %>
+                    <span class="fw-bold"><%= number_to_currency(variant.cost, unit: "$") %></span>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <td class="py-3 text-center">
+                  <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
+                    <%= variant.active ? 'Activa' : 'Inactiva' %>
+                  </span>
+                </td>
+                <td class="py-3 pe-4 text-end">
+                  <div class="d-flex gap-1 justify-content-end">
+                    <%= link_to variant, class: "btn btn-sm btn-light rounded-pill px-3" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to edit_variant_path(variant), class: "btn btn-sm btn-light rounded-pill px-3" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <%= button_to variant, method: :delete, class: "btn btn-sm btn-light text-danger rounded-pill px-3",
+                        form: { data: { turbo_confirm: "¿Eliminar esta variante?" } } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+<style>
+  .bg-success-soft { background-color: #e1f6eb; }
+  .bg-secondary-soft { background-color: #f0f2f5; }
+</style>

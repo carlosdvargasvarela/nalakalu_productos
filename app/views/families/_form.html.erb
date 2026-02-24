@@ -1,49 +1,61 @@
 <%= form_with(model: family, data: { controller: "nested-form", nested_form_wrapper_selector_value: ".nested-fields" }) do |f| %>
-  <div class="card shadow-sm border-0 rounded-3 mb-4">
-    <div class="card-body p-4">
-      <div class="row g-3">
-        <div class="col-md-8">
-          <%= f.label :name, "Nombre de la Familia", class: "form-label fw-bold" %>
-          <%= f.text_field :name, class: "form-control form-control-lg", placeholder: "Ej: Sillas, Mesas de Centro..." %>
-        </div>
-        <div class="col-md-4">
-          <%= f.label :active, "Estado", class: "form-label fw-bold" %>
-          <%= f.select :active, [["Activa", true], ["Inactiva", false]], {}, { class: "form-select form-select-lg" } %>
-        </div>
-        <div class="col-12">
-          <%= f.label :description, "Descripción", class: "form-label fw-bold" %>
-          <%= f.text_area :description, class: "form-control", rows: 2 %>
+  <div class="row g-4">
+    <!-- Columna Info -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Información General</h5>
+          <div class="mb-3">
+            <%= f.label :name, "Nombre de la Familia", class: "form-label small fw-bold" %>
+            <%= f.text_field :name, class: "form-control border-2", placeholder: "Ej: Sillas de Oficina" %>
+          </div>
+          <div class="mb-3">
+            <%= f.label :active, "Estado de la Familia", class: "form-label small fw-bold" %>
+            <%= f.select :active, [["Activa", true], ["Inactiva", false]], {}, { class: "form-select border-2" } %>
+          </div>
+          <div class="mb-0">
+            <%= f.label :description, "Descripción", class: "form-label small fw-bold" %>
+            <%= f.text_area :description, class: "form-control border-2", rows: 4, placeholder: "Detalles internos..." %>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="card shadow-sm border-0 rounded-3">
-    <div class="card-header bg-white py-3">
-      <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-diagram-3 me-2"></i>Estructura de Código para esta Familia</h5>
-      <p class="text-muted small mb-0">Define el orden de las variantes que heredarán los productos de esta familia.</p>
-    </div>
-    <div class="card-body p-4">
-      <div id="rules-container" data-nested-form-target="target">
-        <%= f.fields_for :family_variant_rules do |rule_f| %>
-          <%= render "family_variant_rule_fields", f: rule_f %>
+    <!-- Columna DNA Builder -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-diagram-3 me-2"></i>Constructor de Estructura (DNA)</h5>
+            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-action="nested-form#add">
+              <i class="bi bi-plus-lg me-1"></i>Agregar Paso
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div id="rules-container" data-nested-form-target="target">
+            <%= f.fields_for :family_variant_rules do |rule_f| %>
+              <%= render "family_variant_rule_fields", f: rule_f %>
+            <% end %>
+          </div>
+          <template data-nested-form-target="template">
+            <%= f.fields_for :family_variant_rules, FamilyVariantRule.new, child_index: "NEW_RECORD" do |rule_f| %>
+              <%= render "family_variant_rule_fields", f: rule_f %>
+            <% end %>
+          </template>
+          <% if family.family_variant_rules.empty? %>
+            <div class="text-center py-5 border-2 border-dashed rounded-4 text-muted">
+              <i class="bi bi-stack fs-1 d-block mb-2 opacity-25"></i>
+              Aún no has definido pasos para esta estructura.
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <div class="mt-4 d-flex justify-content-between align-items-center">
+        <%= link_to families_path, class: "btn btn-link text-decoration-none text-muted" do %>
+          <i class="bi bi-arrow-left me-2"></i>Cancelar y volver
         <% end %>
-      </div>
-      <template data-nested-form-target="template">
-        <%= f.fields_for :family_variant_rules, FamilyVariantRule.new, child_index: "NEW_RECORD" do |rule_f| %>
-          <%= render "family_variant_rule_fields", f: rule_f %>
-        <% end %>
-      </template>
-      <div class="text-center mt-4">
-        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4" data-action="nested-form#add">
-          <i class="bi bi-plus-circle me-2"></i>Agregar Paso a la Estructura
-        </button>
+        <%= f.submit "Guardar Cambios", class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
       </div>
     </div>
-  </div>
-  <div class="mt-4 d-flex justify-content-between">
-    <%= link_to families_path, class: "btn btn-light border px-4" do %>
-      <i class="bi bi-arrow-left me-2"></i>Volver
-    <% end %>
-    <%= f.submit "Guardar Familia", class: "btn btn-primary btn-lg px-5 shadow-sm" %>
   </div>
 <% end %>

@@ -1,12 +1,10 @@
-<div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card">
-      <div class="card-header bg-primary text-white">
-        <h3 class="mb-0"><i class="bi bi-plus-circle"></i> Nuevo Proveedor</h3>
-      </div>
-      <div class="card-body">
-        <%= render "form", provider: @provider %>
-      </div>
-    </div>
-  </div>
+<div class="container-fluid py-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
+      <li class="breadcrumb-item active">Nuevo Proveedor</li>
+    </ol>
+  </nav>
+  <h2 class="fw-bold mb-4">Nuevo Proveedor</h2>
+  <%= render "form", provider: @provider %>
 </div>

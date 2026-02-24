@@ -1,12 +1,11 @@
-<div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card">
-      <div class="card-header bg-warning">
-        <h3 class="mb-0"><i class="bi bi-pencil"></i> Editar Variante</h3>
-      </div>
-      <div class="card-body">
-        <%= render "form", variant: @variant %>
-      </div>
-    </div>
-  </div>
+<div class="container-fluid py-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><%= link_to "Variantes", variants_path, class: "text-decoration-none" %></li>
+      <li class="breadcrumb-item"><%= link_to @variant.name, @variant, class: "text-decoration-none" %></li>
+      <li class="breadcrumb-item active">Editar</li>
+    </ol>
+  </nav>
+  <h2 class="fw-bold mb-4">Editando: <span class="text-primary"><%= @variant.name %></span></h2>
+  <%= render "form", variant: @variant %>
 </div>

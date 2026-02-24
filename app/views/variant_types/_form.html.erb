@@ -1,23 +1,30 @@
-<%= form_with(model: variant_type, class: "needs-validation") do |form| %>
+<%= form_with(model: variant_type) do |f| %>
   <% if variant_type.errors.any? %>
-    <div class="alert alert-danger">
-      <h4><%= pluralize(variant_type.errors.count, "error") %> impidieron guardar:</h4>
-      <ul>
+    <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
+      <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</div>
+      <ul class="mb-0 ps-3 small">
         <% variant_type.errors.each do |error| %>
           <li><%= error.full_message %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
-
-  <div class="mb-3">
-    <%= form.label :name, "Nombre del Tipo", class: "form-label" %>
-    <%= form.text_field :name, class: "form-control", placeholder: "Ej: Tela, Madera, Base", required: true %>
-    <div class="form-text">Este nombre se usará para categorizar las variantes.</div>
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+      <div class="mb-3">
+        <%= f.label :name, "Nombre del Tipo de Variante", class: "form-label small fw-bold" %>
+        <%= f.text_field :name, class: "form-control form-control-lg border-2", placeholder: "Ej: Tela, Madera, Acabado..." %>
+        <div class="form-text mt-2">
+          <i class="bi bi-info-circle me-1"></i>
+          Este nombre aparecerá en los selectores cuando el vendedor esté configurando un producto.
+        </div>
+      </div>
+    </div>
   </div>
-
-  <div class="d-flex gap-2">
-    <%= form.submit "Guardar", class: "btn btn-primary" %>
-    <%= link_to "Cancelar", variant_types_path, class: "btn btn-secondary" %>
+  <div class="d-flex justify-content-between align-items-center">
+    <%= link_to variant_types_path, class: "btn btn-link text-decoration-none text-muted" do %>
+      <i class="bi bi-arrow-left me-2"></i>Cancelar
+    <% end %>
+    <%= f.submit "Guardar Tipo", class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
   </div>
 <% end %>

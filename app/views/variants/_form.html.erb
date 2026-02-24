@@ -1,85 +1,121 @@
-<%= form_with(model: variant, class: "needs-validation") do |form| %>
+<%= form_with(model: variant) do |f| %>
   <% if variant.errors.any? %>
-    <div class="alert alert-danger">
-      <h4><%= pluralize(variant.errors.count, "error") %> impidieron guardar:</h4>
-      <ul>
+    <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
+      <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</div>
+      <ul class="mb-0 ps-3 small">
         <% variant.errors.each do |error| %>
           <li><%= error.full_message %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
-  <div class="row">
-    <div class="col-md-6 mb-3">
-      <%= form.label :variant_type_id, "Tipo de Variante", class: "form-label" %>
-      <%= form.collection_select :variant_type_id, VariantType.all, :id, :name, 
-          { prompt: "Seleccione un tipo" }, { class: "form-select", required: true } %>
+  <div class="row g-4">
+    <!-- Columna Izquierda: Estado -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Clasificación</h5>
+          <div class="mb-3">
+            <%= f.label :variant_type_id, "Tipo de Variante", class: "form-label small fw-bold" %>
+            <%= f.collection_select :variant_type_id, VariantType.all, :id, :name,
+                { prompt: "Seleccione un tipo..." },
+                { class: "form-select border-2" } %>
+          </div>
+          <div class="mb-3">
+            <%= f.label :provider_id, "Proveedor", class: "form-label small fw-bold" %>
+            <%= f.collection_select :provider_id, Provider.where(active: true), :id, :name,
+                { prompt: "Seleccione un proveedor..." },
+                { class: "form-select border-2" } %>
+          </div>
+          <div class="mb-0">
+            <%= f.label :active, "Estado", class: "form-label small fw-bold" %>
+            <%= f.select :active, [["Activa", true], ["Inactiva", false]], {}, { class: "form-select border-2" } %>
+          </div>
+          <hr class="my-4 opacity-25">
+          <p class="small text-muted mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Solo las variantes activas aparecerán en el generador de códigos.
+          </p>
+        </div>
+      </div>
     </div>
-    <div class="col-md-6 mb-3">
-      <%= form.label :provider_id, "Proveedor", class: "form-label" %>
-      <%= form.collection_select :provider_id, Provider.where(active: true), :id, :name, 
-          { prompt: "Seleccione un proveedor" }, { class: "form-select", required: true } %>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-8 mb-3">
-      <%= form.label :name, "Nombre de la Variante", class: "form-label" %>
-      <%= form.text_field :name, class: "form-control", placeholder: "Ej: Lino Gris", required: true %>
-    </div>
-    <div class="col-md-4 mb-3">
-      <%= form.label :code, "Código", class: "form-label" %>
-      <%= form.text_field :code, class: "form-control", placeholder: "Ej: LG", required: true %>
-      <div class="form-text">Código corto para el CRM</div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-6 mb-3">
-      <%= form.label :provider_sku, "SKU del Proveedor", class: "form-label" %>
-      <%= form.text_field :provider_sku, class: "form-control", placeholder: "Código del proveedor" %>
-    </div>
-    <div class="col-md-6 mb-3">
-      <%= form.label :cost, "Costo", class: "form-label" %>
-      <%= form.number_field :cost, step: 0.01, class: "form-control", placeholder: "0.00" %>
-    </div>
-  </div>
-  <div class="mb-3 form-check">
-    <%= form.check_box :active, class: "form-check-input" %>
-    <%= form.label :active, "Variante Activa", class: "form-check-label" %>
-  </div>
-  <div class="d-flex gap-2">
-    <%= form.submit "Guardar", class: "btn btn-primary" %>
-    <%= link_to "Cancelar", variants_path, class: "btn btn-secondary" %>
-  </div>
-  <div class="card mt-4 border-info">
-    <div class="card-header bg-info text-white">
-      <h5 class="mb-0">Reglas de Compatibilidad (Opcional)</h5>
-    </div>
-    <div class="card-body">
-      <p class="small text-muted">
-        Si seleccionas variantes aquí, esta opción
-        <strong>solo</strong> se mostrará si una de estas variantes compatibles
-        ha sido seleccionada previamente.
-      </p>
-      <div class="row">
-        <% VariantType.where.not(id: variant.variant_type_id).each do |type| %>
-          <div class="col-md-4 mb-3">
-            <label class="fw-bold small text-uppercase"><%= type.name %></label>
-            <div class="border p-2 rounded bg-light"
-               style="max-height: 150px; overflow-y: auto;">
-              <%= form.collection_check_boxes(
-                  :compatible_variant_ids,
-                  type.variants.where.not(id: variant.id),
-                  :id,
-                  :name
-                ) do |b| %>
-                <div class="form-check">
-                  <%= b.check_box(class: "form-check-input") %>
-                  <%= b.label(class: "form-check-label small") %>
+    <!-- Columna Derecha: Datos + Compatibilidades -->
+    <div class="col-lg-8">
+      <!-- Datos Básicos -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Datos de la Variante</h5>
+          <div class="row g-3 mb-3">
+            <div class="col-md-8">
+              <%= f.label :name, "Nombre de la Variante", class: "form-label small fw-bold" %>
+              <%= f.text_field :name, class: "form-control border-2", placeholder: "Ej: Lino Gris" %>
+            </div>
+            <div class="col-md-4">
+              <%= f.label :code, "Código", class: "form-label small fw-bold" %>
+              <%= f.text_field :code, class: "form-control border-2 font-monospace text-center fw-bold", placeholder: "LG" %>
+              <div class="form-text">Código corto para el CRM.</div>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <%= f.label :provider_sku, "SKU del Proveedor", class: "form-label small fw-bold" %>
+              <%= f.text_field :provider_sku, class: "form-control border-2 font-monospace", placeholder: "Código del proveedor" %>
+            </div>
+            <div class="col-md-6">
+              <%= f.label :cost, "Costo", class: "form-label small fw-bold" %>
+              <div class="input-group">
+                <span class="input-group-text border-2 bg-light fw-bold">$</span>
+                <%= f.number_field :cost, step: 0.01, class: "form-control border-2", placeholder: "0.00" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Compatibilidades -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-link-45deg me-2 text-primary"></i>Reglas de Compatibilidad</h5>
+          <p class="text-muted small mb-0 mt-1">
+            Si defines compatibilidades, esta variante <strong>solo aparecerá</strong> cuando una de las variantes marcadas haya sido seleccionada primero.
+          </p>
+        </div>
+        <div class="card-body p-4">
+          <% if VariantType.where.not(id: variant.variant_type_id).any? %>
+            <div class="row g-3">
+              <% VariantType.where.not(id: variant.variant_type_id).each do |type| %>
+                <div class="col-md-4">
+                  <p class="small fw-bold text-uppercase text-muted mb-2">
+                    <i class="bi bi-tags me-1"></i><%= type.name %>
+                  </p>
+                  <div class="border rounded-3 bg-light p-2" style="max-height: 160px; overflow-y: auto;">
+                    <%= f.collection_check_boxes(
+                        :compatible_variant_ids,
+                        type.variants.where.not(id: variant.id),
+                        :id,
+                        :name
+                      ) do |b| %>
+                      <div class="form-check py-1">
+                        <%= b.check_box(class: "form-check-input") %>
+                        <%= b.label(class: "form-check-label small") %>
+                      </div>
+                    <% end %>
+                  </div>
                 </div>
               <% end %>
             </div>
-          </div>
+          <% else %>
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-tags fs-2 d-block mb-2 opacity-25"></i>
+              No hay otros tipos de variante para definir compatibilidades.
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <%= link_to variants_path, class: "btn btn-link text-decoration-none text-muted" do %>
+          <i class="bi bi-arrow-left me-2"></i>Cancelar
         <% end %>
+        <%= f.submit "Guardar Variante", class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
       </div>
     </div>
   </div>

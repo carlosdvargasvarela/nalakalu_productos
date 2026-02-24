@@ -1,49 +1,67 @@
-<%= form_with(model: provider, class: "needs-validation", novalidate: true) do |form| %>
+<%= form_with(model: provider) do |f| %>
   <% if provider.errors.any? %>
-    <div class="alert alert-danger">
-      <h4><%= pluralize(provider.errors.count, "error") %> impidieron guardar:</h4>
-      <ul>
+    <div class="alert alert-danger border-0 rounded-3 shadow-sm">
+      <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-2"></i><%= pluralize(provider.errors.count, "error") %> impidieron guardar:</div>
+      <ul class="mb-0 ps-3">
         <% provider.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+          <li class="small"><%= error.full_message %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
-
-  <div class="mb-3">
-    <%= form.label :name, "Nombre de la Empresa", class: "form-label" %>
-    <%= form.text_field :name, class: "form-control", placeholder: "Ej: Textiles del Sur", required: true %>
-  </div>
-
-  <div class="row">
-    <div class="col-md-6 mb-3">
-      <%= form.label :contact_name, "Nombre del Contacto", class: "form-label" %>
-      <%= form.text_field :contact_name, class: "form-control", placeholder: "Ej: Juan Pérez" %>
+  <div class="row g-4">
+    <!-- Columna Info -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Estado</h5>
+          <div class="mb-0">
+            <%= f.label :active, "Estado del Proveedor", class: "form-label small fw-bold" %>
+            <%= f.select :active, [["Activo", true], ["Inactivo", false]], {}, { class: "form-select border-2" } %>
+          </div>
+          <hr class="my-4 opacity-25">
+          <p class="small text-muted mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Solo los proveedores activos aparecerán disponibles al asignar variantes.
+          </p>
+        </div>
+      </div>
     </div>
-    
-    <div class="col-md-6 mb-3">
-      <%= form.label :phone, "Teléfono", class: "form-label" %>
-      <%= form.text_field :phone, class: "form-control", placeholder: "Ej: +506 1234-5678" %>
+    <!-- Columna Formulario -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Datos del Proveedor</h5>
+          <div class="mb-3">
+            <%= f.label :name, "Nombre de la Empresa", class: "form-label small fw-bold" %>
+            <%= f.text_field :name, class: "form-control border-2", placeholder: "Ej: Textiles del Sur" %>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <%= f.label :contact_name, "Nombre del Contacto", class: "form-label small fw-bold" %>
+              <%= f.text_field :contact_name, class: "form-control border-2", placeholder: "Ej: Juan Pérez" %>
+            </div>
+            <div class="col-md-6">
+              <%= f.label :phone, "Teléfono", class: "form-label small fw-bold" %>
+              <%= f.text_field :phone, class: "form-control border-2", placeholder: "+506 1234-5678" %>
+            </div>
+          </div>
+          <div class="mb-3">
+            <%= f.label :email, "Email", class: "form-label small fw-bold" %>
+            <%= f.email_field :email, class: "form-control border-2", placeholder: "contacto@empresa.com" %>
+          </div>
+          <div class="mb-0">
+            <%= f.label :notes, "Notas Internas", class: "form-label small fw-bold" %>
+            <%= f.text_area :notes, rows: 4, class: "form-control border-2", placeholder: "Observaciones, condiciones de pago, tiempos de entrega..." %>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <%= link_to providers_path, class: "btn btn-link text-decoration-none text-muted" do %>
+          <i class="bi bi-arrow-left me-2"></i>Cancelar
+        <% end %>
+        <%= f.submit "Guardar Proveedor", class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
+      </div>
     </div>
-  </div>
-
-  <div class="mb-3">
-    <%= form.label :email, "Email", class: "form-label" %>
-    <%= form.email_field :email, class: "form-control", placeholder: "contacto@empresa.com" %>
-  </div>
-
-  <div class="mb-3">
-    <%= form.label :notes, "Notas", class: "form-label" %>
-    <%= form.text_area :notes, rows: 4, class: "form-control", placeholder: "Observaciones sobre el proveedor..." %>
-  </div>
-
-  <div class="mb-3 form-check">
-    <%= form.check_box :active, class: "form-check-input" %>
-    <%= form.label :active, "Proveedor Activo", class: "form-check-label" %>
-  </div>
-
-  <div class="d-flex gap-2">
-    <%= form.submit "Guardar", class: "btn btn-primary" %>
-    <%= link_to "Cancelar", providers_path, class: "btn btn-secondary" %>
   </div>
 <% end %>

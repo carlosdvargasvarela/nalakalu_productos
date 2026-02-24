@@ -16,6 +16,129 @@
           </div>
         </div>
         <div class="row mb-3">
+          <div class="container-fluid py-4">
+            <% if notice %>
+              <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            <% end %>
+            <!-- Header -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+              <div class="card-body p-4">
+                <div class="row align-items-center">
+                  <div class="col-md-8">
+                    <nav aria-label="breadcrumb">
+                      <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><%= link_to "Variantes", variants_path, class: "text-decoration-none" %></li>
+                        <li class="breadcrumb-item active fw-bold"><%= @variant.name %></li>
+                      </ol>
+                    </nav>
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="p-3 rounded-3" style="background-color: #f0ebff;">
+                        <i class="bi bi-palette fs-3" style="color: #7c3aed;"></i>
+                      </div>
+                      <div>
+                        <h2 class="fw-bold mb-0"><%= @variant.name %></h2>
+                        <span class="badge bg-secondary rounded-pill mt-1"><%= @variant.variant_type.name %></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="d-flex gap-2 justify-content-md-end">
+                      <%= link_to edit_variant_path(@variant), class: "btn btn-white border shadow-sm rounded-pill px-4" do %>
+                        <i class="bi bi-pencil-square me-2"></i>Editar
+                      <% end %>
+                      <%= button_to @variant, method: :delete, class: "btn btn-outline-danger rounded-circle p-2",
+                form: { data: { turbo_confirm: "¿Eliminar esta variante?" } } do %>
+                        <i class="bi bi-trash"></i>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row g-4">
+              <!-- Datos Principales -->
+              <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4">
+                  <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Datos de la Variante</h5>
+                  </div>
+                  <div class="list-group list-group-flush rounded-4">
+                    <div class="list-group-item px-4 py-3">
+                      <div class="small text-muted fw-bold mb-1">Código</div>
+                      <code class="fs-4 text-dark"><%= @variant.code %></code>
+                    </div>
+                    <div class="list-group-item px-4 py-3">
+                      <div class="small text-muted fw-bold mb-1">Tipo de Variante</div>
+                      <%= link_to @variant.variant_type.name, @variant.variant_type, class: "text-decoration-none fw-bold" %>
+                    </div>
+                    <div class="list-group-item px-4 py-3">
+                      <div class="small text-muted fw-bold mb-1">Proveedor</div>
+                      <%= link_to @variant.provider.name, @variant.provider, class: "text-decoration-none fw-bold text-primary" %>
+                    </div>
+                    <div class="list-group-item px-4 py-3">
+                      <div class="small text-muted fw-bold mb-1">SKU del Proveedor</div>
+                      <code class="bg-light px-2 py-1 rounded"><%= @variant.provider_sku.presence || "—" %></code>
+                    </div>
+                    <div class="list-group-item px-4 py-3">
+                      <div class="small text-muted fw-bold mb-1">Costo</div>
+                      <% if @variant.cost.present? %>
+                        <span class="fw-bold fs-5"><%= number_to_currency(@variant.cost, unit: "$") %></span>
+                      <% else %>
+                        <span class="text-muted">No especificado</span>
+                      <% end %>
+                    </div>
+                    <div class="list-group-item px-4 py-3">
+                      <div class="small text-muted fw-bold mb-1">Estado</div>
+                      <span class="badge <%= @variant.active ? 'bg-success' : 'bg-secondary' %> rounded-pill px-3">
+                        <%= @variant.active ? 'Activa' : 'Inactiva' %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Compatibilidades -->
+              <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4">
+                  <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h5 class="mb-0 fw-bold"><i class="bi bi-link-45deg me-2 text-primary"></i>Compatibilidades</h5>
+                      <span class="badge bg-primary rounded-pill"><%= @variant.compatible_variants.count %></span>
+                    </div>
+                  </div>
+                  <div class="card-body p-0">
+                    <% if @variant.compatible_variants.any? %>
+                      <% @variant.compatible_variants.group_by(&:variant_type).each do |type, variants| %>
+                        <div class="px-4 py-3 border-bottom">
+                          <p class="small fw-bold text-muted text-uppercase mb-2">
+                            <i class="bi bi-tags me-1"></i><%= type.name %>
+                          </p>
+                          <div class="d-flex flex-wrap gap-2">
+                            <% variants.each do |v| %>
+                              <span class="badge bg-light text-dark border rounded-pill px-3 py-2">
+                                <code class="me-1"><%= v.code %></code><%= v.name %>
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      <% end %>
+                    <% else %>
+                      <div class="text-center py-5 text-muted">
+                        <i class="bi bi-link fs-1 d-block mb-2 opacity-25"></i>
+                        Sin restricciones de compatibilidad.<br>
+                        <span class="small">Esta variante es compatible con todas las demás.</span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <style>
+            .bg-success-soft { background-color: #e1f6eb; }
+          </style>
           <div class="col-md-6">
             <strong>Proveedor:</strong>
             <p><%= link_to @variant.provider.name, @variant.provider, class: "text-decoration-none" %></p>

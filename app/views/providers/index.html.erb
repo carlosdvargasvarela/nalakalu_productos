@@ -1,73 +1,116 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1><i class="bi bi-building"></i> Proveedores</h1>
-  <%= link_to new_provider_path, class: "btn btn-primary" do %>
-    <i class="bi bi-plus-circle"></i> Nuevo Proveedor
-  <% end %>
-</div>
-
-<div class="card">
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead class="table-dark">
-          <tr>
-            <th>Nombre</th>
-            <th>Contacto</th>
-            <th>Email</th>
-            <th>Teléfono</th>
-            <th>Estado</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @providers.each do |provider| %>
-            <tr>
-              <td><strong><%= provider.name %></strong></td>
-              <td><%= provider.contact_name %></td>
-              <td><%= provider.email %></td>
-              <td><%= provider.phone %></td>
-              <td>
-                <% if provider.active %>
-                  <span class="badge bg-success">Activo</span>
-                <% else %>
-                  <span class="badge bg-secondary">Inactivo</span>
-                <% end %>
-              </td>
-              <td class="text-end">
-                <%= link_to provider, class: "btn btn-sm btn-info" do %>
-                  <i class="bi bi-eye"></i>
-                <% end %>
-                <%= link_to edit_provider_path(provider), class: "btn btn-sm btn-warning" do %>
-                  <i class="bi bi-pencil"></i>
-                <% end %>
-                <%= button_to provider, method: :delete, class: "btn btn-sm btn-danger", 
-                    data: { turbo_confirm: "¿Está seguro de eliminar este proveedor?" } do %>
-                  <i class="bi bi-trash"></i>
-                <% end %>
-              </td>
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-bold mb-0">Proveedores</h1>
+      <p class="text-muted">Gestiona los proveedores y sus variantes asociadas.</p>
+    </div>
+    <%= link_to new_provider_path, class: "btn btn-primary shadow-sm rounded-pill px-4" do %>
+      <i class="bi bi-plus-lg me-2"></i>Nuevo Proveedor
+    <% end %>
+  </div>
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr class="border-bottom">
+              <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Empresa</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Contacto</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Email</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Teléfono</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Variantes</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Estado</th>
+              <th class="py-3 pe-4 text-end text-muted small fw-bold text-uppercase">Acciones</th>
             </tr>
+          </thead>
+          <tbody>
+            <% @providers.each do |provider| %>
+              <tr>
+                <td class="px-4 py-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-2 flex-shrink-0">
+                      <i class="bi bi-building text-primary fs-5"></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold"><%= provider.name %></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3"><%= provider.contact_name.presence || "—" %></td>
+                <td class="py-3">
+                  <% if provider.email.present? %>
+                    <a href="mailto:<%= provider.email %>" class="text-decoration-none text-muted small">
+                      <i class="bi bi-envelope me-1"></i><%= provider.email %>
+                    </a>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <td class="py-3">
+                  <% if provider.phone.present? %>
+                    <span class="small"><i class="bi bi-telephone me-1 text-muted"></i><%= provider.phone %></span>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <td class="py-3">
+                  <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">
+                    <%= provider.variants.count %> variantes
+                  </span>
+                </td>
+                <td class="py-3">
+                  <span class="badge <%= provider.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
+                    <%= provider.active ? 'Activo' : 'Inactivo' %>
+                  </span>
+                </td>
+                <td class="py-3 pe-4 text-end">
+                  <div class="d-flex gap-1 justify-content-end">
+                    <%= link_to provider, class: "btn btn-sm btn-light rounded-pill px-3" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to edit_provider_path(provider), class: "btn btn-sm btn-light rounded-pill px-3" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <%= button_to provider, method: :delete, class: "btn btn-sm btn-light text-danger rounded-pill px-3",
+                        form: { data: { turbo_confirm: "¿Eliminar este proveedor?" } } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- Importador CSV -->
+  <div class="card border-0 shadow-sm rounded-4 border-start border-secondary border-4">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="fw-bold mb-1">
+            <i class="bi bi-file-earmark-spreadsheet text-secondary me-2"></i>Importación Masiva
+          </h5>
+          <p class="text-muted small mb-0">
+            Formato CSV: <code class="bg-light px-2 py-1 rounded">Nombre, Contacto, Email, Teléfono, Notas, Activo</code>
+          </p>
+        </div>
+        <div class="col-md-4 mt-3 mt-md-0">
+          <%= form_with url: import_providers_path, multipart: true, local: true do |f| %>
+            <div class="input-group shadow-sm">
+              <%= f.file_field :file, class: "form-control rounded-start-pill", accept: ".csv" %>
+              <button class="btn btn-secondary rounded-end-pill fw-bold" type="submit">
+                <i class="bi bi-cloud-upload me-1"></i>Importar
+              </button>
+            </div>
           <% end %>
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-<div class="card mt-4 border-secondary">
-  <div class="card-body">
-    <h5 class="card-title">
-      <i class="bi bi-file-earmark-spreadsheet"></i>
-      Importación Masiva de Proveedores
-    </h5>
-    <p class="text-muted small mb-2">
-      Formato mínimo CSV: <code>Nombre,Contacto,Email,Teléfono,Notas,Activo</code>
-    </p>
-    <%= form_with url: import_providers_path, multipart: true, local: true do |f| %>
-      <div class="input-group">
-        <%= f.file_field :file, class: "form-control", accept: ".csv" %>
-        <button class="btn btn-secondary" type="submit">
-          <i class="bi bi-cloud-upload"></i> Subir e Importar
-        </button>
-      </div>
-    <% end %>
-  </div>
-</div>
+<style>
+  .bg-success-soft { background-color: #e1f6eb; }
+  .bg-secondary-soft { background-color: #f0f2f5; }
+</style>
