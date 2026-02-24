@@ -33,4 +33,6 @@ Rails.application.routes.draw do
       post :import
     end
   end
+
+  resources :logistics_queries, only: [:index, :show]
 end

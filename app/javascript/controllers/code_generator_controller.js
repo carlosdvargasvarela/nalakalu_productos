@@ -6,6 +6,8 @@ export default class extends Controller {
     "variantsContainer",
     "result",
     "copyButton",
+    "linePreview",
+    "lineWarning",
   ];
 
   static values = {
@@ -40,7 +42,7 @@ export default class extends Controller {
       .catch((error) => {
         console.error("Error cargando producto:", error);
         alert(
-          "Hubo un error al cargar el producto. Por favor intenta de nuevo."
+          "Hubo un error al cargar el producto. Por favor intenta de nuevo.",
         );
       });
   }
@@ -72,25 +74,20 @@ export default class extends Controller {
           ${index + 2}️⃣ ${rule.variant_type_name}
           ${requiredBadge}
         </label>
-
         <select class="form-select form-select-lg"
                 data-rule-id="${rule.rule_id}"
                 data-action="change->code-generator#onVariantChange">
           <option value="" data-code="">
-            ${
-              rule.required
-                ? "— Seleccione una opción —"
-                : "— Ninguno (Opcional) —"
-            }
+            ${rule.required ? "— Seleccione una opción —" : "— Ninguno (Opcional) —"}
           </option>
           ${rule.variants
             .map(
               (v) =>
-                `<option value="${v.id}" 
-                     data-code="${v.code}" 
-                     data-compatible='${JSON.stringify(v.compatible_with)}'>
-              ${v.name}
-            </option>`
+                `<option value="${v.id}"
+                         data-code="${v.code}"
+                         data-compatible='${JSON.stringify(v.compatible_with)}'>
+                  ${v.name}
+                </option>`,
             )
             .join("")}
         </select>
@@ -124,7 +121,7 @@ export default class extends Controller {
 
     this.rules.forEach((rule) => {
       const select = this.variantsContainerTarget.querySelector(
-        `select[data-rule-id="${rule.rule_id}"]`
+        `select[data-rule-id="${rule.rule_id}"]`,
       );
       if (!select) return;
 
@@ -151,7 +148,7 @@ export default class extends Controller {
         }
 
         const isCompatible = selectedIds.some((id) =>
-          compatibleWith.includes(id)
+          compatibleWith.includes(id),
         );
 
         option.disabled = !isCompatible;
@@ -184,6 +181,17 @@ export default class extends Controller {
     });
   }
 
+  // Divide el código en líneas de máx 30 caracteres
+  splitIntoLines(code, maxChars = 30) {
+    const lines = [];
+    let remaining = code;
+    while (remaining.length > 0) {
+      lines.push(remaining.substring(0, maxChars));
+      remaining = remaining.substring(maxChars);
+    }
+    return lines;
+  }
+
   updateResult() {
     let code = this.baseCode;
     let allRequiredFilled = true;
@@ -200,7 +208,52 @@ export default class extends Controller {
       }
     });
 
-    this.resultTarget.textContent = code || "—";
+    if (!code) {
+      this.resultTarget.textContent = "—";
+      this.copyButtonTarget.disabled = true;
+      if (this.hasLinePreviewTarget) this.linePreviewTarget.innerHTML = "";
+      if (this.hasLineWarningTarget)
+        this.lineWarningTarget.classList.add("d-none");
+      return;
+    }
+
+    // Código completo (sin formato)
+    this.resultTarget.textContent = code;
+
+    // Dividir en líneas de 30 caracteres
+    const lines = this.splitIntoLines(code, 30);
+    const tooManyLines = lines.length > 5;
+
+    // Renderizar preview de líneas
+    if (this.hasLinePreviewTarget) {
+      const displayLines = lines.slice(0, 5);
+      this.linePreviewTarget.innerHTML = displayLines
+        .map(
+          (line, i) => `
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary" style="min-width:24px;">L${i + 1}</span>
+            <code class="flex-grow-1 bg-white border rounded px-2 py-1" style="letter-spacing:0.05em;">${line}</code>
+            <span class="text-muted small">${line.length}/30</span>
+          </div>`,
+        )
+        .join("");
+    }
+
+    // Advertencia si excede 5 líneas (150 caracteres)
+    if (this.hasLineWarningTarget) {
+      if (tooManyLines) {
+        this.lineWarningTarget.classList.remove("d-none");
+        this.lineWarningTarget.innerHTML = `
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          El código tiene <strong>${lines.length} líneas</strong> (${code.length} caracteres).
+          El sistema destino solo acepta <strong>5 líneas × 30 caracteres</strong>.
+          Se perderán los últimos <strong>${code.length - 150} caracteres</strong>.
+        `;
+      } else {
+        this.lineWarningTarget.classList.add("d-none");
+      }
+    }
+
     this.copyButtonTarget.disabled = !allRequiredFilled;
 
     if (allRequiredFilled) {
@@ -212,11 +265,16 @@ export default class extends Controller {
     }
   }
 
+  // Copia el código formateado en líneas (lo que realmente va al CRM)
   copy() {
     const code = this.resultTarget.textContent;
+    if (!code || code === "—") return;
+
+    const lines = this.splitIntoLines(code, 30).slice(0, 5);
+    const formatted = lines.join("\n");
 
     navigator.clipboard
-      .writeText(code)
+      .writeText(formatted)
       .then(() => {
         this.copyButtonTarget.innerHTML =
           '<i class="bi bi-check-circle"></i> ¡Copiado!';
@@ -244,5 +302,8 @@ export default class extends Controller {
     this.variantsContainerTarget.innerHTML = "";
     this.resultTarget.textContent = "—";
     this.copyButtonTarget.disabled = true;
+    if (this.hasLinePreviewTarget) this.linePreviewTarget.innerHTML = "";
+    if (this.hasLineWarningTarget)
+      this.lineWarningTarget.classList.add("d-none");
   }
 }

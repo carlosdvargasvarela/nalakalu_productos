@@ -1,0 +1,144 @@
+<div class="container mt-4 pb-5">
+  <!-- Header de Navegación -->
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <%= link_to logistics_queries_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left"></i> Volver al listado
+    <% end %>
+    <button onclick="window.print();" class="btn btn-dark">
+      <i class="bi bi-printer me-2"></i> Imprimir Hoja de Carga
+    </button>
+  </div>
+  <!-- Ficha de la Entrega -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white p-3">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <span class="text-uppercase small opacity-75">Orden de Entrega</span>
+          <h2 class="mb-0"><%= @delivery["order_number"] %></h2>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <span class="badge bg-primary fs-6"><%= @delivery["status_label"] %></span>
+          <div class="mt-1 small opacity-75">Fecha Programada: <%= Date.parse(@delivery["delivery_date"]).strftime("%d/%m/%Y") %></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body bg-light">
+      <div class="row">
+        <div class="col-md-4 border-end">
+          <label class="text-muted small text-uppercase fw-bold">Cliente</label>
+          <p class="fs-5 mb-0"><%= @delivery.dig("client", "name") %></p>
+        </div>
+        <div class="col-md-4 border-end">
+          <label class="text-muted small text-uppercase fw-bold">Dirección de Entrega</label>
+          <p class="mb-0"><%= @delivery.dig("address", "address") %></p>
+          <small class="text-muted"><%= @delivery.dig("address", "description") %></small>
+        </div>
+        <div class="col-md-4">
+          <label class="text-muted small text-uppercase fw-bold">Vendedor</label>
+          <p class="mb-0"><%= @delivery["seller_code"] %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h4 class="mb-3 mt-5"><i class="bi bi-box-seam me-2"></i>Materiales Requeridos por Proveedor</h4>
+  <p class="text-muted">Esta sección detalla qué variantes deben solicitarse a cada proveedor para completar este pedido.</p>
+  <% if @items_by_provider.any? %>
+    <div class="row">
+      <% @items_by_provider.each do |provider, variants| %>
+        <div class="col-md-6 mb-4">
+          <div class="card h-100 border-primary-subtle shadow-sm">
+            <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+              <span><i class="bi bi-building me-2"></i><%= provider.name %></span>
+              <span class="badge bg-white text-primary"><%= variants.size %> items</span>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">Cant.</th>
+                    <th>Variante / Tipo</th>
+                    <th>Código Producto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% variants.each do |v| %>
+                    <tr>
+                      <td class="ps-3 fw-bold text-primary">x<%= v[:quantity] %></td>
+                      <td>
+                        <div class="fw-semibold"><%= v[:variant_name] %></div>
+                        <div class="text-muted small"><%= v[:variant_type] %></div>
+                      </td>
+                      <td><code class="small"><%= v[:product_name] %></code></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-footer bg-white border-top-0 text-end">
+              <small class="text-muted">Contacto: <%= provider.email || 'No registrado' %></small>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      No se detectaron variantes que requieran gestión de proveedores externos para esta entrega.
+    </div>
+  <% end %>
+  <!-- Detalle Completo de Items -->
+  <h4 class="mb-3 mt-5"><i class="bi bi-list-check me-2"></i>Detalle Completo de la Carga</h4>
+  <div class="card shadow-sm border-0">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Producto</th>
+            <th>Desglose de Variantes</th>
+            <th class="text-center">Estado Item</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @delivery["items"].each do |item| %>
+            <% decoding = ProductDecoder.decode(item["product_name"]) %>
+            <tr>
+              <td class="ps-4">
+                <div class="fw-bold fs-5">x<%= item["quantity_delivered"] %></div>
+                <code><%= item["product_name"] %></code>
+                <% if decoding[:base_product] %>
+                  <div class="mt-1"><span class="badge bg-dark"><%= decoding[:base_product].name %></span></div>
+                <% end %>
+              </td>
+              <td>
+                <% if decoding[:has_variants] %>
+                  <div class="d-flex flex-wrap gap-2">
+                    <% decoding[:variants].each do |variant| %>
+                      <div class="border rounded p-2 bg-white shadow-sm" style="min-width: 150px;">
+                        <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.6rem;"><%= variant.variant_type.name %></small>
+                        <div class="fw-semibold"><%= variant.name %></div>
+                        <div class="text-primary small fw-bold"><%= variant.provider.name %></div>
+                      </div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="text-muted italic small">Sin variantes</span>
+                <% end %>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-info-subtle text-info-emphasis border border-info"><%= item["status_label"] %></span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<style>
+  @media print {
+    .no-print { display: none !important; }
+    .card { border: 1px solid #ddd !important; shadow: none !important; }
+    body { background: white !important; }
+  }
+  .border-primary-subtle { border-color: #cfe2ff !important; }
+</style>

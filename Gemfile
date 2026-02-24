@@ -15,6 +15,7 @@ gem "devise"
 gem "sidekiq"
 gem "redis", "~> 5.0"
 gem "csv"
+gem "faraday"
 
 group :development, :test do
   gem "debug", platforms: %i[mri windows], require: "debug/prelude"

@@ -27,7 +27,12 @@
                   <li><%= link_to "Proveedores", providers_path, class: "dropdown-item" %></li>
                   <li><%= link_to "Tipos de Variante", variant_types_path, class: "dropdown-item" %></li>
                   <li><%= link_to "Variantes", variants_path, class: "dropdown-item" %></li>
-                  <li class="nav-item"><%= link_to "Generar Código", new_sale_path, class: "nav-link" %></li>
+                  <li><%= link_to "Generar Código", new_sale_path, class: "dropdown-item" %></li>
+                  <li class="nav-item">
+                    <%= link_to logistics_queries_path, class: "dropdown-item #{'active' if controller_name == 'logistics_queries'}" do %>
+                      <i class="bi bi-search me-1"></i> Consultar Logística
+                    <% end %>
+                  </li>
                 </ul>
               </li>
             <% end %>
