@@ -1,0 +1,12 @@
+<% if notice %>
+  <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-3" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% end %>
+<% if alert %>
+  <div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm rounded-3 mb-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= alert %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% end %>

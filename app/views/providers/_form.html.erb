@@ -1,58 +1,97 @@
-<%= form_with(model: provider) do |f| %>
+<%= form_with(model: provider, 
+              data: { 
+                controller: "nested-form", 
+                nested_form_wrapper_selector_value: ".variant-row" 
+              }) do |f| %>
   <% if provider.errors.any? %>
-    <div class="alert alert-danger border-0 rounded-3 shadow-sm">
-      <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-2"></i><%= pluralize(provider.errors.count, "error") %> impidieron guardar:</div>
-      <ul class="mb-0 ps-3">
+    <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
+      <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</div>
+      <ul class="mb-0 ps-3 small">
         <% provider.errors.each do |error| %>
-          <li class="small"><%= error.full_message %></li>
+          <li><%= error.full_message %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
   <div class="row g-4">
-    <!-- Columna Info -->
+    <!-- Columna izquierda: datos del proveedor -->
     <div class="col-lg-4">
       <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
         <div class="card-body p-4">
-          <h5 class="fw-bold mb-4">Estado</h5>
-          <div class="mb-0">
-            <%= f.label :active, "Estado del Proveedor", class: "form-label small fw-bold" %>
-            <%= f.select :active, [["Activo", true], ["Inactivo", false]], {}, { class: "form-select border-2" } %>
-          </div>
-          <hr class="my-4 opacity-25">
-          <p class="small text-muted mb-0">
-            <i class="bi bi-info-circle me-1"></i>
-            Solo los proveedores activos aparecerán disponibles al asignar variantes.
-          </p>
-        </div>
-      </div>
-    </div>
-    <!-- Columna Formulario -->
-    <div class="col-lg-8">
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-4">
           <h5 class="fw-bold mb-4">Datos del Proveedor</h5>
           <div class="mb-3">
-            <%= f.label :name, "Nombre de la Empresa", class: "form-label small fw-bold" %>
-            <%= f.text_field :name, class: "form-control border-2", placeholder: "Ej: Textiles del Sur" %>
+            <%= f.label :name, "Nombre", class: "form-label small fw-bold" %>
+            <%= f.text_field :name, class: "form-control border-2", placeholder: "Nombre del proveedor" %>
           </div>
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <%= f.label :contact_name, "Nombre del Contacto", class: "form-label small fw-bold" %>
-              <%= f.text_field :contact_name, class: "form-control border-2", placeholder: "Ej: Juan Pérez" %>
-            </div>
-            <div class="col-md-6">
-              <%= f.label :phone, "Teléfono", class: "form-label small fw-bold" %>
-              <%= f.text_field :phone, class: "form-control border-2", placeholder: "+506 1234-5678" %>
-            </div>
+          <div class="mb-3">
+            <%= f.label :contact_name, "Contacto", class: "form-label small fw-bold" %>
+            <%= f.text_field :contact_name, class: "form-control border-2", placeholder: "Nombre del contacto" %>
           </div>
           <div class="mb-3">
             <%= f.label :email, "Email", class: "form-label small fw-bold" %>
-            <%= f.email_field :email, class: "form-control border-2", placeholder: "contacto@empresa.com" %>
+            <%= f.email_field :email, class: "form-control border-2", placeholder: "correo@proveedor.com" %>
+          </div>
+          <div class="mb-3">
+            <%= f.label :phone, "Teléfono", class: "form-label small fw-bold" %>
+            <%= f.text_field :phone, class: "form-control border-2", placeholder: "+506 0000-0000" %>
+          </div>
+          <div class="mb-3">
+            <%= f.label :notes, "Notas", class: "form-label small fw-bold" %>
+            <%= f.text_area :notes, class: "form-control border-2", rows: 3, placeholder: "Observaciones internas..." %>
           </div>
           <div class="mb-0">
-            <%= f.label :notes, "Notas Internas", class: "form-label small fw-bold" %>
-            <%= f.text_area :notes, rows: 4, class: "form-control border-2", placeholder: "Observaciones, condiciones de pago, tiempos de entrega..." %>
+            <%= f.label :active, "Estado", class: "form-label small fw-bold" %>
+            <%= f.select :active, [["Activo", true], ["Inactivo", false]], {}, { class: "form-select border-2" } %>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Columna derecha: variantes -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2 text-primary"></i>Variantes de este Proveedor</h5>
+            <p class="text-muted small mb-0 mt-1">Agrega o edita las variantes que suministra este proveedor.</p>
+          </div>
+          <button type="button" 
+                  class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                  data-action="nested-form#add">
+            <i class="bi bi-plus-lg me-1"></i>Agregar fila
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th class="ps-4 py-2 small fw-bold text-muted text-uppercase">Tipo</th>
+                  <th class="py-2 small fw-bold text-muted text-uppercase">Nombre</th>
+                  <th class="py-2 small fw-bold text-muted text-uppercase">Código</th>
+                  <th class="py-2 small fw-bold text-muted text-uppercase">SKU</th>
+                  <th class="py-2 small fw-bold text-muted text-uppercase">Costo</th>
+                  <th class="py-2 text-center small fw-bold text-muted text-uppercase">Activa</th>
+                  <th class="py-2 pe-4"></th>
+                </tr>
+              </thead>
+              <tbody data-nested-form-target="target">
+                <%= f.fields_for :variants do |variant_form| %>
+                  <%= render "variant_fields", f: variant_form %>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+          <template data-nested-form-target="template">
+            <%= f.fields_for :variants, Variant.new, child_index: "NEW_RECORD" do |variant_form| %>
+              <%= render "variant_fields", f: variant_form %>
+            <% end %>
+          </template>
+          <div class="p-3 text-center border-top">
+            <button type="button" 
+                    class="btn btn-link text-decoration-none text-muted small"
+                    data-action="nested-form#add">
+              <i class="bi bi-plus-circle me-1"></i>Agregar otra variante
+            </button>
           </div>
         </div>
       </div>
@@ -60,7 +99,8 @@
         <%= link_to providers_path, class: "btn btn-link text-decoration-none text-muted" do %>
           <i class="bi bi-arrow-left me-2"></i>Cancelar
         <% end %>
-        <%= f.submit "Guardar Proveedor", class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
+        <%= f.submit "Guardar Proveedor y Variantes", 
+            class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
       </div>
     </div>
   </div>

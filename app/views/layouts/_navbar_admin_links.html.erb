@@ -1,0 +1,50 @@
+<li class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" 
+     href="#" role="button" data-bs-toggle="dropdown">
+    <i class="bi bi-gear-fill"></i>
+    <span>Administración</span>
+  </a>
+  <ul class="dropdown-menu dropdown-menu-dark border-0 shadow">
+    <li>
+      <span class="dropdown-header small text-uppercase opacity-50">Catálogos</span>
+    </li>
+    <li>
+      <%= link_to families_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'families'}" do %>
+        <i class="bi bi-collection"></i> Familias
+      <% end %>
+    </li>
+    <li>
+      <%= link_to products_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'products'}" do %>
+        <i class="bi bi-box"></i> Productos Base
+      <% end %>
+    </li>
+    <li><hr class="dropdown-divider opacity-25"></li>
+    <li>
+      <span class="dropdown-header small text-uppercase opacity-50">Variantes</span>
+    </li>
+    <li>
+      <%= link_to providers_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'providers'}" do %>
+        <i class="bi bi-building"></i> Proveedores
+      <% end %>
+    </li>
+    <li>
+      <%= link_to variant_types_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'variant_types'}" do %>
+        <i class="bi bi-tags"></i> Tipos de Variante
+      <% end %>
+    </li>
+    <li>
+      <%= link_to variants_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'variants'}" do %>
+        <i class="bi bi-palette"></i> Variantes
+      <% end %>
+    </li>
+    <li><hr class="dropdown-divider opacity-25"></li>
+    <li>
+      <span class="dropdown-header small text-uppercase opacity-50">Sistema</span>
+    </li>
+    <li>
+      <%= link_to "/sidekiq", class: "dropdown-item d-flex align-items-center gap-2", target: "_blank" do %>
+        <i class="bi bi-activity"></i> Sidekiq Jobs
+      <% end %>
+    </li>
+  </ul>
+</li>

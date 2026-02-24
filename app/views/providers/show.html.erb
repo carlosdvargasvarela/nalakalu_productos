@@ -12,7 +12,9 @@
         <div class="col-md-8">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
-              <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
+              <li class="breadcrumb-item">
+                <%= link_to "Proveedores", providers_path, class: "text-decoration-none" %>
+              </li>
               <li class="breadcrumb-item active fw-bold"><%= @provider.name %></li>
             </ol>
           </nav>
@@ -34,7 +36,7 @@
               <i class="bi bi-pencil-square me-2"></i>Editar
             <% end %>
             <%= button_to @provider, method: :delete, class: "btn btn-outline-danger rounded-circle p-2",
-                form: { data: { turbo_confirm: "¿Eliminar este proveedor?" } } do %>
+                form: { data: { turbo_confirm: "¿Eliminar este proveedor? Solo es posible si no tiene variantes asignadas." } } do %>
               <i class="bi bi-trash"></i>
             <% end %>
           </div>
@@ -43,86 +45,105 @@
     </div>
   </div>
   <div class="row g-4">
-    <!-- Info del Proveedor -->
-    <div class="col-lg-5">
-      <div class="card border-0 shadow-sm rounded-4 h-100">
+    <!-- Datos de contacto -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4">
         <div class="card-header bg-white py-3 border-bottom">
-          <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Información de Contacto</h5>
+          <h5 class="mb-0 fw-bold"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Contacto</h5>
         </div>
         <div class="list-group list-group-flush rounded-4">
           <div class="list-group-item px-4 py-3">
-            <div class="small text-muted fw-bold mb-1">Empresa</div>
-            <div class="fw-bold fs-5"><%= @provider.name %></div>
-          </div>
-          <div class="list-group-item px-4 py-3">
-            <div class="small text-muted fw-bold mb-1">Contacto</div>
+            <div class="small text-muted fw-bold mb-1">Nombre de Contacto</div>
             <div><%= @provider.contact_name.presence || "—" %></div>
           </div>
           <div class="list-group-item px-4 py-3">
             <div class="small text-muted fw-bold mb-1">Email</div>
             <% if @provider.email.present? %>
-              <a href="mailto:<%= @provider.email %>" class="text-decoration-none">
-                <i class="bi bi-envelope me-1"></i><%= @provider.email %>
-              </a>
+              <%= mail_to @provider.email, class: "text-decoration-none" %>
             <% else %>
               <span class="text-muted">—</span>
             <% end %>
           </div>
           <div class="list-group-item px-4 py-3">
             <div class="small text-muted fw-bold mb-1">Teléfono</div>
-            <% if @provider.phone.present? %>
-              <a href="tel:<%= @provider.phone %>" class="text-decoration-none">
-                <i class="bi bi-telephone me-1"></i><%= @provider.phone %>
-              </a>
-            <% else %>
-              <span class="text-muted">—</span>
-            <% end %>
+            <div><%= @provider.phone.presence || "—" %></div>
           </div>
           <% if @provider.notes.present? %>
             <div class="list-group-item px-4 py-3">
               <div class="small text-muted fw-bold mb-1">Notas</div>
-              <div class="text-muted small"><%= simple_format(@provider.notes) %></div>
+              <div class="small text-muted"><%= @provider.notes %></div>
             </div>
           <% end %>
         </div>
       </div>
     </div>
-    <!-- Variantes Asociadas -->
-    <div class="col-lg-7">
+    <!-- Variantes -->
+    <div class="col-lg-8">
       <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white py-3 border-bottom">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-tags me-2 text-primary"></i>Variantes Asociadas</h5>
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2 text-primary"></i>Variantes Suministradas</h5>
+          <div class="d-flex align-items-center gap-2">
             <span class="badge bg-primary rounded-pill"><%= @provider.variants.count %></span>
+            <%= link_to edit_provider_path(@provider), class: "btn btn-sm btn-outline-primary rounded-pill px-3" do %>
+              <i class="bi bi-pencil me-1"></i>Gestionar
+            <% end %>
           </div>
         </div>
         <div class="card-body p-0">
           <% if @provider.variants.any? %>
-            <div class="list-group list-group-flush rounded-4">
-              <% @provider.variants.each do |variant| %>
-                <div class="list-group-item px-4 py-3 d-flex align-items-center justify-content-between">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="bg-secondary bg-opacity-10 rounded-3 p-2">
-                      <i class="bi bi-tag text-secondary"></i>
-                    </div>
-                    <div>
-                      <div class="fw-bold"><%= variant.name %></div>
-                      <div class="small text-muted"><%= variant.variant_type.name %></div>
-                    </div>
-                  </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <code class="bg-light px-2 py-1 rounded small"><%= variant.code %></code>
-                    <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill">
-                      <%= variant.active ? 'Activa' : 'Inactiva' %>
-                    </span>
-                  </div>
-                </div>
-              <% end %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                  <tr>
+                    <th class="ps-4 py-2 small fw-bold text-muted text-uppercase">Tipo</th>
+                    <th class="py-2 small fw-bold text-muted text-uppercase">Nombre</th>
+                    <th class="py-2 small fw-bold text-muted text-uppercase">Código</th>
+                    <th class="py-2 small fw-bold text-muted text-uppercase">SKU</th>
+                    <th class="py-2 small fw-bold text-muted text-uppercase text-end pe-4">Costo</th>
+                    <th class="py-2 text-center small fw-bold text-muted text-uppercase">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @provider.variants.includes(:variant_type).order("variant_types.name, variants.name").each do |variant| %>
+                    <tr>
+                      <td class="ps-4 py-3">
+                        <span class="badge bg-light text-dark border rounded-pill px-3">
+                          <%= variant.variant_type.name %>
+                        </span>
+                      </td>
+                      <td class="py-3 fw-bold">
+                        <%= link_to variant.name, variant, class: "text-decoration-none text-dark" %>
+                      </td>
+                      <td class="py-3">
+                        <code class="bg-light px-2 py-1 rounded text-primary fw-bold"><%= variant.code %></code>
+                      </td>
+                      <td class="py-3">
+                        <span class="text-muted small font-monospace"><%= variant.provider_sku.presence || "—" %></span>
+                      </td>
+                      <td class="py-3 text-end pe-4">
+                        <% if variant.cost.present? %>
+                          <span class="fw-bold"><%= number_to_currency(variant.cost, unit: "$") %></span>
+                        <% else %>
+                          <span class="text-muted">—</span>
+                        <% end %>
+                      </td>
+                      <td class="py-3 text-center">
+                        <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
+                          <%= variant.active ? 'Activa' : 'Inactiva' %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
             </div>
           <% else %>
             <div class="text-center py-5 text-muted">
-              <i class="bi bi-tags fs-1 d-block mb-2 opacity-25"></i>
-              No hay variantes asociadas a este proveedor.
+              <i class="bi bi-box-seam fs-1 d-block mb-2 opacity-25"></i>
+              Este proveedor no tiene variantes registradas aún.<br>
+              <%= link_to edit_provider_path(@provider), class: "btn btn-sm btn-outline-primary mt-3 rounded-pill" do %>
+                <i class="bi bi-plus-lg me-1"></i>Agregar variantes
+              <% end %>
             </div>
           <% end %>
         </div>

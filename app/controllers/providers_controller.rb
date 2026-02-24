@@ -12,6 +12,7 @@ class ProvidersController < ApplicationController
 
   def new
     @provider = Provider.new
+    3.times { @provider.variants.build }
   end
 
   def edit
@@ -60,8 +61,6 @@ class ProvidersController < ApplicationController
 
     file = params[:file]
     tmp_path = Rails.root.join("tmp", "import_providers_#{Time.now.to_i}.csv")
-
-    # Cambio a copia segura
     FileUtils.cp(file.tempfile.path, tmp_path)
 
     ImportProvidersJob.perform_later(tmp_path.to_s, current_user.id)
@@ -75,6 +74,11 @@ class ProvidersController < ApplicationController
   end
 
   def provider_params
-    params.require(:provider).permit(:name, :contact_name, :email, :phone, :notes, :active)
+    params.require(:provider).permit(
+      :name, :contact_name, :email, :phone, :notes, :active,
+      variants_attributes: [
+        :id, :variant_type_id, :name, :code, :provider_sku, :cost, :active, :_destroy
+      ]
+    )
   end
 end

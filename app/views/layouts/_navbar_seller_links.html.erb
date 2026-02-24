@@ -1,0 +1,12 @@
+<li class="nav-item">
+  <%= link_to new_sale_path, class: "nav-link d-flex align-items-center gap-1 #{'active' if controller_name == 'sales'}" do %>
+    <i class="bi bi-qr-code"></i>
+    <span>Generar Código</span>
+  <% end %>
+</li>
+<li class="nav-item">
+  <%= link_to logistics_queries_path, class: "nav-link d-flex align-items-center gap-1 #{'active' if controller_name == 'logistics_queries'}" do %>
+    <i class="bi bi-search"></i>
+    <span>Consultar Logística</span>
+  <% end %>
+</li>
