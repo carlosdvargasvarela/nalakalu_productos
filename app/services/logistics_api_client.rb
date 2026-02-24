@@ -1,7 +1,7 @@
 # app/services/logistics_api_client.rb
 class LogisticsApiClient
   # Cambia esto por la URL real de tu app de logística en producción/desarrollo
-  BASE_URL = ENV["LOGISTICS_API_URL"] || "https://localhost:3000/api/v1"
+  BASE_URL = ENV["LOGISTICS_API_URL"]
 
   def fetch_delivery(id)
     response = @connection.get("deliveries/#{id}")

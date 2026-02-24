@@ -18,10 +18,10 @@ gem "csv"
 gem "faraday"
 
 group :development, :test do
+  gem "dotenv-rails"
   gem "debug", platforms: %i[mri windows], require: "debug/prelude"
   gem "brakeman", require: false
   gem "sqlite3"
-  # Standard aquí permite que el LSP y los tests lo vean
   gem "standard", ">= 1.35.1"
 end
 
