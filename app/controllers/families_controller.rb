@@ -43,12 +43,35 @@ class FamiliesController < ApplicationController
     @family = Family.find(params[:id])
     product_ids = params[:product_ids]
 
-    if product_ids.present?
-      Product.where(id: product_ids).update_all(family_id: @family.id)
-      redirect_to @family, notice: "#{product_ids.count} productos asignados a #{@family.name}."
-    else
+    if product_ids.blank?
       redirect_to @family, alert: "No seleccionaste ningún producto."
+      return
     end
+
+    products = Product.where(id: product_ids)
+
+    ActiveRecord::Base.transaction do
+      products.each do |product|
+        # 1. Asignar familia
+        product.update!(family_id: @family.id)
+
+        # 2. Borrar reglas actuales del producto (si existieran)
+        product.product_variant_rules.destroy_all
+
+        # 3. Clonar las reglas de la familia
+        @family.family_variant_rules.each do |fr|
+          product.product_variant_rules.create!(
+            variant_type_id: fr.variant_type_id,
+            position: fr.position,
+            required: fr.required,
+            separator: fr.separator,
+            label: fr.label
+          )
+        end
+      end
+    end
+
+    redirect_to @family, notice: "#{products.count} productos asignados y configurados para #{@family.name}."
   end
 
   private
