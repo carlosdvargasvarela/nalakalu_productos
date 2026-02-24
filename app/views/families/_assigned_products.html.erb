@@ -1,0 +1,42 @@
+<div class="card shadow-sm border-0 rounded-4 h-100">
+  <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+    <h5 class="mb-0 fw-bold">
+      <i class="bi bi-box-seam me-2 text-primary"></i>Productos en esta Familia
+    </h5>
+    <span class="badge bg-primary rounded-pill"><%= family.products.count %></span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive" style="max-height: 650px;">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Código</th>
+            <th>Nombre</th>
+            <th class="text-end pe-4"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% family.products.order(:base_code).each do |product| %>
+            <tr>
+              <td class="ps-4 fw-bold text-primary"><%= product.base_code %></td>
+              <td class="small"><%= product.name %></td>
+              <td class="text-end pe-4">
+                <%= link_to product_path(product), class: "btn btn-sm btn-light border" do %>
+                  <i class="bi bi-eye"></i>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          <% if family.products.empty? %>
+            <tr>
+              <td colspan="3" class="text-center py-5 text-muted">
+                <i class="bi bi-info-circle d-block fs-2 mb-2"></i>
+                No hay productos asignados todavía.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

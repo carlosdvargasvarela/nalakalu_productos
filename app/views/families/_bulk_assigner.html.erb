@@ -1,0 +1,82 @@
+<%# Productos sin familia para mostrar en el asignador %>
+<% unassigned = Product.where(family_id: nil).order(:base_code) %>
+<div class="card shadow-sm border-0 rounded-4 h-100"
+     style="border: 2px solid var(--bs-primary) !important;"
+     data-controller="bulk-assign">
+  <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+    <h5 class="mb-0 fw-bold">
+      <i class="bi bi-plus-circle-dotted me-2"></i>Asignación Masiva
+    </h5>
+    <span class="badge bg-white text-primary rounded-pill px-3">
+      <%= unassigned.count %> sin familia
+    </span>
+  </div>
+  <div class="card-body p-4">
+    <p class="text-muted small mb-4">
+      Busca y selecciona los productos que deseas mover a <strong><%= family.name %></strong>.
+    </p>
+    <%= form_with url: assign_products_family_path(family), method: :post do |f| %>
+      <%# BUSCADOR %>
+      <div class="input-group mb-3 shadow-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted">
+          <i class="bi bi-search"></i>
+        </span>
+        <input type="text"
+               class="form-control border-start-0 ps-0"
+               placeholder="Filtrar por nombre o código..."
+               data-bulk-assign-target="search"
+               data-action="input->bulk-assign#filter">
+      </div>
+      <%# TABLA %>
+      <div class="table-responsive border rounded-3" style="max-height: 420px;">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th width="50" class="text-center py-2">
+                <input type="checkbox"
+                       class="form-check-input"
+                       data-bulk-assign-target="selectAll"
+                       data-action="change->bulk-assign#toggleAll">
+              </th>
+              <th class="py-2">Código</th>
+              <th class="py-2">Nombre</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% unassigned.each do |product| %>
+              <tr data-bulk-assign-target="row">
+                <td class="text-center">
+                  <%= check_box_tag "product_ids[]", product.id, false,
+                      class: "form-check-input",
+                      data: { "bulk-assign-target": "checkbox", action: "change->bulk-assign#updateUI" } %>
+                </td>
+                <td class="fw-bold small"><%= product.base_code %></td>
+                <td class="small text-truncate" style="max-width: 250px;"><%= product.name %></td>
+              </tr>
+            <% end %>
+            <% if unassigned.empty? %>
+              <tr>
+                <td colspan="3" class="text-center py-5 text-muted">
+                  <i class="bi bi-check2-all d-block fs-2 mb-2 text-success"></i>
+                  Todos los productos tienen familia asignada.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%# FOOTER DE ACCIÓN %>
+      <div class="mt-4 d-flex align-items-center justify-content-between bg-light p-3 rounded-3 border">
+        <div class="small fw-bold text-secondary">
+          Seleccionados: <span class="text-primary fs-5 fw-bold" data-bulk-assign-target="count">0</span>
+        </div>
+        <button type="submit"
+                class="btn btn-primary btn-lg px-5 shadow-sm fw-bold"
+                data-bulk-assign-target="submitBtn"
+                disabled>
+          <i class="bi bi-check2-circle me-2"></i>Asignar a esta Familia
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>

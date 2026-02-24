@@ -39,6 +39,18 @@ class FamiliesController < ApplicationController
     redirect_to families_path, notice: "Familia eliminada."
   end
 
+  def assign_products
+    @family = Family.find(params[:id])
+    product_ids = params[:product_ids]
+
+    if product_ids.present?
+      Product.where(id: product_ids).update_all(family_id: @family.id)
+      redirect_to @family, notice: "#{product_ids.count} productos asignados a #{@family.name}."
+    else
+      redirect_to @family, alert: "No seleccionaste ningún producto."
+    end
+  end
+
   private
 
   def set_family

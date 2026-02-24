@@ -1,0 +1,21 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-1">
+        <li class="breadcrumb-item"><%= link_to "Familias", families_path %></li>
+        <li class="breadcrumb-item active"><%= family.name %></li>
+      </ol>
+    </nav>
+    <h1 class="fw-bold mb-0 text-dark"><%= family.name %></h1>
+    <p class="text-muted mb-0"><%= family.description %></p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to edit_family_path(family), class: "btn btn-outline-primary" do %>
+      <i class="bi bi-pencil me-1"></i> Editar Estructura
+    <% end %>
+    <%= button_to family, method: :delete, class: "btn btn-outline-danger",
+        form: { data: { turbo_confirm: "¿Estás seguro? Esta acción no se puede deshacer." } } do %>
+      <i class="bi bi-trash"></i>
+    <% end %>
+  </div>
+</div>

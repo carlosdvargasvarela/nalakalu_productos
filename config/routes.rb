@@ -1,6 +1,5 @@
 require "sidekiq/web"
 Rails.application.routes.draw do
-  resources :families
   devise_for :users
 
   authenticate :user, lambda { |u| u.role == "admin" } do
@@ -36,4 +35,13 @@ Rails.application.routes.draw do
   end
 
   resources :logistics_queries, only: [:index, :show]
+
+  resources :families do
+    member do
+      post :assign_products
+    end
+    collection do
+      post :bulk_unassign
+    end
+  end
 end
