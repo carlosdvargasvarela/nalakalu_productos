@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  family: one
+  variant_type: one
+  position: 1
+  required: false
+  separator: MyString
+  label: MyString
+
+two:
+  family: two
+  variant_type: two
+  position: 1
+  required: false
+  separator: MyString
+  label: MyString

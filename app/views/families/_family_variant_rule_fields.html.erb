@@ -1,0 +1,29 @@
+<div class="nested-fields mb-3 p-3 border rounded-3 bg-light position-relative shadow-sm" data-new-record="<​%= f.object.new_record? %>">
+  <div class="row g-2 align-items-end">
+    <%= f.hidden_field :position, data: { role: "position" } %>
+    <div class="col-md-4">
+      <%= f.label :variant_type_id, "Tipo de Variante", class: "small fw-bold text-muted" %>
+      <%= f.collection_select :variant_type_id, VariantType.all, :id, :name, { prompt: "Seleccione..." }, { class: "form-select shadow-sm" } %>
+    </div>
+    <div class="col-md-3">
+      <%= f.label :label, "Etiqueta (Opcional)", class: "small fw-bold text-muted" %>
+      <%= f.text_field :label, class: "form-control shadow-sm", placeholder: "Ej: Base, Tope..." %>
+    </div>
+    <div class="col-md-2">
+      <%= f.label :separator, "Separador", class: "small fw-bold text-muted" %>
+      <%= f.text_field :separator, class: "form-control text-center shadow-sm" %>
+    </div>
+    <div class="col-md-2">
+      <div class="form-check form-switch mb-2">
+        <%= f.check_box :required, class: "form-check-input" %>
+        <%= f.label :required, "Obligatorio", class: "form-check-label small fw-bold" %>
+      </div>
+    </div>
+    <div class="col-md-1 text-end">
+      <%= f.hidden_field :_destroy %>
+      <button type="button" class="btn btn-outline-danger btn-sm border-0" data-action="nested-form#remove">
+        <i class="bi bi-trash3 fs-5"></i>
+      </button>
+    </div>
+  </div>
+</div>

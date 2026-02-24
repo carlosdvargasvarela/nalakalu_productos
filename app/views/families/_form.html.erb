@@ -1,0 +1,49 @@
+<%= form_with(model: family, data: { controller: "nested-form", nested_form_wrapper_selector_value: ".nested-fields" }) do |f| %>
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-4">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <%= f.label :name, "Nombre de la Familia", class: "form-label fw-bold" %>
+          <%= f.text_field :name, class: "form-control form-control-lg", placeholder: "Ej: Sillas, Mesas de Centro..." %>
+        </div>
+        <div class="col-md-4">
+          <%= f.label :active, "Estado", class: "form-label fw-bold" %>
+          <%= f.select :active, [["Activa", true], ["Inactiva", false]], {}, { class: "form-select form-select-lg" } %>
+        </div>
+        <div class="col-12">
+          <%= f.label :description, "Descripción", class: "form-label fw-bold" %>
+          <%= f.text_area :description, class: "form-control", rows: 2 %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-header bg-white py-3">
+      <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-diagram-3 me-2"></i>Estructura de Código para esta Familia</h5>
+      <p class="text-muted small mb-0">Define el orden de las variantes que heredarán los productos de esta familia.</p>
+    </div>
+    <div class="card-body p-4">
+      <div id="rules-container" data-nested-form-target="target">
+        <%= f.fields_for :family_variant_rules do |rule_f| %>
+          <%= render "family_variant_rule_fields", f: rule_f %>
+        <% end %>
+      </div>
+      <template data-nested-form-target="template">
+        <%= f.fields_for :family_variant_rules, FamilyVariantRule.new, child_index: "NEW_RECORD" do |rule_f| %>
+          <%= render "family_variant_rule_fields", f: rule_f %>
+        <% end %>
+      </template>
+      <div class="text-center mt-4">
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4" data-action="nested-form#add">
+          <i class="bi bi-plus-circle me-2"></i>Agregar Paso a la Estructura
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="mt-4 d-flex justify-content-between">
+    <%= link_to families_path, class: "btn btn-light border px-4" do %>
+      <i class="bi bi-arrow-left me-2"></i>Volver
+    <% end %>
+    <%= f.submit "Guardar Familia", class: "btn btn-primary btn-lg px-5 shadow-sm" %>
+  </div>
+<% end %>

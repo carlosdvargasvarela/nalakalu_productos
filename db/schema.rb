@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_09_093703) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_24_145934) do
   create_table "compatibilities", force: :cascade do |t|
     t.integer "variant_id", null: false
     t.integer "compatible_variant_id", null: false
@@ -19,6 +19,27 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_09_093703) do
     t.index ["compatible_variant_id"], name: "index_compatibilities_on_compatible_variant_id"
     t.index ["variant_id", "compatible_variant_id"], name: "index_compatibilities_on_variant_id_and_compatible_variant_id", unique: true
     t.index ["variant_id"], name: "index_compatibilities_on_variant_id"
+  end
+
+  create_table "families", force: :cascade do |t|
+    t.string "name"
+    t.text "description"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "family_variant_rules", force: :cascade do |t|
+    t.integer "family_id", null: false
+    t.integer "variant_type_id", null: false
+    t.integer "position"
+    t.boolean "required", default: true
+    t.string "separator", default: "-"
+    t.string "label"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["family_id"], name: "index_family_variant_rules_on_family_id"
+    t.index ["variant_type_id"], name: "index_family_variant_rules_on_variant_type_id"
   end
 
   create_table "product_variant_rules", force: :cascade do |t|
@@ -41,6 +62,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_09_093703) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "family_id"
+    t.index ["family_id"], name: "index_products_on_family_id"
   end
 
   create_table "providers", force: :cascade do |t|
@@ -90,8 +113,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_09_093703) do
 
   add_foreign_key "compatibilities", "variants"
   add_foreign_key "compatibilities", "variants", column: "compatible_variant_id"
+  add_foreign_key "family_variant_rules", "families"
+  add_foreign_key "family_variant_rules", "variant_types"
   add_foreign_key "product_variant_rules", "products"
   add_foreign_key "product_variant_rules", "variant_types"
+  add_foreign_key "products", "families"
   add_foreign_key "variants", "providers"
   add_foreign_key "variants", "variant_types"
 end

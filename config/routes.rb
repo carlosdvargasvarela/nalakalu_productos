@@ -1,5 +1,6 @@
 require "sidekiq/web"
 Rails.application.routes.draw do
+  resources :families
   devise_for :users
 
   authenticate :user, lambda { |u| u.role == "admin" } do
