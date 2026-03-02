@@ -1,25 +1,24 @@
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="fw-bold mb-0">Proveedores</h1>
-      <p class="text-muted">Gestiona los proveedores y sus variantes asociadas.</p>
+      <h1 class="fw-bold mb-0 text-dark">Proveedores</h1>
+      <p class="text-muted mb-0">Gestiona el origen de tus variantes y suministros.</p>
     </div>
-    <%= link_to new_provider_path, class: "btn btn-primary shadow-sm rounded-pill px-4" do %>
+    <%= link_to new_provider_path, class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
       <i class="bi bi-plus-lg me-2"></i>Nuevo Proveedor
     <% end %>
   </div>
-  <div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr class="border-bottom">
-              <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Empresa</th>
-              <th class="py-3 text-muted small fw-bold text-uppercase">Contacto</th>
-              <th class="py-3 text-muted small fw-bold text-uppercase">Email</th>
-              <th class="py-3 text-muted small fw-bold text-uppercase">Teléfono</th>
-              <th class="py-3 text-muted small fw-bold text-uppercase">Variantes</th>
-              <th class="py-3 text-muted small fw-bold text-uppercase">Estado</th>
+          <thead class="bg-light border-bottom">
+            <tr>
+              <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Empresa / Origen</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Contacto Principal</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase">Email / Teléfono</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase text-center">Variantes</th>
+              <th class="py-3 text-muted small fw-bold text-uppercase text-center">Estado</th>
               <th class="py-3 pe-4 text-end text-muted small fw-bold text-uppercase">Acciones</th>
             </tr>
           </thead>
@@ -32,48 +31,44 @@
                       <i class="bi bi-building text-primary fs-5"></i>
                     </div>
                     <div>
-                      <div class="fw-bold"><%= provider.name %></div>
+                      <div class="fw-bold text-dark"><%= provider.name %></div>
+                      <span class="badge <%= provider.category == 'interno' ? 'bg-info-soft text-info' : 'bg-warning-soft text-warning' %> rounded-pill x-small">
+                        <%= provider.category.capitalize %>
+                      </span>
                     </div>
                   </div>
                 </td>
-                <td class="py-3"><%= provider.contact_name.presence || "—" %></td>
+                <td class="py-3">
+                  <div class="fw-semibold small"><%= provider.contact_name.presence || "—" %></div>
+                </td>
                 <td class="py-3">
                   <% if provider.email.present? %>
-                    <a href="mailto:<%= provider.email %>" class="text-decoration-none text-muted small">
-                      <i class="bi bi-envelope me-1"></i><%= provider.email %>
-                    </a>
-                  <% else %>
-                    <span class="text-muted">—</span>
+                    <div class="small text-dark mb-1"><i class="bi bi-envelope me-2 text-muted"></i><%= provider.email %></div>
                   <% end %>
-                </td>
-                <td class="py-3">
                   <% if provider.phone.present? %>
-                    <span class="small"><i class="bi bi-telephone me-1 text-muted"></i><%= provider.phone %></span>
-                  <% else %>
-                    <span class="text-muted">—</span>
+                    <div class="small text-muted"><i class="bi bi-telephone me-2"></i><%= provider.phone %></div>
+                  <% end %>
+                  <% if provider.email.blank? && provider.phone.blank? %>
+                    <span class="text-muted small">—</span>
                   <% end %>
                 </td>
-                <td class="py-3">
-                  <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">
-                    <%= provider.variants.count %> variantes
+                <td class="py-3 text-center">
+                  <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 fw-bold">
+                    <%= provider.variants.count %>
                   </span>
                 </td>
-                <td class="py-3">
+                <td class="py-3 text-center">
                   <span class="badge <%= provider.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
                     <%= provider.active ? 'Activo' : 'Inactivo' %>
                   </span>
                 </td>
                 <td class="py-3 pe-4 text-end">
                   <div class="d-flex gap-1 justify-content-end">
-                    <%= link_to provider, class: "btn btn-sm btn-light rounded-pill px-3" do %>
+                    <%= link_to provider, class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm", title: "Ver detalles" do %>
                       <i class="bi bi-eye"></i>
                     <% end %>
-                    <%= link_to edit_provider_path(provider), class: "btn btn-sm btn-light rounded-pill px-3" do %>
+                    <%= link_to edit_provider_path(provider), class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm", title: "Editar" do %>
                       <i class="bi bi-pencil"></i>
-                    <% end %>
-                    <%= button_to provider, method: :delete, class: "btn btn-sm btn-light text-danger rounded-pill px-3",
-                        form: { data: { turbo_confirm: "¿Eliminar este proveedor?" } } do %>
-                      <i class="bi bi-trash"></i>
                     <% end %>
                   </div>
                 </td>
@@ -85,24 +80,18 @@
     </div>
   </div>
   <!-- Importador CSV -->
-  <div class="card border-0 shadow-sm rounded-4 border-start border-secondary border-4">
+  <div class="card border-0 shadow-sm rounded-4 border-start border-primary border-4">
     <div class="card-body p-4">
       <div class="row align-items-center">
         <div class="col-md-8">
-          <h5 class="fw-bold mb-1">
-            <i class="bi bi-file-earmark-spreadsheet text-secondary me-2"></i>Importación Masiva
-          </h5>
-          <p class="text-muted small mb-0">
-            Formato CSV: <code class="bg-light px-2 py-1 rounded">Nombre, Contacto, Email, Teléfono, Notas, Activo</code>
-          </p>
+          <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet text-primary me-2"></i>Importación Masiva</h5>
+          <p class="text-muted small mb-0">Sube tu lista de proveedores en formato CSV para agilizar la carga inicial.</p>
         </div>
-        <div class="col-md-4 mt-3 mt-md-0">
-          <%= form_with url: import_providers_path, multipart: true, local: true do |f| %>
+        <div class="col-md-4 mt-3 mt-md-0 text-md-end">
+          <%= form_with url: import_providers_path, multipart: true, local: true, class: "d-inline-block w-100" do |f| %>
             <div class="input-group shadow-sm">
-              <%= f.file_field :file, class: "form-control rounded-start-pill", accept: ".csv" %>
-              <button class="btn btn-secondary rounded-end-pill fw-bold" type="submit">
-                <i class="bi bi-cloud-upload me-1"></i>Importar
-              </button>
+              <%= f.file_field :file, class: "form-control rounded-start-pill small", accept: ".csv" %>
+              <button class="btn btn-primary rounded-end-pill fw-bold px-3" type="submit">Importar</button>
             </div>
           <% end %>
         </div>
@@ -113,4 +102,7 @@
 <style>
   .bg-success-soft { background-color: #e1f6eb; }
   .bg-secondary-soft { background-color: #f0f2f5; }
+  .bg-info-soft { background-color: #e0f4ff; }
+  .bg-warning-soft { background-color: #fff8e6; }
+  .x-small { font-size: 0.7rem; }
 </style>

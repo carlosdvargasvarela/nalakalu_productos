@@ -1,28 +1,52 @@
-<%= form_with(model: product, data: { controller: "nested-form", nested_form_wrapper_selector_value: ".nested-form-wrapper" }) do |f| %>
+<%= form_with(model: product, data: { 
+  controller: "nested-form", 
+  nested_form_wrapper_selector_value: ".nested-form-wrapper" 
+}) do |f| %>
+  <% if product.errors.any? %>
+    <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4">
+      <h6 class="fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Por favor corrige los siguientes errores:</h6>
+      <ul class="mb-0 small">
+        <% product.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
   <div class="row g-4">
-    <!-- Columna Izquierda: Info -->
+    <!-- Columna Izquierda: Configuración Base -->
     <div class="col-lg-4">
       <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
         <div class="card-body p-4">
-          <h5 class="fw-bold mb-4">Información General</h5>
+          <h5 class="fw-bold mb-4 text-dark">
+            <i class="bi bi-gear-fill me-2 text-primary"></i>Configuración Base
+          </h5>
           <div class="mb-3">
-            <%= f.label :family_id, "Familia", class: "form-label small fw-bold" %>
-            <%= f.collection_select :family_id, Family.where(active: true), :id, :name,
-                { include_blank: "Sin Familia" },
-                { class: "form-select border-2" } %>
-            <div class="form-text"><i class="bi bi-info-circle me-1"></i>Hereda la estructura de código de la familia.</div>
+            <%= f.label :name, "Nombre del Producto", class: "form-label small fw-bold text-muted" %>
+            <%= f.text_field :name, class: "form-control form-control-lg border-2 shadow-none", placeholder: "Ej: Sofá Milano 3 Cuerpos" %>
           </div>
           <div class="mb-3">
-            <%= f.label :name, "Nombre del Producto", class: "form-label small fw-bold" %>
-            <%= f.text_field :name, class: "form-control border-2", placeholder: "Ej: Sofá Milano" %>
+            <%= f.label :base_code, "Código Base (Prefijo)", class: "form-label small fw-bold text-muted" %>
+            <%= f.text_field :base_code, class: "form-control form-control-lg border-2 font-monospace shadow-none", placeholder: "MIL" %>
+            <div class="form-text x-small">Este código iniciará siempre la cadena (ej: MIL-...)</div>
           </div>
           <div class="mb-3">
-            <%= f.label :base_code, "Código Base", class: "form-label small fw-bold" %>
-            <%= f.text_field :base_code, class: "form-control border-2 font-monospace", placeholder: "Ej: MIL" %>
+            <%= f.label :family_id, "Familia de Producto", class: "form-label small fw-bold text-muted" %>
+            <%= f.collection_select :family_id, Family.where(active: true), :id, :name, 
+                { include_blank: "Sin Familia (Independiente)" }, 
+                { class: "form-select border-2 shadow-none" } %>
           </div>
           <div class="mb-0">
-            <%= f.label :active, "Estado", class: "form-label small fw-bold" %>
-            <%= f.select :active, [["Activo", true], ["Inactivo", false]], {}, { class: "form-select border-2" } %>
+            <%= f.label :active, "Estado del Producto", class: "form-label small fw-bold text-muted" %>
+            <div class="d-flex gap-3 mt-1">
+              <div class="form-check">
+                <%= f.radio_button :active, true, class: "form-check-input" %>
+                <%= f.label :active_true, "Activo", class: "form-check-label small" %>
+              </div>
+              <div class="form-check">
+                <%= f.radio_button :active, false, class: "form-check-input" %>
+                <%= f.label :active_false, "Inactivo", class: "form-check-label small" %>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -30,55 +54,70 @@
     <!-- Columna Derecha: DNA Builder -->
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-header bg-white py-3 border-bottom">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-diagram-3 me-2"></i>Estructura del Código (Variantes)</h5>
-              <p class="text-muted small mb-0">Reglas específicas para este producto. Si las dejas vacías, se usarán las de la familia.</p>
-            </div>
-            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-action="nested-form#add">
-              <i class="bi bi-plus-lg me-1"></i>Agregar Paso
-            </button>
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0 fw-bold text-primary">
+              <i class="bi bi-diagram-3-fill me-2"></i>Estructura DNA del Código
+            </h5>
+            <p class="text-muted small mb-0">Define el orden y tipo de variantes que componen el código final.</p>
           </div>
+          <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold" data-action="nested-form#add">
+            <i class="bi bi-plus-lg me-2"></i>Agregar Paso
+          </button>
         </div>
-        <div class="card-body p-4">
-          <% if product.family.present? && product.product_variant_rules.empty? %>
-            <div class="alert alert-info border-0 rounded-3 small mb-4">
-              <i class="bi bi-arrow-up-circle me-2"></i>
-              Actualmente hereda la estructura de <strong><%= product.family.name %></strong>. Agrega pasos aquí solo si necesitas una estructura diferente.
-            </div>
-          <% end %>
-          <% if product.product_variant_rules.any? %>
-            <div class="alert alert-warning border-0 rounded-3 small mb-4">
-              <i class="bi bi-exclamation-triangle me-2"></i>
-              <strong>Nota:</strong> Al tener reglas propias, se ignorarán las de la familia.
+        <div class="card-body p-4 bg-light bg-opacity-50">
+          <!-- Alertas de Herencia -->
+          <% if product.family.present? %>
+            <div class="alert bg-info bg-opacity-10 border-info border-opacity-25 text-info rounded-4 mb-4 d-flex align-items-center">
+              <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+              <div class="small">
+                Este producto pertenece a la familia <strong><%= product.family.name %></strong>. 
+                <% if product.product_variant_rules.empty? %>
+                  Actualmente usa la estructura de la familia. <strong>Si agregas pasos aquí, se ignorarán los de la familia.</strong>
+                <% else %>
+                  Tiene reglas personalizadas que <strong>anulan</strong> las de la familia.
+                <% end %>
+              </div>
             </div>
           <% end %>
           <div id="rules-container">
+            <!-- Template para nuevos registros -->
             <template data-nested-form-target="template">
               <%= f.fields_for :product_variant_rules, ProductVariantRule.new, child_index: "NEW_RECORD" do |rule_f| %>
                 <%= render "product_variant_rule_fields", f: rule_f %>
               <% end %>
             </template>
-            <%= f.fields_for :product_variant_rules do |rule_f| %>
-              <%= render "product_variant_rule_fields", f: rule_f %>
-            <% end %>
-            <div data-nested-form-target="target"></div>
+            <!-- Registros existentes -->
+            <div data-nested-form-target="target">
+              <%= f.fields_for :product_variant_rules do |rule_f| %>
+                <%= render "product_variant_rule_fields", f: rule_f %>
+              <% end %>
+            </div>
           </div>
+          <!-- Estado vacío visual -->
           <% if product.product_variant_rules.empty? %>
-            <div class="text-center py-5 border rounded-4 text-muted" style="border-style: dashed !important;">
-              <i class="bi bi-stack fs-1 d-block mb-2 opacity-25"></i>
-              Sin reglas propias. Se usarán las de la familia si está asignada.
+            <div class="text-center py-5 border-2 border-dashed rounded-4 text-muted bg-white" id="empty-rules-msg">
+              <i class="bi bi-layers fs-1 d-block mb-2 opacity-25"></i>
+              <p class="mb-0">No hay reglas específicas definidas.</p>
+              <small>Haz clic en "Agregar Paso" para personalizar el código.</small>
             </div>
           <% end %>
         </div>
       </div>
-      <div class="d-flex justify-content-between align-items-center">
-        <%= link_to products_path, class: "btn btn-link text-decoration-none text-muted" do %>
-          <i class="bi bi-arrow-left me-2"></i>Cancelar
-        <% end %>
-        <%= f.submit "Guardar Producto", class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
+      <!-- Footer de acciones -->
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-3 d-flex justify-content-between align-items-center">
+          <%= link_to products_path, class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
+            <i class="bi bi-x-lg me-2"></i>Descartar cambios
+          <% end %>
+          <%= f.submit product.new_record? ? "Crear Producto" : "Actualizar Producto", 
+              class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
+        </div>
       </div>
     </div>
   </div>
 <% end %>
+<style>
+  .border-dashed { border-style: dashed !important; }
+  .x-small { font-size: 0.75rem; }
+</style>

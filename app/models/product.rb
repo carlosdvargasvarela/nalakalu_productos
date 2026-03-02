@@ -27,6 +27,35 @@ class Product < ApplicationRecord
     parts.join("")
   end
 
+  def supplier_type
+    # Obtenemos los tipos de proveedores de todas las variantes posibles
+    # que este producto puede tener según sus reglas (variant_types)
+    provider_categories = Variant.where(variant_type_id: variant_types.pluck(:id))
+      .joins(:provider)
+      .pluck("providers.category")
+      .uniq
+
+    if provider_categories.include?("interno") && provider_categories.include?("externo")
+      "mixto"
+    elsif provider_categories.include?("externo")
+      "externo"
+    elsif provider_categories.include?("interno")
+      "interno"
+    else
+      "sin_definir"
+    end
+  end
+
+  # Helper para badges de UI
+  def supplier_type_color
+    case supplier_type
+    when "interno" then "success"
+    when "externo" then "warning"
+    when "mixto" then "info"
+    else "secondary"
+    end
+  end
+
   private
 
   def flag_family_change

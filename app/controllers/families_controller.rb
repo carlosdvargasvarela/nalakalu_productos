@@ -74,6 +74,16 @@ class FamiliesController < ApplicationController
     redirect_to @family, notice: "#{products.count} productos asignados y configurados para #{@family.name}."
   end
 
+  def unassign_product
+    @family = Family.find(params[:id])
+    @product = @family.products.find(params[:product_id])
+
+    @product.update!(family_id: nil)
+    redirect_to @family, notice: "#{@product.name} desvinculado de #{@family.name}."
+  rescue ActiveRecord::RecordNotFound
+    redirect_to @family, alert: "Producto no encontrado en esta familia."
+  end
+
   private
 
   def set_family

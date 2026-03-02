@@ -1,7 +1,31 @@
-<div class="container py-4">
+<div class="container-fluid py-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <%= link_to "Tipos de Variante", variant_types_path, class: "text-decoration-none" %>
+      </li>
+      <li class="breadcrumb-item">
+        <%= link_to @variant_type.name, @variant_type, class: "text-decoration-none" %>
+      </li>
+      <li class="breadcrumb-item active fw-bold">Editar</li>
+    </ol>
+  </nav>
   <div class="row justify-content-center">
-    <div class="col-md-6">
-      <h2 class="fw-bold mb-4">Editar Tipo: <span class="text-primary"><%= @variant_type.name %></span></h2>
+    <div class="col-lg-6">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="fw-bold mb-0 text-dark">
+            Editando: <span class="text-primary"><%= @variant_type.name %></span>
+          </h2>
+          <p class="text-muted small mb-0">
+            <span class="fw-bold text-info"><%= @variant_type.variants.count %> variantes</span>
+            asociadas a este tipo.
+          </p>
+        </div>
+        <%= link_to @variant_type, class: "btn btn-outline-secondary rounded-pill px-4" do %>
+          <i class="bi bi-eye me-2"></i>Ver Tipo
+        <% end %>
+      </div>
       <%= render "form", variant_type: @variant_type %>
     </div>
   </div>

@@ -2,66 +2,80 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h1 class="fw-bold mb-0">Productos Base</h1>
-      <p class="text-muted">Gestiona el catálogo y la estructura de códigos.</p>
+      <p class="text-muted">Gestiona el catálogo, la estructura de códigos y el origen de suministros.</p>
     </div>
     <%= link_to new_product_path, class: "btn btn-primary shadow-sm rounded-pill px-4" do %>
       <i class="bi bi-plus-lg me-2"></i>Nuevo Producto
     <% end %>
   </div>
-  <div class="row g-4 mb-5">
-    <% @products.each do |product| %>
-      <div class="col-md-6 col-xl-4">
-        <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
-          <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <div class="bg-primary bg-opacity-10 p-3 rounded-3">
-                <i class="bi bi-box-seam fs-3 text-primary"></i>
+  <% if @products.empty? %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-box-seam d-block fs-1 mb-3 opacity-25"></i>
+      <p class="fw-bold">No hay productos registrados aún.</p>
+      <%= link_to new_product_path, class: "btn btn-primary rounded-pill px-4" do %>
+        <i class="bi bi-plus-lg me-2"></i>Crear primer producto
+      <% end %>
+    </div>
+  <% else %>
+    <div class="row g-4 mb-5">
+      <% @products.each do |product| %>
+        <div class="col-md-6 col-xl-4">
+          <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-3">
+                  <i class="bi bi-box-seam fs-3 text-primary"></i>
+                </div>
+                <div class="d-flex flex-column align-items-end gap-1">
+                  <span class="badge <%= product.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
+                    <%= product.active ? 'Activo' : 'Inactivo' %>
+                  </span>
+                  <%= supplier_type_badge(product) %>
+                  <% if product.family.present? %>
+                    <span class="badge bg-info-soft text-info rounded-pill px-3 small">
+                      <i class="bi bi-diagram-3 me-1"></i><%= product.family.name %>
+                    </span>
+                  <% end %>
+                </div>
               </div>
-              <div class="d-flex flex-column align-items-end gap-1">
-                <span class="badge <%= product.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
-                  <%= product.active ? 'Activo' : 'Inactivo' %>
-                </span>
-                <% if product.family.present? %>
-                  <span class="badge bg-info-soft text-info rounded-pill px-3 small">
-                    <i class="bi bi-diagram-3 me-1"></i><%= product.family.name %>
+              <h5 class="fw-bold mb-1"><%= product.name %></h5>
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <code class="text-muted small"><%= product.base_code %></code>
+                <%= supplier_type_info_icon(product) %>
+              </div>
+              <p class="small fw-bold text-muted mb-2">Estructura del Código:</p>
+              <div class="d-flex flex-wrap gap-1 mb-4">
+                <span class="badge bg-dark rounded-pill shadow-sm"><%= product.base_code %></span>
+                <% product.product_variant_rules.each do |rule| %>
+                  <span class="badge bg-secondary rounded-pill opacity-75">
+                    <%= rule.separator %><%= rule.variant_type.name %>
+                  </span>
+                <% end %>
+                <% if product.product_variant_rules.empty? && product.family.present? %>
+                  <span class="badge bg-info-soft text-info border border-info border-opacity-50 rounded-pill small">
+                    <i class="bi bi-arrow-up-circle me-1"></i>Hereda de Familia
                   </span>
                 <% end %>
               </div>
-            </div>
-            <h5 class="fw-bold mb-1"><%= product.name %></h5>
-            <code class="text-muted small"><%= product.base_code %></code>
-            <hr class="my-3 opacity-25">
-            <p class="small fw-bold text-muted mb-2">Estructura del Código:</p>
-            <div class="d-flex flex-wrap gap-1 mb-4">
-              <span class="badge bg-dark rounded-pill"><%= product.base_code %></span>
-              <% product.product_variant_rules.each do |rule| %>
-                <span class="badge bg-secondary rounded-pill">
-                  <%= rule.separator %><%= rule.variant_type.name %>
-                </span>
-              <% end %>
-              <% if product.product_variant_rules.empty? && product.family.present? %>
-                <span class="badge bg-info-soft text-info border border-info rounded-pill small">
-                  <i class="bi bi-arrow-up-circle me-1"></i>Hereda de Familia
-                </span>
-              <% end %>
-            </div>
-            <div class="d-flex gap-2">
-              <%= link_to product_path(product), class: "btn btn-sm btn-outline-primary rounded-pill flex-fill" do %>
-                <i class="bi bi-eye me-1"></i>Ver
-              <% end %>
-              <%= link_to edit_product_path(product), class: "btn btn-sm btn-outline-secondary rounded-pill flex-fill" do %>
-                <i class="bi bi-pencil me-1"></i>Editar
-              <% end %>
-              <%= button_to product, method: :delete, class: "btn btn-sm btn-outline-danger rounded-pill",
-                  form: { data: { turbo_confirm: "¿Eliminar este producto?" } } do %>
-                <i class="bi bi-trash"></i>
-              <% end %>
+              <div class="d-flex gap-2">
+                <%= link_to product_path(product), class: "btn btn-sm btn-outline-primary rounded-pill flex-fill fw-bold" do %>
+                  <i class="bi bi-eye me-1"></i>Ver
+                <% end %>
+                <%= link_to edit_product_path(product), class: "btn btn-sm btn-outline-secondary rounded-pill flex-fill" do %>
+                  <i class="bi bi-pencil me-1"></i>Editar
+                <% end %>
+                <%= button_to product, method: :delete,
+                    class: "btn btn-sm btn-outline-danger rounded-pill",
+                    form: { data: { turbo_confirm: "¿Eliminar '#{product.name}'? Esta acción no se puede deshacer." } } do %>
+                  <i class="bi bi-trash"></i>
+                <% end %>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    <% end %>
-  </div>
+      <% end %>
+    </div>
+  <% end %>
   <!-- Importador CSV -->
   <div class="card border-0 shadow-sm rounded-4 border-start border-warning border-4">
     <div class="card-body p-4">
@@ -70,15 +84,15 @@
           <h5 class="fw-bold mb-1">
             <i class="bi bi-file-earmark-spreadsheet text-warning me-2"></i>Importación Masiva
           </h5>
-          <p class="text-muted small mb-2">
+          <p class="text-muted small mb-0">
             Formato CSV: <code class="bg-light px-2 py-1 rounded">Producto, Código Base, Tipo Variante, Etiqueta, Separador, Variante Nombre, Variante Código, Proveedor, Costo, SKU Proveedor, Obligatorio, Activo</code>
           </p>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 mt-3 mt-md-0">
           <%= form_with url: import_products_path, multipart: true, local: true do |f| %>
             <div class="input-group shadow-sm">
               <%= f.file_field :file, class: "form-control rounded-start-pill", accept: ".csv" %>
-              <button class="btn btn-warning rounded-end-pill fw-bold" type="submit">
+              <button class="btn btn-warning rounded-end-pill fw-bold text-white" type="submit">
                 <i class="bi bi-cloud-upload me-1"></i>Importar
               </button>
             </div>
@@ -91,7 +105,8 @@
 <style>
   .hover-card { transition: all 0.25s ease; }
   .hover-card:hover { transform: translateY(-4px); box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.1) !important; }
-  .bg-success-soft { background-color: #e1f6eb; }
+  .bg-success-soft   { background-color: #e1f6eb; }
   .bg-secondary-soft { background-color: #f0f2f5; }
-  .bg-info-soft { background-color: #e0f4ff; }
+  .bg-info-soft      { background-color: #e0f4ff; }
+  .bg-warning-soft   { background-color: #fff8e6; }
 </style>

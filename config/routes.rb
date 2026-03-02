@@ -39,6 +39,7 @@ Rails.application.routes.draw do
   resources :families do
     member do
       post :assign_products
+      delete :unassign_product
     end
     collection do
       post :bulk_unassign

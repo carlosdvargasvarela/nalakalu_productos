@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_24_145934) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_02_165315) do
   create_table "compatibilities", force: :cascade do |t|
     t.integer "variant_id", null: false
     t.integer "compatible_variant_id", null: false
@@ -75,6 +75,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_24_145934) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "category", default: "externo"
   end
 
   create_table "users", force: :cascade do |t|
@@ -95,6 +96,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_24_145934) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "description"
+    t.boolean "active", default: true, null: false
   end
 
   create_table "variants", force: :cascade do |t|

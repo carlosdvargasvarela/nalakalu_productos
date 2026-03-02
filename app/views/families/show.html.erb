@@ -1,10 +1,4 @@
 <div class="container-fluid py-4">
-  <% if notice %>
-    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
-      <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <% end %>
   <%= render "family_header", family: @family %>
   <div class="row g-4 mt-1">
     <div class="col-lg-5">
@@ -12,6 +6,21 @@
     </div>
     <div class="col-lg-7">
       <%= render "bulk_assigner", family: @family %>
+    </div>
+  </div>
+  <!-- Botones de acción -->
+  <div class="mt-4 d-flex justify-content-between align-items-center">
+    <%= link_to families_path, class: "btn btn-link text-decoration-none text-muted" do %>
+      <i class="bi bi-arrow-left me-2"></i>Volver a Familias
+    <% end %>
+    <div class="d-flex gap-2">
+      <%= link_to edit_family_path(@family), class: "btn btn-outline-primary rounded-pill px-4" do %>
+        <i class="bi bi-pencil-square me-2"></i>Editar Familia
+      <% end %>
+      <%= button_to @family, method: :delete, class: "btn btn-outline-danger rounded-pill px-4",
+          form: { data: { turbo_confirm: "¿Estás seguro de eliminar esta familia?" } } do %>
+        <i class="bi bi-trash me-2"></i>Eliminar Familia
+      <% end %>
     </div>
   </div>
 </div>

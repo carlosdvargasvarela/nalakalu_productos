@@ -1,42 +1,31 @@
-<tr class="variant-row">
+<tr class="variant-row bg-white border-bottom">
   <%= f.hidden_field :id %>
   <%= f.hidden_field :_destroy, class: "destroy-field" %>
-  <td class="ps-4 py-2">
-    <%= f.collection_select :variant_type_id, VariantType.all, :id, :name,
-        { prompt: "Tipo..." },
-        { class: "form-select form-select-sm border-2" } %>
+  <td class="ps-4 py-3">
+    <%= f.collection_select :variant_type_id, VariantType.where(active: true).order(:name), :id, :name,
+        { prompt: "Seleccionar..." },
+        { class: "form-select form-select-sm border-0 bg-light fw-bold shadow-none" } %>
   </td>
-  <td class="py-2">
-    <%= f.text_field :name, 
-        class: "form-control form-control-sm border-2", 
-        placeholder: "Ej: Lino Gris" %>
+  <td class="py-3">
+    <%= f.text_field :name, class: "form-control form-control-sm border-0 bg-light shadow-none", placeholder: "Ej: Lino Gris" %>
   </td>
-  <td class="py-2">
-    <%= f.text_field :code, 
-        class: "form-control form-control-sm border-2 font-monospace text-center fw-bold", 
-        placeholder: "LG" %>
+  <td class="py-3">
+    <%= f.text_field :code, class: "form-control form-control-sm border-0 bg-light text-center fw-bold font-monospace shadow-none", placeholder: "LG" %>
   </td>
-  <td class="py-2">
-    <%= f.text_field :provider_sku, 
-        class: "form-control form-control-sm border-2 font-monospace", 
-        placeholder: "SKU-001" %>
-  </td>
-  <td class="py-2">
+  <td class="py-3">
     <div class="input-group input-group-sm">
-      <span class="input-group-text border-2 bg-light">$</span>
-      <%= f.number_field :cost, step: 0.01, 
-          class: "form-control border-2", 
-          placeholder: "0.00" %>
+      <span class="input-group-text border-0 bg-light text-muted">$</span>
+      <%= f.number_field :cost, step: 0.01, class: "form-control border-0 bg-light shadow-none text-end", placeholder: "0.00" %>
     </div>
   </td>
-  <td class="py-2 text-center">
-    <%= f.check_box :active, class: "form-check-input" %>
+  <td class="py-3 text-center">
+    <div class="form-check form-switch d-inline-block">
+      <%= f.check_box :active, class: "form-check-input cursor-pointer" %>
+    </div>
   </td>
-  <td class="py-2 pe-4 text-end">
-    <button type="button" 
-            class="btn btn-sm btn-outline-danger border-0 rounded-circle"
-            data-action="nested-form#remove">
-      <i class="bi bi-trash"></i>
+  <td class="py-3 pe-4 text-end">
+    <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle p-1" data-action="nested-form#remove">
+      <i class="bi bi-trash3-fill"></i>
     </button>
   </td>
 </tr>

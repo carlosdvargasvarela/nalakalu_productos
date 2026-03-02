@@ -1,30 +1,48 @@
 <%= form_with(model: variant_type) do |f| %>
   <% if variant_type.errors.any? %>
     <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
-      <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</div>
+      <h6 class="fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</h6>
       <ul class="mb-0 ps-3 small">
-        <% variant_type.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+        <% variant_type.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
   <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-tags-fill me-2 text-info"></i>Definición del Tipo
+      </h5>
+    </div>
     <div class="card-body p-4">
       <div class="mb-3">
-        <%= f.label :name, "Nombre del Tipo de Variante", class: "form-label small fw-bold" %>
-        <%= f.text_field :name, class: "form-control form-control-lg border-2", placeholder: "Ej: Tela, Madera, Acabado..." %>
+        <%= f.label :name, "Nombre del Tipo de Variante", class: "form-label small fw-bold text-muted" %>
+        <%= f.text_field :name,
+            class: "form-control form-control-lg border-2 shadow-none",
+            placeholder: "Ej: Tela, Madera, Acabado, Color..." %>
         <div class="form-text mt-2">
           <i class="bi bi-info-circle me-1"></i>
-          Este nombre aparecerá en los selectores cuando el vendedor esté configurando un producto.
+          Este nombre aparecerá como etiqueta en el generador de códigos cuando el vendedor configure un producto.
+        </div>
+      </div>
+      <div class="alert alert-info border-0 rounded-3 bg-info bg-opacity-10 mt-3 mb-0">
+        <div class="d-flex gap-2 align-items-start">
+          <i class="bi bi-lightbulb-fill text-info mt-1 flex-shrink-0"></i>
+          <div class="small">
+            <strong>Ejemplos de tipos:</strong> Tela Principal, Tela Secundaria, Tipo de Madera,
+            Acabado, Color de Hilo, Dimensión, Patas... Cada tipo agrupa variantes del mismo
+            "grupo de decisión" al configurar un producto.
+          </div>
         </div>
       </div>
     </div>
   </div>
   <div class="d-flex justify-content-between align-items-center">
-    <%= link_to variant_types_path, class: "btn btn-link text-decoration-none text-muted" do %>
-      <i class="bi bi-arrow-left me-2"></i>Cancelar
+    <%= link_to variant_types_path, class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
+      <i class="bi bi-x-lg me-2"></i>Descartar
     <% end %>
-    <%= f.submit "Guardar Tipo", class: "btn btn-primary btn-lg px-5 shadow rounded-pill fw-bold" %>
+    <%= f.submit variant_type.new_record? ? "Crear Tipo" : "Guardar Cambios",
+        class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
   </div>
 <% end %>

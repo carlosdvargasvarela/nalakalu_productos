@@ -1,87 +1,117 @@
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="fw-bold mb-0">Tipos de Variante</h1>
-      <p class="text-muted">Categorías generales para agrupar las opciones de los productos.</p>
+      <h1 class="fw-bold mb-0 text-dark">Tipos de Variante</h1>
+      <p class="text-muted mb-0">Categorías generales para agrupar las opciones de los productos.</p>
     </div>
-    <%= link_to new_variant_type_path, class: "btn btn-primary shadow-sm rounded-pill px-4" do %>
+    <%= link_to new_variant_type_path, class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
       <i class="bi bi-plus-lg me-2"></i>Nuevo Tipo
     <% end %>
   </div>
-  <div class="card border-0 shadow-sm rounded-4 mb-4">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr class="border-bottom">
-              <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Nombre del Tipo</th>
-              <th class="py-3 text-muted small fw-bold text-uppercase text-center">Variantes Registradas</th>
-              <th class="py-3 pe-4 text-end text-muted small fw-bold text-uppercase">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @variant_types.each do |variant_type| %>
+  <% if @variant_types.empty? %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-tags d-block fs-1 mb-3 opacity-25"></i>
+      <p class="fw-bold">No hay tipos de variante registrados aún.</p>
+      <p class="small mb-3">Los tipos agrupan las opciones: Tela, Madera, Acabado, Color, etc.</p>
+      <%= link_to new_variant_type_path, class: "btn btn-primary rounded-pill px-4" do %>
+        <i class="bi bi-plus-lg me-2"></i>Crear primer tipo
+      <% end %>
+    </div>
+  <% else %>
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light border-bottom">
               <tr>
-                <td class="px-4 py-3">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="bg-info bg-opacity-10 rounded-3 p-2 flex-shrink-0">
-                      <i class="bi bi-tags text-info fs-5"></i>
-                    </div>
-                    <div class="fw-bold"><%= variant_type.name %></div>
-                  </div>
-                </td>
-                <td class="py-3 text-center">
-                  <span class="badge bg-info-soft text-info rounded-pill px-3 fs-6">
-                    <%= variant_type.variants.count %> opciones
-                  </span>
-                </td>
-                <td class="py-3 pe-4 text-end">
-                  <div class="d-flex gap-1 justify-content-end">
-                    <%= link_to variant_type, class: "btn btn-sm btn-light rounded-pill px-3" do %>
-                      <i class="bi bi-eye"></i>
-                    <% end %>
-                    <%= link_to edit_variant_type_path(variant_type), class: "btn btn-sm btn-light rounded-pill px-3" do %>
-                      <i class="bi bi-pencil"></i>
-                    <% end %>
-                    <%= button_to variant_type, method: :delete, class: "btn btn-sm btn-light text-danger rounded-pill px-3",
-                        form: { data: { turbo_confirm: "¿Eliminar este tipo? Esto podría afectar a las reglas de productos existentes." } } do %>
-                      <i class="bi bi-trash"></i>
-                    <% end %>
-                  </div>
-                </td>
+                <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Nombre del Tipo</th>
+                <th class="py-3 text-muted small fw-bold text-uppercase text-center">Activas</th>
+                <th class="py-3 text-muted small fw-bold text-uppercase text-center">Total</th>
+                <th class="py-3 pe-4 text-end text-muted small fw-bold text-uppercase">Acciones</th>
               </tr>
+            </thead>
+            <tbody>
+              <% @variant_types.each do |variant_type| %>
+                <tr>
+                  <td class="px-4 py-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="bg-info bg-opacity-10 rounded-3 p-2 flex-shrink-0">
+                        <i class="bi bi-tags text-info fs-5"></i>
+                      </div>
+                      <div>
+                        <div class="fw-bold text-dark"><%= variant_type.name %></div>
+                        <div class="small text-muted">
+                          <%= variant_type.variants.where(active: true).count %> activas de
+                          <%= variant_type.variants.count %> totales
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 text-center">
+                    <span class="badge bg-success-soft text-success rounded-pill px-3 fw-bold">
+                      <%= variant_type.variants.where(active: true).count %>
+                    </span>
+                  </td>
+                  <td class="py-3 text-center">
+                    <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 fw-bold">
+                      <%= variant_type.variants.count %>
+                    </span>
+                  </td>
+                  <td class="py-3 pe-4 text-end">
+                    <div class="d-flex gap-1 justify-content-end">
+                      <%= link_to variant_type,
+                          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
+                          title: "Ver detalle" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                      <%= link_to edit_variant_type_path(variant_type),
+                          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
+                          title: "Editar" do %>
+                        <i class="bi bi-pencil"></i>
+                      <% end %>
+                      <%= button_to variant_type, method: :delete,
+                          class: "btn btn-sm btn-light text-danger rounded-pill px-3 border shadow-sm",
+                          form: { data: { turbo_confirm: "¿Eliminar '#{variant_type.name}'? Esto podría afectar reglas de productos existentes." } } do %>
+                        <i class="bi bi-trash"></i>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- Importador CSV -->
+    <div class="card border-0 shadow-sm rounded-4 border-start border-info border-4">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h5 class="fw-bold mb-1">
+              <i class="bi bi-file-earmark-spreadsheet text-info me-2"></i>Importación Masiva
+            </h5>
+            <p class="text-muted small mb-0">
+              Formato CSV esperado: <code class="bg-light px-2 py-1 rounded">Nombre</code>
+            </p>
+          </div>
+          <div class="col-md-4 mt-3 mt-md-0">
+            <%= form_with url: import_variant_types_path, multipart: true, local: true do |f| %>
+              <div class="input-group shadow-sm">
+                <%= f.file_field :file, class: "form-control rounded-start-pill small", accept: ".csv" %>
+                <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
+                  <i class="bi bi-cloud-upload me-1"></i>Importar
+                </button>
+              </div>
             <% end %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  <!-- Importador CSV -->
-  <div class="card border-0 shadow-sm rounded-4 border-start border-info border-4">
-    <div class="card-body p-4">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <h5 class="fw-bold mb-1">
-            <i class="bi bi-file-earmark-spreadsheet text-info me-2"></i>Importación Masiva
-          </h5>
-          <p class="text-muted small mb-0">
-            Formato CSV: <code class="bg-light px-2 py-1 rounded">Nombre</code>
-          </p>
-        </div>
-        <div class="col-md-4 mt-3 mt-md-0">
-          <%= form_with url: import_variant_types_path, multipart: true, local: true do |f| %>
-            <div class="input-group shadow-sm">
-              <%= f.file_field :file, class: "form-control rounded-start-pill", accept: ".csv" %>
-              <button class="btn btn-info text-white rounded-end-pill fw-bold" type="submit">
-                <i class="bi bi-cloud-upload me-1"></i>Importar
-              </button>
-            </div>
-          <% end %>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  <% end %>
 </div>
 <style>
+  .bg-success-soft { background-color: #e1f6eb; }
+  .bg-secondary-soft { background-color: #f0f2f5; }
   .bg-info-soft { background-color: #e0f4ff; }
 </style>

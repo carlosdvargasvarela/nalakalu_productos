@@ -74,11 +74,9 @@ class ProvidersController < ApplicationController
   end
 
   def provider_params
-    params.require(:provider).permit(
-      :name, :contact_name, :email, :phone, :notes, :active,
+    params.require(:provider).permit(:name, :contact_name, :email, :phone, :notes, :active, :category,
       variants_attributes: [
         :id, :variant_type_id, :name, :code, :provider_sku, :cost, :active, :_destroy
-      ]
-    )
+      ])
   end
 end

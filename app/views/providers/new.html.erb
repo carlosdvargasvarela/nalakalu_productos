@@ -2,9 +2,14 @@
   <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
-      <li class="breadcrumb-item active">Nuevo Proveedor</li>
+      <li class="breadcrumb-item active fw-bold">Nuevo Proveedor</li>
     </ol>
   </nav>
-  <h2 class="fw-bold mb-4">Nuevo Proveedor</h2>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0 text-dark">Registrar Nuevo Proveedor</h2>
+    <%= link_to providers_path, class: "btn btn-outline-secondary rounded-pill px-4" do %>
+      <i class="bi bi-arrow-left me-2"></i>Volver
+    <% end %>
+  </div>
   <%= render "form", provider: @provider %>
 </div>
