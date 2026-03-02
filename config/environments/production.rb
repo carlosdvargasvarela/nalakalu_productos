@@ -68,15 +68,7 @@ Rails.application.configure do
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   # Use a different cache store in production.
-  # config.cache_store = :mem_cache_store
-
-  if ENV["REDIS_URL"].present?
-    config.cache_store = :redis_cache_store, {
-      url: ENV["REDIS_URL"],
-      # Heroku Redis requiere SSL, pero con certificados auto-firmados
-      ssl_params: {verify_mode: OpenSSL::SSL::VERIFY_NONE}
-    }
-  end
+  config.cache_store = :mem_cache_store
 
   # Asegúrate de que esta línea también esté activa
   config.active_job.queue_adapter = :sidekiq
