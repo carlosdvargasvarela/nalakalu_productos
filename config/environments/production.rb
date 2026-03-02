@@ -70,12 +70,15 @@ Rails.application.configure do
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
 
-  config.cache_store = :redis_cache_store, {
-    url: ENV.fetch("REDIS_URL"),
-    ssl_params: {verify_mode: OpenSSL::SSL::VERIFY_NONE}
-  }
+  if ENV["REDIS_URL"].present?
+    config.cache_store = :redis_cache_store, {
+      url: ENV["REDIS_URL"],
+      # Heroku Redis requiere SSL, pero con certificados auto-firmados
+      ssl_params: {verify_mode: OpenSSL::SSL::VERIFY_NONE}
+    }
+  end
 
-  # Y activa el queue adapter explícito en producción también:
+  # Asegúrate de que esta línea también esté activa
   config.active_job.queue_adapter = :sidekiq
 
   # Use a real queuing backend for Active Job (and separate queues per environment).
