@@ -68,7 +68,7 @@ Rails.application.configure do
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   # Use a different cache store in production.
-  config.cache_store = :mem_cache_store
+  config.cache_store = :memory_store
 
   # Asegúrate de que esta línea también esté activa
   config.active_job.queue_adapter = :sidekiq
