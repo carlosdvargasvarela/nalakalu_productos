@@ -53,21 +53,24 @@ class ProductsController < ApplicationController
   end
 
   def import
-    unless params[:file].present?
-      redirect_to products_path, alert: "Selecciona un archivo CSV"
-      return
+    if params[:file].blank?
+      redirect_to products_path, alert: "Selecciona un archivo CSV." and return
     end
 
-    file = params[:file]
-    tmp_path = Rails.root.join("tmp", "import_products_#{Time.now.to_i}.csv")
+    # Guardar archivo temporal
+    tmp_path = Rails.root.join("tmp", "import_products_#{SecureRandom.hex(8)}.csv")
+    File.binwrite(tmp_path, params[:file].read)
 
-    # Copiar archivo de forma segura
-    FileUtils.cp(file.tempfile.path, tmp_path)
+    report = ImportProductsService.call(tmp_path.to_s)
 
-    # Encolar job
-    ImportProductsJob.perform_later(tmp_path.to_s, current_user.id)
+    if report[:errors].any?
+      flash[:alert] = "Importación con errores: #{report[:errors].first(3).join(" | ")}"
+    else
+      flash[:notice] = "✅ Importación exitosa — " \
+        "#{report[:created]} productos creados, #{report[:updated]} actualizados."
+    end
 
-    redirect_to products_path, notice: "Importación iniciada. Revisa los logs."
+    redirect_to products_path
   end
 
   private
