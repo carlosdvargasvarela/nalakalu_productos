@@ -1,28 +1,17 @@
 <div class="container-fluid py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <%= link_to "Productos", products_path, class: "text-decoration-none" %>
-      </li>
-      <li class="breadcrumb-item">
-        <%= link_to @product.name, @product, class: "text-decoration-none" %>
-      </li>
-      <li class="breadcrumb-item active fw-bold">Editar</li>
-    </ol>
-  </nav>
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h2 class="fw-bold mb-0">Editando: <span class="text-primary"><%= @product.name %></span></h2>
-      <p class="text-muted small mb-0">Código base: <code><%= @product.base_code %></code></p>
-    </div>
-    <div class="d-flex gap-2">
-      <%= link_to @product, class: "btn btn-outline-secondary rounded-pill px-4" do %>
-        <i class="bi bi-eye me-2"></i>Ver Producto
-      <% end %>
-      <%= link_to products_path, class: "btn btn-link text-muted text-decoration-none" do %>
-        <i class="bi bi-arrow-left me-1"></i>Cancelar
-      <% end %>
+      <h1 class="fw-bold mb-0">Editar Familia</h1>
+      <p class="text-muted">Modifica la información y estructura de esta familia.</p>
     </div>
   </div>
-  <%= render "form", product: @product %>
+  <%= render "form", family: @family %>
+  <div class="mt-4 d-flex justify-content-between align-items-center">
+    <%= link_to families_path, class: "btn btn-link text-decoration-none text-muted" do %>
+      <i class="bi bi-arrow-left me-2"></i>Cancelar y volver
+    <% end %>
+    <%= link_to family_path(@family), class: "btn btn-outline-primary rounded-pill px-4" do %>
+      <i class="bi bi-eye me-2"></i>Ver Familia
+    <% end %>
+  </div>
 </div>
