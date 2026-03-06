@@ -28,18 +28,25 @@ class Product < ApplicationRecord
   end
 
   def supplier_type
-    # Obtenemos los tipos de proveedores de todas las variantes posibles
-    # que este producto puede tener según sus reglas (variant_types)
-    provider_categories = Variant.where(variant_type_id: variant_types.pluck(:id))
-      .joins(:provider)
+    # Obtenemos los IDs de tipos de variantes requeridos por este producto
+    type_ids = variant_types.pluck(:id)
+    return "sin_definir" if type_ids.empty?
+
+    # Buscamos las categorías de los proveedores de las variantes asociadas
+    # Usamos .compact para eliminar los nulos (variantes sin proveedor)
+    provider_categories = Variant.where(variant_type_id: type_ids)
+      .joins("LEFT JOIN providers ON providers.id = variants.provider_id")
       .pluck("providers.category")
+      .compact
       .uniq
 
+    # Si hay variantes sin proveedor, podríamos considerarlas "internas"
+    # o simplemente ignorarlas para el cálculo del tipo de proveedor
     if provider_categories.include?("interno") && provider_categories.include?("externo")
       "mixto"
     elsif provider_categories.include?("externo")
       "externo"
-    elsif provider_categories.include?("interno")
+    elsif provider_categories.include?("interno") || provider_categories.empty?
       "interno"
     else
       "sin_definir"

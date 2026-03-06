@@ -1,4 +1,4 @@
-<%= form_with(model: variant) do |f| %>
+<%= form_with(model: variant, data: { controller: "variant-form" }) do |f| %>
   <% if variant.errors.any? %>
     <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
       <h6 class="fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</h6>
@@ -28,8 +28,9 @@
             <%= f.label :provider_id, "Proveedor", class: "form-label small fw-bold text-muted" %>
             <%= f.collection_select :provider_id,
                 Provider.where(active: true).order(:name), :id, :name,
-                { prompt: "Seleccione un proveedor..." },
+                { include_blank: "Sin proveedor (Uso interno / Genérico)" },
                 { class: "form-select border-2 shadow-none" } %>
+            <div class="form-text x-small">Opcional para materiales genéricos o internos.</div>
           </div>
           <div class="mb-0">
             <%= f.label :active, "Estado", class: "form-label small fw-bold text-muted" %>
@@ -54,33 +55,84 @@
     </div>
     <!-- Columna Principal -->
     <div class="col-lg-8">
-      <!-- Datos Básicos -->
+      <!-- Identificación de la Variante -->
       <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white py-3 border-bottom">
           <h5 class="fw-bold mb-0">
-            <i class="bi bi-pencil-square me-2 text-primary"></i>Datos de la Variante
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Identificación de la Variante
           </h5>
         </div>
         <div class="card-body p-4">
           <div class="row g-3">
+            <%# ── SECCIÓN VENDEDOR ── %>
+            <div class="col-12">
+              <p class="small fw-bold text-uppercase text-primary mb-0">
+                <i class="bi bi-person me-1"></i>Lo que ve el Vendedor
+              </p>
+            </div>
             <div class="col-md-8">
-              <%= f.label :name, "Nombre de la Variante", class: "form-label small fw-bold text-muted" %>
-              <%= f.text_field :name,
+              <%= f.label :display_name, "Nombre Comercial", class: "form-label small fw-bold text-muted" %>
+              <%= f.text_field :display_name,
                   class: "form-control border-2 shadow-none",
-                  placeholder: "Ej: Lino Gris Perla" %>
+                  placeholder: "Ej: Azul Petróleo",
+                  data: {
+                    "variant-form-target": "displayName",
+                    action: "blur->variant-form#syncName"
+                  } %>
+              <div class="form-text x-small">Este es el nombre que verá el vendedor en el generador.</div>
             </div>
             <div class="col-md-4">
-              <%= f.label :code, "Código Corto", class: "form-label small fw-bold text-muted" %>
+              <%= f.label :code, "Código Quickbooks", class: "form-label small fw-bold text-muted" %>
               <%= f.text_field :code,
                   class: "form-control border-2 font-monospace text-center fw-bold shadow-none",
-                  placeholder: "LGP" %>
-              <div class="form-text x-small">Se usará en el código final del CRM.</div>
+                  placeholder: "AZP",
+                  data: {
+                    "variant-form-target": "code",
+                    action: "blur->variant-form#syncCode"
+                  } %>
+              <div class="form-text x-small">Se usará en el código final (Ej: DAL-AZP).</div>
             </div>
-            <div class="col-md-6">
-              <%= f.label :provider_sku, "SKU del Proveedor", class: "form-label small fw-bold text-muted" %>
+            <div class="col-12">
+              <hr class="my-1 opacity-25">
+            </div>
+            <%# ── SECCIÓN COMPRA/TÉCNICA ── %>
+            <div class="col-12">
+              <p class="small fw-bold text-uppercase text-secondary mb-0">
+                <i class="bi bi-truck me-1"></i>Datos para Compra / Logística
+              </p>
+            </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <%= f.label :name, "Nombre Técnico / Compra", class: "form-label small fw-bold text-muted mb-0" %>
+                <span class="badge bg-warning text-dark d-none x-small"
+                      data-variant-form-target="nameWarning">
+                  <i class="bi bi-exclamation-triangle me-1"></i>Usando nombre comercial
+                </span>
+              </div>
+              <%= f.text_field :name,
+                  class: "form-control border-2 shadow-none",
+                  placeholder: "Ej: Lino Pesado Azul Petróleo",
+                  data: {
+                    "variant-form-target": "name",
+                    action: "input->variant-form#onNameInput"
+                  } %>
+              <div class="form-text x-small">Nombre exacto para Órdenes de Compra o Inventario.</div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <%= f.label :provider_sku, "Código Color / SKU Prov.", class: "form-label small fw-bold text-muted mb-0" %>
+                <span class="badge bg-warning text-dark d-none x-small"
+                      data-variant-form-target="skuWarning">
+                  <i class="bi bi-exclamation-triangle me-1"></i>Usando código quickbooks
+                </span>
+              </div>
               <%= f.text_field :provider_sku,
                   class: "form-control border-2 font-monospace shadow-none",
-                  placeholder: "Código interno del proveedor" %>
+                  placeholder: "Ej: COL-742",
+                  data: {
+                    "variant-form-target": "providerSku",
+                    action: "input->variant-form#onSkuInput"
+                  } %>
             </div>
             <div class="col-md-6">
               <%= f.label :cost, "Costo de Compra", class: "form-label small fw-bold text-muted" %>
@@ -90,6 +142,13 @@
                     class: "form-control border-2 shadow-none",
                     placeholder: "0.00" %>
               </div>
+            </div>
+            <div class="col-12">
+              <%= f.label :technical_description, "Notas Técnicas Internas", class: "form-label small fw-bold text-muted" %>
+              <%= f.text_area :technical_description,
+                  class: "form-control border-2 shadow-none",
+                  rows: 2,
+                  placeholder: "Detalles adicionales sobre el material, composición, etc." %>
             </div>
           </div>
         </div>
@@ -102,7 +161,6 @@
           </h5>
           <p class="text-muted small mb-0 mt-1">
             Si defines compatibilidades, esta variante <strong>solo aparecerá</strong> cuando una de las variantes marcadas haya sido seleccionada primero.
-            Si no marcas ninguna, es compatible con todo.
           </p>
         </div>
         <div class="card-body p-4">
@@ -148,9 +206,7 @@
         </div>
       </div>
     </div>
-    <%# cierra col-lg-8 %>
   </div>
-  <%# cierra row g-4 %>
 <% end %>
 <style>
   .x-small { font-size: 0.75rem; }

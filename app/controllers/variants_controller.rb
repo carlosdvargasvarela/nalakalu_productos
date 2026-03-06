@@ -1,7 +1,7 @@
 class VariantsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_variant, only: %i[ show edit update destroy ]
+  before_action :set_variant, only: %i[show edit update destroy]
 
   def index
     @variants = Variant.all.includes(:variant_type, :provider)
@@ -53,20 +53,23 @@ class VariantsController < ApplicationController
   end
 
   private
-    def set_variant
-      @variant = Variant.find(params[:id])
-    end
 
-    def variant_params
-      params.require(:variant).permit(
-        :variant_type_id,
-        :provider_id,
-        :name,
-        :code,
-        :provider_sku,
-        :cost,
-        :active,
-        compatible_variant_ids: []
-      )
-    end
+  def set_variant
+    @variant = Variant.find(params[:id])
+  end
+
+  def variant_params
+    params.require(:variant).permit(
+      :variant_type_id,
+      :provider_id,
+      :name,
+      :display_name, # Nuevo
+      :code,
+      :provider_sku,
+      :cost,
+      :active,
+      :technical_description, # Nuevo
+      compatible_variant_ids: []
+    )
+  end
 end

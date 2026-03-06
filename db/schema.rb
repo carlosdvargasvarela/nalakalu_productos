@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_02_165315) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_05_234130) do
   create_table "compatibilities", force: :cascade do |t|
     t.integer "variant_id", null: false
     t.integer "compatible_variant_id", null: false
@@ -101,7 +101,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_02_165315) do
 
   create_table "variants", force: :cascade do |t|
     t.integer "variant_type_id", null: false
-    t.integer "provider_id", null: false
+    t.integer "provider_id"
     t.string "name"
     t.string "code"
     t.string "provider_sku"
@@ -109,6 +109,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_02_165315) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "display_name"
+    t.text "technical_description"
     t.index ["provider_id"], name: "index_variants_on_provider_id"
     t.index ["variant_type_id"], name: "index_variants_on_variant_type_id"
   end
