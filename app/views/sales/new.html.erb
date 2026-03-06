@@ -1,7 +1,6 @@
 <div class="row justify-content-center">
   <div class="col-md-10 col-lg-8">
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-
       <%# HEADER %>
       <div class="p-4 text-white" style="background: linear-gradient(145deg, #0d6efd, #0a4fb4);">
         <div class="d-flex align-items-center gap-3">
@@ -15,114 +14,114 @@
           </div>
         </div>
       </div>
-
       <%# BODY %>
       <div class="card-body p-4"
            data-controller="code-generator"
            data-code-generator-search-url-value="<%= search_products_sales_path %>"
-           data-code-generator-variants-url-value="<%= variants_for_product_sales_path %>">
-
-        <%# STEP 1: Búsqueda %>
-        <section class="mb-5">
-          <h5 class="fw-bold mb-1 text-secondary">
-            <span class="badge bg-primary rounded-circle me-2" style="font-size:0.7rem;">1</span>
-            Producto Base
-          </h5>
-          <p class="text-muted small mb-3">Escribe el nombre o código del producto para buscarlo.</p>
-
-          <div class="position-relative" data-code-generator-target="searchWrapper">
-
-            <div class="input-group shadow-sm">
-              <span class="input-group-text bg-white border-end-0 border-2">
-                <i class="bi bi-search text-muted" data-code-generator-target="searchIcon"></i>
-              </span>
-              <input type="text"
+        data-code-generator-variants-url-value="<%= variants_for_product_sales_path %>">
+          <%# STEP 1: Búsqueda %>
+          <section class="mb-5">
+            <h5 class="fw-bold mb-1 text-secondary">
+              <span class="badge bg-primary rounded-circle me-2" style="font-size:0.7rem;">1</span>
+              Producto Base
+            </h5>
+            <p class="text-muted small mb-3">Escribe el nombre o código del producto para buscarlo.</p>
+            <div class="position-relative" data-code-generator-target="searchWrapper">
+              <div class="input-group shadow-sm">
+                <span class="input-group-text bg-white border-end-0 border-2">
+                  <i class="bi bi-search text-muted" data-code-generator-target="searchIcon"></i>
+                </span>
+                <input type="text"
                      class="form-control border-start-0 border-2 ps-0"
                      placeholder="Buscar producto por nombre o código..."
                      autocomplete="off"
                      data-code-generator-target="searchInput"
                      data-action="input->code-generator#onSearchInput
-                                  keydown->code-generator#onSearchKeydown
-                                  focus->code-generator#onSearchFocus">
-            </div>
-
-            <div class="position-absolute w-100 z-3 d-none"
+                keydown->code-generator#onSearchKeydown
+                focus->code-generator#onSearchFocus">
+              </div>
+              <div class="position-absolute w-100 z-3 d-none"
                  data-code-generator-target="searchDropdown"
                  style="top: calc(100% + 4px);">
-              <div class="card border-0 shadow rounded-3 overflow-hidden">
-                <div class="list-group list-group-flush"
+                <div class="card border-0 shadow rounded-3 overflow-hidden">
+                  <div class="list-group list-group-flush"
                      data-code-generator-target="searchResults">
+                  </div>
                 </div>
               </div>
             </div>
-
-          </div>
-
-          <%# Chip de producto seleccionado %>
-          <div class="d-none mt-3" data-code-generator-target="selectedProduct">
-            <div class="d-flex align-items-center gap-2 bg-primary-subtle border border-primary rounded-3 px-3 py-2">
-              <i class="bi bi-box-seam text-primary"></i>
-              <div class="flex-grow-1">
-                <span class="fw-bold text-primary" data-code-generator-target="selectedProductName"></span>
-                <code class="ms-2 text-muted small" data-code-generator-target="selectedProductCode"></code>
-              </div>
-              <button type="button"
+            <%# Chip de producto seleccionado %>
+            <div class="d-none mt-3" data-code-generator-target="selectedProduct">
+              <div class="d-flex align-items-center gap-2 bg-primary-subtle border border-primary rounded-3 px-3 py-2">
+                <i class="bi bi-box-seam text-primary"></i>
+                <div class="flex-grow-1">
+                  <span class="fw-bold text-primary" data-code-generator-target="selectedProductName"></span>
+                  <code class="ms-2 text-muted small" data-code-generator-target="selectedProductCode"></code>
+                </div>
+                <button type="button"
                       class="btn btn-sm btn-link text-muted p-0"
                       data-action="click->code-generator#clearProduct"
-                      title="Cambiar producto">
-                <i class="bi bi-pencil-square"></i>
-              </button>
+                  title="Cambiar producto">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
-
-        <%# STEP 2: Variantes %>
-        <section class="mb-5">
-          <h5 class="fw-bold mb-1 text-secondary">
-            <span class="badge bg-primary rounded-circle me-2" style="font-size:0.7rem;">2</span>
-            Variantes
-          </h5>
-          <p class="text-muted small mb-3">Seleccione las opciones disponibles para este producto.</p>
-
-          <div data-code-generator-target="variantsContainer">
-            <div class="text-muted small p-3 border rounded-3 bg-light text-center">
-              <i class="bi bi-arrow-up-circle me-1"></i>
-              Seleccione un producto primero.
+          </section>
+          <%# STEP 2: Variantes %>
+          <section class="mb-5">
+            <h5 class="fw-bold mb-1 text-secondary">
+              <span class="badge bg-primary rounded-circle me-2" style="font-size:0.7rem;">2</span>
+              Variantes
+            </h5>
+            <p class="text-muted small mb-3">Seleccione las opciones disponibles para este producto.</p>
+            <div data-code-generator-target="variantsContainer">
+              <div class="text-muted small p-3 border rounded-3 bg-light text-center">
+                <i class="bi bi-arrow-up-circle me-1"></i>
+                Seleccione un producto primero.
+              </div>
             </div>
-          </div>
-        </section>
-
-        <%# STEP 3: Código generado %>
-        <section>
-          <h5 class="fw-bold mb-1 text-secondary">
-            <span class="badge bg-primary rounded-circle me-2" style="font-size:0.7rem;">3</span>
-            Código Generado
-          </h5>
-          <p class="text-muted small mb-3">Este es el código para ingresar en el CRM.</p>
-
-          <div class="card bg-light border-0 shadow-sm rounded-4 p-4">
-            <textarea class="font-monospace fs-5 fw-bold text-center text-dark bg-white rounded-3 border p-3 mb-3 w-100"
+            <%# Checkbox Stock de sala %>
+            <div class="mt-3">
+              <div class="d-flex align-items-center gap-3 bg-warning-subtle border border-warning rounded-3 px-3 py-2">
+                <input class="form-check-input ms-0 fs-5 flex-shrink-0"
+                     type="checkbox"
+                     role="switch"
+                     id="stockSala"
+                     data-code-generator-target="stockSala"
+                     data-action="change->code-generator#updateResult">
+                <label class="form-check-label fw-semibold text-warning-emphasis mb-0" for="stockSala">
+                  <i class="bi bi-shop me-1"></i>Stock de sala
+                </label>
+              </div>
+            </div>
+          </section>
+          <%# STEP 3: Código generado %>
+          <section>
+            <h5 class="fw-bold mb-1 text-secondary">
+              <span class="badge bg-primary rounded-circle me-2" style="font-size:0.7rem;">3</span>
+              Código Generado
+            </h5>
+            <p class="text-muted small mb-3">Este es el código para ingresar en el CRM.</p>
+            <div class="card bg-light border-0 shadow-sm rounded-4 p-4">
+              <textarea class="font-monospace fs-5 fw-bold text-center text-dark bg-white rounded-3 border p-3 mb-3 w-100"
                       rows="3"
                       readonly
                       style="letter-spacing: 0.08em; resize: none;"
                       placeholder="Esperando configuración..."
                       data-code-generator-target="result"></textarea>
-
-            <div class="alert alert-warning d-none py-2 small mb-3"
+              <div class="alert alert-warning d-none py-2 small mb-3"
                  data-code-generator-target="lineWarning"></div>
-
-            <div class="text-center">
-              <button class="btn btn-primary btn-lg px-5 shadow-sm fw-bold rounded-pill"
+              <div class="text-center">
+                <button class="btn btn-primary btn-lg px-5 shadow-sm fw-bold rounded-pill"
                       data-action="click->code-generator#copy"
-                      disabled
-                      data-code-generator-target="copyButton">
-                <i class="bi bi-clipboard-check me-2"></i>Copiar código
-              </button>
+                  disabled
+                  data-code-generator-target="copyButton">
+                  <i class="bi bi-clipboard-check me-2"></i>Copiar código
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
-
+          </section>
+        </div>
       </div>
     </div>
   </div>
-</div>

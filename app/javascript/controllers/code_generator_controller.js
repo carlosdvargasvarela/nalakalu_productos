@@ -14,6 +14,7 @@ export default class extends Controller {
     "result",
     "copyButton",
     "lineWarning",
+    "stockSala",
   ];
 
   static values = {
@@ -140,7 +141,7 @@ export default class extends Controller {
     fetch(`${this.variantsUrlValue}?product_id=${productId}`)
       .then((res) => res.json())
       .then((data) => {
-        this.baseCode = data.base_code; // se mantiene por si luego lo necesitan, pero NO se usa en el generado
+        this.baseCode = data.base_code;
         this.rules = data.rules;
         this.selections = {};
         this.selections_ids = {};
@@ -179,7 +180,7 @@ export default class extends Controller {
 
       const labelText = rule.variant_type_name;
       const requiredMark = rule.required
-        ? '<span class="text-danger">*</span>'
+        ? '<span class="text-danger"></span>'
         : "";
 
       wrapper.innerHTML = `
@@ -258,7 +259,7 @@ export default class extends Controller {
     });
   }
 
-  // ─── GENERACIÓN DE CÓDIGO (WRAP POR VARIANTE, NO POR CARACTERES) ─────────────
+  // ─── GENERACIÓN DE CÓDIGO ────────────────────────────────────────────────────
 
   labelPrefix(rule) {
     if (!rule?.label) return "";
@@ -268,8 +269,6 @@ export default class extends Controller {
   }
 
   buildSegments() {
-    // Cada segmento representa UNA variante completa: "TEL ABC123"
-    // (sin separador al inicio; el separador se maneja al unir segmentos)
     const segments = [];
 
     this.rules.forEach((rule) => {
@@ -279,23 +278,27 @@ export default class extends Controller {
       const prefix = this.labelPrefix(rule);
       segments.push({
         text: `${prefix}${part}`,
-        separator: rule.separator || "-", // separador entre segmentos
+        separator: rule.separator || "-",
       });
     });
+
+    // Stock de sala al final (si el checkbox está marcado)
+    if (this.hasStockSalaTarget && this.stockSalaTarget.checked) {
+      segments.push({
+        text: "Stock de sala",
+        separator: "-",
+      });
+    }
 
     return segments;
   }
 
   wrapSegments(segments, maxChars = 30, maxLines = 5) {
-    // Une segmentos completos en líneas sin partirlos.
-    // Si un segmento NO cabe en la línea actual, pasa a la siguiente línea.
-    // Nota: si un segmento por sí solo supera maxChars, se coloca igual (no se corta).
     const lines = [];
     let current = "";
 
     segments.forEach((seg, index) => {
       if (index === 0) {
-        // primer segmento sin separador previo
         current = seg.text;
         return;
       }
@@ -309,7 +312,6 @@ export default class extends Controller {
       } else if (candidate.length <= maxChars) {
         current = candidate;
       } else {
-        // No cabe: cerramos línea actual y empezamos nueva con el segmento completo
         lines.push(current);
         current = seg.text;
       }
@@ -389,5 +391,6 @@ export default class extends Controller {
     this.copyButtonTarget.disabled = true;
     if (this.hasLineWarningTarget)
       this.lineWarningTarget.classList.add("d-none");
+    if (this.hasStockSalaTarget) this.stockSalaTarget.checked = false;
   }
 }
