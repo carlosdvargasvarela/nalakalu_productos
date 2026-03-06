@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   resources :sales, only: [:new] do
     collection do
       get :variants_for_product
+      get :search_products
     end
   end
 
