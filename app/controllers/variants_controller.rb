@@ -17,6 +17,25 @@ class VariantsController < ApplicationController
   def edit
   end
 
+  def import
+    file = params[:file]
+
+    if file.blank?
+      redirect_to variants_path, alert: "Por favor, selecciona un archivo CSV."
+      return
+    end
+
+    result = ImportVariantsService.call(file.path)
+
+    if result[:success]
+      notice = "Importación exitosa: #{result[:created]} creados, #{result[:updated]} actualizados."
+      redirect_to variants_path, notice: notice
+    else
+      alert = "Importación con errores: #{result[:errors].join(", ")}"
+      redirect_to variants_path, alert: alert
+    end
+  end
+
   def create
     @variant = Variant.new(variant_params)
 
@@ -63,12 +82,12 @@ class VariantsController < ApplicationController
       :variant_type_id,
       :provider_id,
       :name,
-      :display_name, # Nuevo
+      :display_name,
       :code,
       :provider_sku,
       :cost,
       :active,
-      :technical_description, # Nuevo
+      :technical_description,
       compatible_variant_ids: []
     )
   end

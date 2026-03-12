@@ -6,24 +6,19 @@ module CsvImportHelper
     errors = []
 
     begin
-      # Leer con encoding UTF-8 con BOM
       content = File.read(file_path, encoding: "bom|utf-8")
 
       CSV.parse(content, headers: true, skip_blanks: true).each do |row|
         normalized_row = {}
-
         row.to_h.each do |key, value|
-          # Normalizar header: minúsculas, sin acentos, snake_case
           header = normalize_header(key.to_s)
           normalized_row[header] = value.to_s.strip
         end
-
         rows << normalized_row
       end
 
       {rows: rows, errors: errors}
     rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
-      # Intentar con ISO-8859-1
       begin
         content = File.read(file_path, encoding: "ISO-8859-1").encode("UTF-8")
         CSV.parse(content, headers: true, skip_blanks: true).each do |row|
@@ -46,11 +41,10 @@ module CsvImportHelper
   end
 
   def self.normalize_header(header)
-    # Convertir "Código Base" -> "codigo_base"
     header = header.downcase.strip
-    header = I18n.transliterate(header) # Quita acentos
-    header = header.gsub(/\s+/, "_")    # Espacios a guiones bajos
-    header.gsub(/[^a-z0-9_]/, "") # Solo letras, números y _
+    header = I18n.transliterate(header)
+    header = header.gsub(/\s+/, "_")
+    header.gsub(/[^a-z0-9_]/, "")
   end
 
   def self.validate_headers(actual_headers, required_headers)
@@ -77,5 +71,15 @@ module CsvImportHelper
     BigDecimal(value.to_s.tr(",", "."))
   rescue ArgumentError
     nil
+  end
+
+  def self.generate_report(total:, created:, updated:, errors:)
+    {
+      total: total,
+      created: created,
+      updated: updated,
+      errors: errors,
+      success: errors.empty?
+    }
   end
 end

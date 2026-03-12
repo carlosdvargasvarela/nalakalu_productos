@@ -1,21 +1,12 @@
 <div class="container-fluid py-4">
-  <% if notice %>
-    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
-      <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <% end %>
-  <!-- HEADER -->
+  <!-- HEADER (Igual al anterior pero con breadcrumbs limpios) -->
   <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body p-4">
       <div class="row align-items-center">
-        <!-- Left -->
         <div class="col-md-8">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
-              <li class="breadcrumb-item">
-                <%= link_to "Proveedores", providers_path, class: "text-decoration-none" %>
-              </li>
+              <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
               <li class="breadcrumb-item active fw-bold"><%= @provider.name %></li>
             </ol>
           </nav>
@@ -36,17 +27,10 @@
             </div>
           </div>
         </div>
-        <!-- Right -->
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
           <div class="d-flex justify-content-md-end gap-2">
-            <%= link_to edit_provider_path(@provider),
-                class: "btn btn-outline-primary rounded-pill px-4 shadow-sm" do %>
-              <i class="bi bi-pencil-square me-2"></i>Editar
-            <% end %>
-            <%= button_to @provider, method: :delete,
-                class: "btn btn-outline-danger rounded-circle p-2",
-                form: { data: { turbo_confirm: "¿Eliminar este proveedor? Debe no tener variantes asignadas." } } do %>
-              <i class="bi bi-trash"></i>
+            <%= link_to edit_provider_path(@provider), class: "btn btn-outline-primary rounded-pill px-4 shadow-sm" do %>
+              <i class="bi bi-pencil-square me-2"></i>Editar Datos
             <% end %>
           </div>
         </div>
@@ -56,96 +40,44 @@
   <div class="row g-4">
     <!-- CONTACT CARD -->
     <div class="col-lg-4">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
         <div class="card-header bg-white py-3 border-bottom">
-          <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Contacto</h5>
+          <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Información de Contacto</h5>
         </div>
-        <div class="list-group list-group-flush rounded-4">
-          <div class="list-group-item px-4 py-3">
-            <div class="small text-muted fw-bold mb-1">Persona de Contacto</div>
-            <div><%= @provider.contact_name.presence || "—" %></div>
-          </div>
-          <div class="list-group-item px-4 py-3">
-            <div class="small text-muted fw-bold mb-1">Email</div>
-            <%= @provider.email.present? ? mail_to(@provider.email) : "—" %>
-          </div>
-          <div class="list-group-item px-4 py-3">
-            <div class="small text-muted fw-bold mb-1">Teléfono</div>
-            <div><%= @provider.phone.presence || "—" %></div>
-          </div>
-          <% if @provider.notes.present? %>
-            <div class="list-group-item px-4 py-3">
-              <div class="small text-muted fw-bold mb-1">Notas</div>
-              <div class="text-muted small"><%= @provider.notes %></div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <div class="list-group-item px-4 py-3 border-0">
+              <div class="small text-muted fw-bold mb-1">Persona de Contacto</div>
+              <div class="fw-semibold"><%= @provider.contact_name.presence || "—" %></div>
             </div>
-          <% end %>
+            <div class="list-group-item px-4 py-3 border-0">
+              <div class="small text-muted fw-bold mb-1">Email</div>
+              <%= @provider.email.present? ? mail_to(@provider.email, nil, class: "text-primary text-decoration-none") : "—" %>
+            </div>
+            <div class="list-group-item px-4 py-3 border-0">
+              <div class="small text-muted fw-bold mb-1">Teléfono</div>
+              <div><%= @provider.phone.presence || "—" %></div>
+            </div>
+            <% if @provider.notes.present? %>
+              <div class="list-group-item px-4 py-3 border-0">
+                <div class="small text-muted fw-bold mb-1">Notas Internas</div>
+                <div class="text-muted small"><%= @provider.notes %></div>
+              </div>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>
-    <!-- VARIANTS LIST -->
+    <!-- PANEL DE GESTIÓN DE VARIANTES (Lógica similar a Familias) -->
     <div class="col-lg-8">
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-          <h5 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Variantes Suministradas</h5>
-          <%= link_to edit_provider_path(@provider),
-              class: "btn btn-sm btn-outline-primary rounded-pill px-3" do %>
-            <i class="bi bi-pencil me-1"></i>Gestionar Variantes
-          <% end %>
+      <div class="row g-4">
+        <!-- Variantes Asignadas -->
+        <div class="col-12">
+          <%= render "assigned_variants", provider: @provider %>
         </div>
-        <div class="card-body p-0">
-          <% if @provider.variants.any? %>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                  <tr>
-                    <th class="ps-4 small text-muted text-uppercase">Tipo</th>
-                    <th class="small text-muted text-uppercase">Nombre</th>
-                    <th class="small text-muted text-uppercase">Código</th>
-                    <th class="small text-muted text-uppercase">SKU</th>
-                    <th class="small text-muted text-uppercase text-end pe-4">Costo</th>
-                    <th class="small text-muted text-uppercase text-center">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% @provider.variants.includes(:variant_type).order("variant_types.name, variants.name").each do |v| %>
-                    <tr>
-                      <td class="ps-4">
-                        <span class="badge bg-light text-dark border rounded-pill px-3">
-                          <%= v.variant_type.name %>
-                        </span>
-                      </td>
-                      <td class="fw-bold"><%= link_to v.name, v, class: "text-decoration-none text-dark" %></td>
-                      <td><code class="bg-light px-2 py-1 rounded text-primary"><%= v.code %></code></td>
-                      <td class="small text-muted font-monospace">
-                        <%= v.provider_sku.presence || "—" %>
-                      </td>
-                      <td class="text-end pe-4">
-                        <% if v.cost.present? %>
-                          <span class="fw-bold"><%= number_to_currency(v.cost, unit: "$") %></span>
-                        <% else %>
-                          <span class="text-muted">—</span>
-                        <% end %>
-                      </td>
-                      <td class="text-center">
-                        <span class="badge <%= v.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
-                          <%= v.active ? "Activa" : "Inactiva" %>
-                        </span>
-                      </td>
-                    </tr>
-                  <% end %>
-                </tbody>
-              </table>
-            </div>
-          <% else %>
-            <div class="text-center py-5 text-muted">
-              <i class="bi bi-box-seam fs-1 opacity-25 d-block mb-2"></i>
-              <p class="mb-1">Este proveedor aún no tiene variantes.</p>
-              <%= link_to edit_provider_path(@provider),
-                  class: "btn btn-outline-primary btn-sm rounded-pill mt-2" do %>
-                <i class="bi bi-plus-lg me-1"></i>Agregar Variantes
-              <% end %>
-            </div>
-          <% end %>
+        <!-- Asignador Masivo (Variantes sin proveedor) -->
+        <div class="col-12">
+          <%= render "bulk_assigner", provider: @provider %>
         </div>
       </div>
     </div>

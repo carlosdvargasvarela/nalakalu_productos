@@ -16,6 +16,10 @@ Rails.application.routes.draw do
   end
 
   resources :providers do
+    member do
+      post :assign_variant
+      delete :unassign_variant
+    end
     collection do
       post :import
     end
@@ -27,7 +31,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :variants
+  resources :variants do
+    collection do
+      post :import
+    end
+  end
 
   resources :products do
     collection do

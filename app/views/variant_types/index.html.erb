@@ -83,32 +83,32 @@
         </div>
       </div>
     </div>
-    <!-- Importador CSV -->
-    <div class="card border-0 shadow-sm rounded-4 border-start border-info border-4">
-      <div class="card-body p-4">
-        <div class="row align-items-center">
-          <div class="col-md-8">
-            <h5 class="fw-bold mb-1">
-              <i class="bi bi-file-earmark-spreadsheet text-info me-2"></i>Importación Masiva
-            </h5>
-            <p class="text-muted small mb-0">
-              Formato CSV esperado: <code class="bg-light px-2 py-1 rounded">Nombre</code>
-            </p>
-          </div>
-          <div class="col-md-4 mt-3 mt-md-0">
-            <%= form_with url: import_variant_types_path, multipart: true, local: true do |f| %>
-              <div class="input-group shadow-sm">
-                <%= f.file_field :file, class: "form-control rounded-start-pill small", accept: ".csv" %>
-                <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
-                  <i class="bi bi-cloud-upload me-1"></i>Importar
-                </button>
-              </div>
-            <% end %>
-          </div>
+  <% end %>
+  <!-- Importador CSV -->
+  <div class="card border-0 shadow-sm rounded-4 border-start border-info border-4">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="fw-bold mb-1">
+            <i class="bi bi-file-earmark-spreadsheet text-info me-2"></i>Importación Masiva
+          </h5>
+          <p class="text-muted small mb-0">
+            Formato CSV esperado: <code class="bg-light px-2 py-1 rounded">Nombre</code>
+          </p>
+        </div>
+        <div class="col-md-4 mt-3 mt-md-0">
+          <%= form_with url: import_variant_types_path, multipart: true, local: true do |f| %>
+            <div class="input-group shadow-sm">
+              <%= f.file_field :file, class: "form-control rounded-start-pill small", accept: ".csv" %>
+              <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
+                <i class="bi bi-cloud-upload me-1"></i>Importar
+              </button>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
-  <% end %>
+  </div>
 </div>
 <style>
   .bg-success-soft { background-color: #e1f6eb; }

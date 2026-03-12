@@ -67,6 +67,32 @@ class ProvidersController < ApplicationController
     redirect_to providers_path, notice: "Importación de proveedores iniciada."
   end
 
+  def assign_variant
+    @provider = Provider.find(params[:id])
+    variant = Variant.find(params[:variant_id])
+
+    if variant.provider_id.present? && variant.provider_id != @provider.id
+      redirect_to @provider, alert: "Esta variante ya está asignada a otro proveedor."
+      return
+    end
+
+    variant.update(provider: @provider)
+    redirect_to @provider, notice: "Variante asignada correctamente."
+  end
+
+  def unassign_variant
+    @provider = Provider.find(params[:id])
+    variant = Variant.find(params[:variant_id])
+
+    if variant.provider_id != @provider.id
+      redirect_to @provider, alert: "La variante no pertenece a este proveedor."
+      return
+    end
+
+    variant.update(provider: nil)
+    redirect_to @provider, notice: "Variante desvinculada correctamente."
+  end
+
   private
 
   def set_provider

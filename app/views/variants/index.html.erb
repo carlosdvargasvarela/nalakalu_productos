@@ -101,6 +101,43 @@
       </div>
     </div>
   <% end %>
+  <!-- Importador CSV -->
+  <div class="card border-0 shadow-sm rounded-4 border-start border-4 mt-4" style="border-color: #7c3aed !important;">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="fw-bold mb-1">
+            <i class="bi bi-file-earmark-spreadsheet me-2" style="color: #7c3aed;"></i>Importación Masiva
+          </h5>
+          <p class="text-muted small mb-1">
+            Columnas del CSV:
+            <code class="bg-light px-1 rounded">tipo_de_variante</code>
+            <code class="bg-light px-1 rounded">nombre</code>
+            <code class="bg-light px-1 rounded">codigo</code>
+            <span class="text-muted">(requeridos)</span>
+          </p>
+          <p class="text-muted small mb-0">
+            Opcionales:
+            <code class="bg-light px-1 rounded">proveedor</code>
+            <code class="bg-light px-1 rounded">sku_proveedor</code>
+            <code class="bg-light px-1 rounded">costo</code>
+          </p>
+        </div>
+        <div class="col-md-4 mt-3 mt-md-0">
+          <%= form_with url: import_variants_path, multipart: true, local: true do |f| %>
+            <div class="input-group shadow-sm">
+              <%= f.file_field :file, class: "form-control rounded-start-pill small", accept: ".csv" %>
+              <button class="btn text-white rounded-end-pill fw-bold px-3"
+                    style="background-color: #7c3aed;"
+                    type="submit">
+                <i class="bi bi-cloud-upload me-1"></i>Importar
+              </button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <style>
   .bg-success-soft { background-color: #e1f6eb; }
