@@ -1,21 +1,17 @@
+# app/jobs/import_variants_job.rb
 class ImportVariantsJob < ApplicationJob
   queue_as :imports
 
-  def perform(file_path, user_id = nil)
-    Rails.logger.info "🚀 Iniciando importación de VARIANTES: #{file_path}"
+  def perform(csv_content, user_id = nil)
+    Rails.logger.info "🚀 Iniciando importación de VARIANTES"
 
-    report = ImportVariantsService.call(file_path)
-
-    Rails.logger.info "✅ Importación de Variantes completada: #{report.inspect}"
-
-    if user_id
-      user = User.find_by(id: user_id)
-      Rails.logger.info "👤 Ejecutada por: #{user&.email}"
+    Tempfile.create(["import_variants", ".csv"]) do |file|
+      file.write(csv_content)
+      file.rewind
+      report = ImportVariantsService.call(file.path)
+      Rails.logger.info "✅ Importación de Variantes completada: #{report.inspect}"
     end
-  ensure
-    if file_path.start_with?(Rails.root.join("tmp").to_s) && File.exist?(file_path)
-      File.delete(file_path)
-      Rails.logger.info "🗑️ Archivo temporal de variantes eliminado"
-    end
+
+    Rails.logger.info "👤 Ejecutada por: #{User.find_by(id: user_id)&.email}" if user_id
   end
 end

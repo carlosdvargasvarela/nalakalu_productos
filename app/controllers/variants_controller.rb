@@ -25,7 +25,8 @@ class VariantsController < ApplicationController
       return
     end
 
-    result = ImportVariantsService.call(file.path)
+    # Aquí sí podés leer directo del tempfile
+    result = ImportVariantsService.call(file.tempfile.path)
 
     if result[:success]
       notice = "Importación exitosa: #{result[:created]} creados, #{result[:updated]} actualizados."

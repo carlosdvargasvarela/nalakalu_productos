@@ -58,13 +58,9 @@ class VariantTypesController < ApplicationController
       return
     end
 
-    file = params[:file]
-    tmp_path = Rails.root.join("tmp", "import_variant_types_#{Time.now.to_i}.csv")
+    csv_content = params[:file].read
+    ImportVariantTypesJob.perform_later(csv_content, current_user.id)
 
-    # Cambio a copia segura
-    FileUtils.cp(file.tempfile.path, tmp_path)
-
-    ImportVariantTypesJob.perform_later(tmp_path.to_s, current_user.id)
     redirect_to variant_types_path, notice: "Importación de tipos de variante iniciada."
   end
 
