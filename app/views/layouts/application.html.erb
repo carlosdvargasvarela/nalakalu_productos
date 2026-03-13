@@ -16,6 +16,8 @@
       <%= render "layouts/flash_messages" %>
       <%= yield %>
     </main>
+    <%# Contenedor para modales dinámicos %>
+    <%= turbo_frame_tag "remote_modal" %>
     <%= render "layouts/footer" %>
   </body>
 </html>

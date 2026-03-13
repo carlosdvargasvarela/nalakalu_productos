@@ -133,7 +133,11 @@
                                   </div>
                                   <div class="text-end border-start ps-3 ms-2">
                                     <span class="fw-bold text-primary d-block small">
-                                      <%= variant.provider.name %>
+                                      <% if variant.provider.present? %>
+                                        <%= variant.provider.name %>
+                                      <% else %>
+                                        <span class="text-muted italic">Interno / Sin asignar</span>
+                                      <% end %>
                                     </span>
                                     <span class="text-muted" style="font-size: 0.7rem;">Proveedor</span>
                                   </div>

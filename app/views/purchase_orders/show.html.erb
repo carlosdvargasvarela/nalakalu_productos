@@ -1,0 +1,157 @@
+<div class="container mt-4 pb-5">
+  <!-- Acciones (no se imprimen) -->
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <%= link_to purchase_orders_path, class: "btn btn-outline-secondary rounded-pill px-4 shadow-sm" do %>
+      <i class="bi bi-arrow-left me-1"></i> Volver al listado
+    <% end %>
+    <div class="d-flex gap-2">
+      <% if @purchase_order.status == "borrador" %>
+        <%= link_to edit_purchase_order_path(@purchase_order), class: "btn btn-outline-primary rounded-pill px-4 shadow-sm" do %>
+          <i class="bi bi-pencil me-1"></i> Editar
+        <% end %>
+      <% end %>
+      <button onclick="window.print();" class="btn btn-dark rounded-pill px-4 shadow-sm">
+        <i class="bi bi-printer me-2"></i> Imprimir OC
+      </button>
+    </div>
+  </div>
+  <!-- Cabecera de la OC (estilo PDF) -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-4">
+      <div class="row align-items-start">
+        <div class="col-md-6">
+          <h2 class="fw-bold mb-1">Orden de Compra</h2>
+          <table class="table table-sm table-borderless mb-0" style="width: auto;">
+            <tr>
+              <td class="text-muted pe-3">Número:</td>
+              <td class="fw-bold font-monospace"><%= @purchase_order.number %></td>
+            </tr>
+            <tr>
+              <td class="text-muted pe-3">Fecha:</td>
+              <td><%= @purchase_order.issued_date&.strftime("%d/%m/%Y") %></td>
+            </tr>
+            <tr>
+              <td class="text-muted pe-3">Estado:</td>
+              <td>
+                <%
+                  badge = case @purchase_order.status
+                          when "borrador"   then "bg-warning text-dark"
+                          when "enviado"    then "bg-info text-dark"
+                          when "confirmado" then "bg-primary"
+                          when "recibido"   then "bg-success"
+                          when "cancelado"  then "bg-danger"
+                          else "bg-secondary"
+                          end
+                %>
+                <span class="badge <%= badge %>"><%= @purchase_order.status.capitalize %></span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <div class="fw-bold fs-5">Nalakalú Solutions S.A.</div>
+          <div class="text-muted small">3-101-477431</div>
+          <div class="text-muted small">800m este de Concrepal</div>
+          <div class="text-muted small">Buenos Aires, Palmares, Alajuela</div>
+          <div class="text-muted small">Tel. +(506) 2453-8003</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Proveedor y Envío -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-light fw-bold small text-uppercase text-muted">Proveedor</div>
+        <div class="card-body">
+          <div class="fw-bold fs-5"><%= @purchase_order.provider.name %></div>
+          <% if @purchase_order.provider.contact_name.present? %>
+            <div class="text-muted"><%= @purchase_order.provider.contact_name %></div>
+          <% end %>
+          <% if @purchase_order.provider.email.present? %>
+            <div class="small"><i class="bi bi-envelope me-1"></i><%= @purchase_order.provider.email %></div>
+          <% end %>
+          <% if @purchase_order.provider.phone.present? %>
+            <div class="small"><i class="bi bi-telephone me-1"></i><%= @purchase_order.provider.phone %></div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-light fw-bold small text-uppercase text-muted">Enviar a</div>
+        <div class="card-body">
+          <div class="fw-bold">NALAKALU SOLUTIONS S.A.</div>
+          <div class="text-muted small">800mts Este de Concrepal</div>
+          <div class="text-muted small">Céd. Jurídica: 3-101-477431</div>
+          <% if @purchase_order.delivery_deadline.present? %>
+            <div class="mt-2 small">
+              <span class="text-muted">Fecha Máx. Entrega:</span>
+              <strong><%= @purchase_order.delivery_deadline.strftime("%d/%m/%Y") %></strong>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Tabla de Items (igual al PDF) -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-dark text-white">
+          <tr>
+            <th class="ps-4 py-3">Código</th>
+            <th class="py-3">Descripción</th>
+            <th class="py-3 text-center">Cantidad</th>
+            <th class="py-3 text-center">U/M</th>
+            <th class="py-3 text-end">Valor Unit.</th>
+            <th class="py-3 text-end pe-4">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @purchase_order.purchase_order_items.each do |item| %>
+            <tr class="border-bottom">
+              <td class="ps-4">
+                <code class="small"><%= item.variant.code %></code>
+              </td>
+              <td>
+                <div class="fw-semibold"><%= item.description_override.presence || item.variant.purchase_name %></div>
+                <small class="text-muted"><%= item.variant.variant_type.name %></small>
+              </td>
+              <td class="text-center fw-bold"><%= item.quantity.to_f %></td>
+              <td class="text-center">
+                <span class="badge bg-secondary-subtle text-secondary border">
+                  <%= item.unit.upcase %>
+                </span>
+              </td>
+              <td class="text-end">₡<%= number_with_delimiter(item.unit_cost.to_f, delimiter: ".") %></td>
+              <td class="text-end pe-4 fw-bold">₡<%= number_with_delimiter(item.total.to_f, delimiter: ".") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <td colspan="5" class="text-end fw-bold py-3 pe-3">TOTAL ORDEN:</td>
+            <td class="text-end pe-4 fw-bold fs-5 text-primary py-3">
+              ₡<%= number_with_delimiter(@purchase_order.total_amount.to_f, delimiter: ".") %>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+  <!-- Notas -->
+  <% if @purchase_order.notes.present? %>
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-light fw-bold small text-uppercase text-muted">Notas</div>
+      <div class="card-body text-muted"><%= @purchase_order.notes %></div>
+    </div>
+  <% end %>
+</div>
+<style>
+  @media print {
+    .no-print { display: none !important; }
+    .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+    body { font-size: 13px; }
+  }
+</style>

@@ -5,6 +5,10 @@ class Variant < ApplicationRecord
   validates :name, :code, presence: true
   validates :code, uniqueness: {scope: :variant_type_id, message: "ya existe para este tipo de variante"}
 
+  # Variantes relacionadas para precios alternativos
+  has_many :variant_pricings, dependent: :destroy
+  accepts_nested_attributes_for :variant_pricings, allow_destroy: true
+
   # Relación de compatibilidad
   has_many :compatibilities, dependent: :destroy
   has_many :compatible_variants, through: :compatibilities, source: :compatible_variant
@@ -27,6 +31,11 @@ class Variant < ApplicationRecord
   def compatible_with?(other_variant)
     return true if compatible_variants.empty?
     compatible_variants.include?(other_variant)
+  end
+
+  # Helper para obtener el precio por defecto o el primero disponible
+  def default_pricing
+    variant_pricings.find_by(is_default: true) || variant_pricings.first
   end
 
   private

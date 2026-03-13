@@ -1,0 +1,46 @@
+<div class="container-fluid mt-4 pb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0">
+        <i class="bi bi-file-earmark-text text-primary me-2"></i>
+        Órdenes de Compra
+      </h1>
+      <p class="text-muted small mb-0">Borradores y órdenes emitidas a proveedores.</p>
+    </div>
+  </div>
+  <div class="card border-0 shadow-sm overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-dark text-white">
+          <tr>
+            <th class="ps-4 py-3 fw-medium">N° OC</th>
+            <th class="py-3 fw-medium">Proveedor</th>
+            <th class="py-3 fw-medium">Fecha Emisión</th>
+            <th class="py-3 fw-medium">Fecha Máx. Entrega</th>
+            <th class="py-3 fw-medium text-center">Estado</th>
+            <th class="py-3 fw-medium text-end pe-4">Total</th>
+            <th class="py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if @purchase_orders.any? %>
+            <% @purchase_orders.each do |po| %>
+              <%= render "row", po: po %>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-file-earmark-x display-1 text-light d-block mb-3"></i>
+                <h5 class="text-muted">No hay órdenes de compra aún</h5>
+                <p class="text-muted small">Generá una desde el detalle de una entrega logística.</p>
+                <%= link_to logistics_queries_path, class: "btn btn-outline-primary mt-2" do %>
+                  <i class="bi bi-connector-cascade me-1"></i> Ir a Logística
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

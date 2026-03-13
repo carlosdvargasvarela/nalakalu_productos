@@ -4,9 +4,22 @@
     <span>Generar Código</span>
   <% end %>
 </li>
+
 <li class="nav-item">
   <%= link_to logistics_queries_path, class: "nav-link d-flex align-items-center gap-1 #{'active' if controller_name == 'logistics_queries'}" do %>
-    <i class="bi bi-search"></i>
-    <span>Consultar Logística</span>
+    <i class="bi bi-truck"></i>
+    <span>Logística</span>
+  <% end %>
+</li>
+
+<li class="nav-item">
+  <%= link_to purchase_orders_path, class: "nav-link d-flex align-items-center gap-1 #{'active' if controller_name == 'purchase_orders'}" do %>
+    <i class="bi bi-file-earmark-text"></i>
+    <span>Órdenes de Compra</span>
+    <%# Opcional: Badge de borradores pendientes %>
+    <% draft_count = PurchaseOrder.where(status: 'borrador').count %>
+    <% if draft_count > 0 %>
+      <span class="badge rounded-pill bg-danger ms-1" style="font-size: 0.6rem;"><%= draft_count %></span>
+    <% end %>
   <% end %>
 </li>

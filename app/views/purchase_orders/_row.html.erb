@@ -1,0 +1,61 @@
+<%# app/views/purchase_orders/_row.html.erb %>
+<%
+  status_badge = case po.status
+                 when "borrador"   then "bg-warning text-dark"
+                 when "enviado"    then "bg-info text-dark"
+                 when "confirmado" then "bg-primary"
+                 when "recibido"   then "bg-success"
+                 when "cancelado"  then "bg-danger"
+                 else "bg-secondary"
+                 end
+%>
+<tr id="purchase_order_<%= po.id %>">
+  <td class="ps-4">
+    <span class="fw-bold font-monospace"><%= po.number %></span>
+  </td>
+  <td>
+    <div class="fw-semibold"><%= po.provider.name %></div>
+    <small class="text-muted"><%= po.provider.email.presence || "Sin email" %></small>
+  </td>
+  <td><%= po.issued_date&.strftime("%d/%m/%Y") || "—" %></td>
+  <td>
+    <% if po.delivery_deadline.present? %>
+      <% overdue = po.delivery_deadline < Date.current && !%w[recibido cancelado].include?(po.status) %>
+      <span class="<%= overdue ? 'text-danger fw-bold' : '' %>">
+        <%= po.delivery_deadline.strftime("%d/%m/%Y") %>
+        <%= " ⚠️" if overdue %>
+      </span>
+    <% else %>
+      <span class="text-muted">—</span>
+    <% end %>
+  </td>
+  <td class="text-center">
+    <span class="badge rounded-pill <%= status_badge %> px-3 py-2">
+      <%= po.status.capitalize %>
+    </span>
+  </td>
+  <td class="text-end pe-4 fw-bold">
+    ₡<%= number_with_delimiter(po.total_amount.to_f, delimiter: ".") %>
+  </td>
+  <td class="text-end pe-3">
+    <div class="d-flex gap-1 justify-content-end">
+      <%= link_to purchase_order_path(po),
+            class: "btn btn-sm btn-outline-secondary", title: "Ver" do %>
+        <i class="bi bi-eye"></i>
+      <% end %>
+      <% if po.status == "borrador" %>
+        <%= link_to edit_purchase_order_path(po),
+              class: "btn btn-sm btn-outline-primary", title: "Editar" do %>
+          <i class="bi bi-pencil"></i>
+        <% end %>
+        <%= button_to purchase_order_path(po),
+              method: :delete,
+              form: { data: { turbo_stream: true, turbo_confirm: "¿Eliminar este borrador?" } },
+              class: "btn btn-sm btn-outline-danger",
+              title: "Eliminar" do %>
+          <i class="bi bi-trash"></i>
+        <% end %>
+      <% end %>
+    </div>
+  </td>
+</tr>

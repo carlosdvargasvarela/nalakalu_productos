@@ -54,4 +54,10 @@ Rails.application.routes.draw do
       post :bulk_unassign
     end
   end
+
+  resources :purchase_orders do
+    collection do
+      post :create_from_delivery
+    end
+  end
 end

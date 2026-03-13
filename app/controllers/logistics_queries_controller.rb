@@ -36,14 +36,19 @@ class LogisticsQueriesController < ApplicationController
 
     items.each do |item|
       decoding = ProductDecoder.decode(item["product_name"])
+
       if decoding[:has_variants]
         decoding[:variants].each do |variant|
-          grouped[variant.provider] << {
-            product_name: item["product_name"],
-            variant_name: variant.name,
-            variant_type: variant.variant_type.name,
-            quantity: item["quantity_delivered"]
-          }
+          # Solo agrupamos si la variante tiene un proveedor asignado
+          if variant.provider
+            grouped[variant.provider] << {
+              product_name: item["product_name"],
+              variant_id: variant.id, # Crucial para el formulario de la OC
+              variant_name: variant.seller_name,
+              variant_type: variant.variant_type.name,
+              quantity: item["quantity_delivered"]
+            }
+          end
         end
       end
     end

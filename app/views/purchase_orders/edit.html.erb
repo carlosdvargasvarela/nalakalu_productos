@@ -1,0 +1,172 @@
+<div class="container mt-4 pb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h4 mb-0">
+        <i class="bi bi-pencil-square text-primary me-2"></i>
+        Editar Borrador — <span class="font-monospace"><%= @purchase_order.number %></span>
+      </h1>
+      <p class="text-muted small mb-0">Revisá cantidades, unidades y precios antes de confirmar.</p>
+    </div>
+    <%= link_to purchase_orders_path, class: "btn btn-outline-secondary rounded-pill px-4" do %>
+      <i class="bi bi-arrow-left me-1"></i> Volver
+    <% end %>
+  </div>
+  <%= form_with model: @purchase_order, local: true do |f| %>
+    <!-- Info General -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-light fw-bold">
+        <i class="bi bi-info-circle me-2"></i>Información General
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold text-uppercase">Proveedor</label>
+            <input type="text" class="form-control bg-light" value="<%= @purchase_order.provider.name %>" readonly>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label text-muted small fw-bold text-uppercase">N° OC</label>
+            <input type="text" class="form-control bg-light font-monospace" value="<%= @purchase_order.number %>" readonly>
+          </div>
+          <div class="col-md-3">
+            <%= f.label :delivery_deadline, "Fecha Máx. Entrega", class: "form-label text-muted small fw-bold text-uppercase" %>
+            <%= f.date_field :delivery_deadline, class: "form-control" %>
+          </div>
+          <div class="col-md-3">
+            <%= f.label :status, "Estado", class: "form-label text-muted small fw-bold text-uppercase" %>
+            <%= f.select :status,
+                  PurchaseOrder::STATUSES.map { |s| [s.capitalize, s] },
+                  {},
+                  class: "form-select" %>
+          </div>
+          <div class="col-12">
+            <%= f.label :notes, "Notas internas", class: "form-label text-muted small fw-bold text-uppercase" %>
+            <%= f.text_area :notes, class: "form-control", rows: 2 %>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Items con Stimulus -->
+    <div class="card shadow-sm border-0 mb-4"
+         data-controller="purchase-order-calculator">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul me-2"></i>Items de la Orden</span>
+        <span class="badge bg-white text-dark"><%= @purchase_order.purchase_order_items.size %> items</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Variante</th>
+              <th style="width: 120px;">Cantidad</th>
+              <th style="width: 200px;">Unidad / Precio</th>
+              <th style="width: 160px;">Costo Unitario</th>
+              <th style="width: 140px;" class="text-end pe-4">Total</th>
+              <th style="width: 50px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= f.fields_for :purchase_order_items do |item_f| %>
+              <% item    = item_f.object %>
+              <% variant = item.variant %>
+              <% pricings = variant.variant_pricings %>
+              <tr data-purchase-order-calculator-target="row"
+                  class="<%= 'table-danger opacity-50' if item.marked_for_destruction? %>">
+                <td class="ps-4">
+                  <%= item_f.hidden_field :variant_id %>
+                  <div class="fw-semibold"><%= variant.seller_name %></div>
+                  <small class="text-muted"><%= variant.variant_type.name %></small>
+                  <% if item.description_override.present? && item.description_override != variant.seller_name %>
+                    <div class="text-muted" style="font-size: 0.7rem;">
+                      <i class="bi bi-tag me-1"></i><%= item.description_override %>
+                    </div>
+                  <% end %>
+                </td>
+                <td>
+                  <%= item_f.number_field :quantity,
+                        class: "form-control form-control-sm",
+                        min: 0, step: "any",
+                        data: {
+                          purchase_order_calculator_target: "qtyInput",
+                          action: "input->purchase-order-calculator#calculate"
+                        } %>
+                </td>
+                <td>
+                  <% if pricings.any? %>
+                    <%= item_f.select :variant_pricing_id,
+                          pricings.map { |p|
+                            [
+                              "#{p.unit.upcase} — ₡#{number_with_delimiter(p.cost.to_f, delimiter: '.')}",
+                              p.id,
+                              { data: { cost: p.cost, unit: p.unit } }
+                            ]
+                          },
+                          { include_blank: "— Seleccionar —" },
+                          {
+                            class: "form-select form-select-sm",
+                            data: {
+                              unit_select: true,
+                              action: "change->purchase-order-calculator#onUnitChange"
+                            }
+                          } %>
+                  <% else %>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning small">
+                      <i class="bi bi-exclamation-triangle me-1"></i>Sin precios cargados
+                    </span>
+                    <%= item_f.hidden_field :unit, value: "und" %>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">₡</span>
+                    <%= item_f.number_field :unit_cost,
+                          class: "form-control",
+                          min: 0, step: "any",
+                          data: {
+                            purchase_order_calculator_target: "costInput",
+                            action: "input->purchase-order-calculator#calculate"
+                          } %>
+                  </div>
+                </td>
+                <td class="text-end pe-4 fw-bold">
+                  ₡<span data-purchase-order-calculator-target="rowTotal" class="text-primary">0,00</span>
+                </td>
+                <td class="text-center">
+                  <%= item_f.check_box :_destroy,
+                        class: "d-none",
+                        data: { purchase_order_calculator_target: "destroyCheckbox" } %>
+                  <button type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          title="Quitar item"
+                          data-action="click->purchase-order-calculator#removeItem">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <td colspan="4" class="text-end fw-bold pe-3 py-3">TOTAL ORDEN:</td>
+              <td class="text-end pe-4 fw-bold fs-5 text-primary py-3">
+                ₡<span data-purchase-order-calculator-target="grandTotal">0,00</span>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <!-- Acciones -->
+    <div class="d-flex justify-content-between align-items-center">
+      <%= link_to purchase_order_path(@purchase_order), class: "btn btn-outline-secondary px-4" do %>
+        <i class="bi bi-eye me-1"></i> Ver OC
+      <% end %>
+      <div class="d-flex gap-2">
+        <%= link_to purchase_orders_path, class: "btn btn-light px-4" do %>
+          Cancelar
+        <% end %>
+        <%= f.submit "Guardar Cambios", class: "btn btn-primary px-5 fw-bold shadow-sm" %>
+      </div>
+    </div>
+  <% end %>
+</div>

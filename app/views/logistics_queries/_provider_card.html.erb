@@ -1,0 +1,76 @@
+<%# app/views/logistics_queries/_provider_card.html.erb %>
+<%= turbo_frame_tag "provider_card_#{provider.id}" do %>
+  <div class="card h-100 border-primary-subtle shadow-sm">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-building me-2"></i><%= provider.name %></span>
+      <span class="badge bg-white text-primary"><%= variants.size %> items</span>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">Cant.</th>
+            <th>Variante / Tipo</th>
+            <th>Código Producto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% variants.each do |v| %>
+            <tr>
+              <td class="ps-3 fw-bold text-primary">x<%= v[:quantity] %></td>
+              <td>
+                <div class="fw-semibold"><%= v[:variant_name] %></div>
+                <div class="text-muted small"><%= v[:variant_type] %></div>
+              </td>
+              <td><code class="small"><%= v[:product_name] %></code></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center gap-2 flex-wrap">
+      <small class="text-muted">
+        <i class="bi bi-envelope me-1"></i>
+        <%= provider.email.presence || 'Sin contacto registrado' %>
+      </small>
+      <%
+        items_for_form = variants.select { |v| v[:variant_id].present? }
+        existing_po    = PurchaseOrder.find_by(
+                           provider: provider,
+                           notes:    "Generada desde Entrega: #{delivery_number}"
+                         )
+      %>
+      <% if existing_po %>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-info-subtle text-info-emphasis border border-info">
+            <i class="bi bi-check-circle-fill me-1"></i>
+            OC <%= existing_po.number %>
+            <span class="ms-1 opacity-75">(<%= existing_po.status.capitalize %>)</span>
+          </span>
+          <%= link_to purchase_order_path(existing_po),
+                class: "btn btn-sm btn-outline-primary fw-bold",
+                data: { turbo_frame: "_top" } do %>
+            <i class="bi bi-eye me-1"></i> Ver OC
+          <% end %>
+        </div>
+      <% elsif items_for_form.any? %>
+        <%= form_with url: create_from_delivery_purchase_orders_path, method: :post, class: "d-inline" do |f| %>
+          <%= f.hidden_field :provider_id,  value: provider.id %>
+          <%= f.hidden_field :order_number, value: delivery_number %>
+          <% items_for_form.each_with_index do |v, index| %>
+            <%= hidden_field_tag "items[#{index}][variant_id]",   v[:variant_id] %>
+            <%= hidden_field_tag "items[#{index}][quantity]",     v[:quantity] %>
+            <%= hidden_field_tag "items[#{index}][variant_name]", v[:variant_name] %>
+          <% end %>
+          <%= f.submit "Generar Borrador OC",
+                class: "btn btn-sm btn-success fw-bold shadow-sm",
+                data: { turbo_confirm: "¿Generar borrador de Orden de Compra para #{provider.name}?" } %>
+        <% end %>
+      <% else %>
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning small">
+          <i class="bi bi-exclamation-triangle me-1"></i> Variantes no vinculadas
+        </span>
+      <% end %>
+    </div>
+  </div>
+<% end %>

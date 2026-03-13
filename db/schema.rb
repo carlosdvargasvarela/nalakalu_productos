@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_05_234130) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
   create_table "compatibilities", force: :cascade do |t|
     t.integer "variant_id", null: false
     t.integer "compatible_variant_id", null: false
@@ -78,6 +78,33 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_234130) do
     t.string "category", default: "externo"
   end
 
+  create_table "purchase_order_items", force: :cascade do |t|
+    t.integer "purchase_order_id", null: false
+    t.integer "variant_id", null: false
+    t.integer "variant_pricing_id"
+    t.decimal "quantity"
+    t.string "unit"
+    t.decimal "unit_cost"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "description_override"
+    t.index ["purchase_order_id"], name: "index_purchase_order_items_on_purchase_order_id"
+    t.index ["variant_id"], name: "index_purchase_order_items_on_variant_id"
+    t.index ["variant_pricing_id"], name: "index_purchase_order_items_on_variant_pricing_id"
+  end
+
+  create_table "purchase_orders", force: :cascade do |t|
+    t.integer "provider_id", null: false
+    t.string "number"
+    t.date "issued_date"
+    t.date "delivery_deadline"
+    t.string "status"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider_id"], name: "index_purchase_orders_on_provider_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -89,6 +116,16 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_234130) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+  end
+
+  create_table "variant_pricings", force: :cascade do |t|
+    t.integer "variant_id", null: false
+    t.string "unit", null: false
+    t.decimal "cost", precision: 15, scale: 2, default: "0.0"
+    t.boolean "is_default", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["variant_id"], name: "index_variant_pricings_on_variant_id"
   end
 
   create_table "variant_types", force: :cascade do |t|
@@ -122,6 +159,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_234130) do
   add_foreign_key "product_variant_rules", "products"
   add_foreign_key "product_variant_rules", "variant_types"
   add_foreign_key "products", "families"
+  add_foreign_key "purchase_order_items", "purchase_orders"
+  add_foreign_key "purchase_order_items", "variant_pricings"
+  add_foreign_key "purchase_order_items", "variants"
+  add_foreign_key "purchase_orders", "providers"
+  add_foreign_key "variant_pricings", "variants"
   add_foreign_key "variants", "providers"
   add_foreign_key "variants", "variant_types"
 end
