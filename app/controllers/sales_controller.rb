@@ -36,6 +36,7 @@ class SalesController < ApplicationController
           {
             id: v.id,
             name: v.display_name.presence || v.name,
+            display_name: v.display_name.presence || v.name,
             code: v.code,
             compatible_with: v.compatible_variant_ids
           }

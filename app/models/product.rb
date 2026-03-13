@@ -6,9 +6,6 @@ class Product < ApplicationRecord
 
   accepts_nested_attributes_for :product_variant_rules, allow_destroy: true, reject_if: :all_blank
 
-  validates :name, :base_code, presence: true
-  validates :base_code, uniqueness: true
-
   before_save :flag_family_change
   after_save :sync_variant_rules_from_family
 

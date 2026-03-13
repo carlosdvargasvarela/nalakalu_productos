@@ -112,7 +112,7 @@ export default class extends Controller {
       .classList.add("d-none");
     this.selectedProductTarget.classList.remove("d-none");
     this.selectedProductNameTarget.textContent = product.name;
-    this.selectedProductCodeTarget.textContent = ""; // NO mostramos SKU/base_code
+    this.selectedProductCodeTarget.textContent = "";
     this.loadProduct(product.id);
   }
 
@@ -172,6 +172,7 @@ export default class extends Controller {
           (v) =>
             `<option value="${v.id}"
                     data-code="${v.code}"
+                    data-display="${v.display_name}"
                     data-compatible='${JSON.stringify(v.compatible_with)}'>
               ${v.name}
             </option>`,
@@ -180,7 +181,7 @@ export default class extends Controller {
 
       const labelText = rule.variant_type_name;
       const requiredMark = rule.required
-        ? '<span class="text-danger"></span>'
+        ? '<span class="text-danger">*</span>'
         : "";
 
       wrapper.innerHTML = `
@@ -206,7 +207,8 @@ export default class extends Controller {
     const ruleId = select.dataset.ruleId;
     const selectedOption = select.selectedOptions[0];
 
-    this.selections[ruleId] = selectedOption?.dataset.code || "";
+    // Usar display_name para el código generado
+    this.selections[ruleId] = selectedOption?.dataset.display || "";
     this.selections_ids[ruleId] = selectedOption?.value || null;
 
     this.filterOptions();

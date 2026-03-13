@@ -1,32 +1,32 @@
 <div class="container mt-4 pb-5">
   <!-- Header de Navegación -->
   <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-    <%= link_to logistics_queries_path, class: "btn btn-outline-secondary" do %>
+    <%= link_to logistics_queries_path, class: "btn btn-outline-secondary rounded-pill px-4 shadow-sm" do %>
       <i class="bi bi-arrow-left"></i> Volver al listado
     <% end %>
-    <button onclick="window.print();" class="btn btn-dark">
+    <button onclick="window.print();" class="btn btn-dark rounded-pill px-4 shadow-sm">
       <i class="bi bi-printer me-2"></i> Imprimir Hoja de Carga
     </button>
   </div>
   <!-- Ficha de la Entrega -->
   <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-dark text-white p-3">
+    <div class="card-header bg-dark text-white p-4 rounded-top-4">
       <div class="row align-items-center">
         <div class="col-md-6">
           <span class="text-uppercase small opacity-75">Orden de Entrega</span>
-          <h2 class="mb-0"><%= @delivery["order_number"] %></h2>
+          <h2 class="mb-0 fw-bold"><%= @delivery["order_number"] %></h2>
         </div>
         <div class="col-md-6 text-md-end">
-          <span class="badge bg-primary fs-6"><%= @delivery["status_label"] %></span>
-          <div class="mt-1 small opacity-75">Fecha Programada: <%= Date.parse(@delivery["delivery_date"]).strftime("%d/%m/%Y") %></div>
+          <span class="badge bg-primary fs-6 px-3 py-2 shadow-sm"><%= @delivery["status_label"] %></span>
+          <div class="mt-2 small opacity-75">Fecha Programada: <%= Date.parse(@delivery["delivery_date"]).strftime("%d/%m/%Y") %></div>
         </div>
       </div>
     </div>
-    <div class="card-body bg-light">
+    <div class="card-body bg-light p-4">
       <div class="row">
         <div class="col-md-4 border-end">
           <label class="text-muted small text-uppercase fw-bold">Cliente</label>
-          <p class="fs-5 mb-0"><%= @delivery.dig("client", "name") %></p>
+          <p class="fs-5 mb-0 fw-bold"><%= @delivery.dig("client", "name") %></p>
         </div>
         <div class="col-md-4 border-end">
           <label class="text-muted small text-uppercase fw-bold">Dirección de Entrega</label>
@@ -35,11 +35,12 @@
         </div>
         <div class="col-md-4">
           <label class="text-muted small text-uppercase fw-bold">Vendedor</label>
-          <p class="mb-0"><%= @delivery["seller_code"] %></p>
+          <p class="mb-0 fw-bold"><%= @delivery["seller_code"] %></p>
         </div>
       </div>
     </div>
   </div>
+  <!-- Materiales por Proveedor -->
   <h4 class="mb-3 mt-5"><i class="bi bi-box-seam me-2"></i>Materiales Requeridos por Proveedor</h4>
   <p class="text-muted">Esta sección detalla qué variantes deben solicitarse a cada proveedor para completar este pedido.</p>
   <% if @items_by_provider.any? %>
@@ -134,11 +135,3 @@
     </div>
   </div>
 </div>
-<style>
-  @media print {
-    .no-print { display: none !important; }
-    .card { border: 1px solid #ddd !important; shadow: none !important; }
-    body { background: white !important; }
-  }
-  .border-primary-subtle { border-color: #cfe2ff !important; }
-</style>

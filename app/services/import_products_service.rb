@@ -47,15 +47,11 @@ class ImportProductsService
     codigo_base = CsvImportHelper.normalize_string(row["codigo_base"])
     descripcion = CsvImportHelper.normalize_string(row["descripcion"])
 
-    unless nombre && codigo_base
-      @errors << "Fila #{line_number}: 'nombre' y 'codigo_base' son obligatorios"
-      return
-    end
-
-    product = Product.find_or_initialize_by(base_code: codigo_base)
+    product = Product.find_or_initialize_by(name: nombre)
 
     if product.new_record?
       product.name = nombre
+      product.base_code = codigo_base
       product.description = descripcion
       product.active = true
 

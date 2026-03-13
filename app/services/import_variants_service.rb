@@ -69,6 +69,7 @@ class ImportVariantsService
       is_new = variant.new_record?
 
       variant.name = name
+      variant.display_name = name
       variant.provider = provider
       variant.provider_sku = CsvImportHelper.normalize_string(row["sku_proveedor"]).presence || code
       variant.active = true

@@ -69,7 +69,6 @@
           <% if @deliveries.any? %>
             <% @deliveries.each do |delivery| %>
               <tr class="border-bottom">
-                <!-- Columna: Info de Entrega -->
                 <td class="ps-4">
                   <div class="fw-bold text-dark"><%= Date.parse(delivery["delivery_date"]).strftime("%d/%m/%Y") %></div>
                   <div class="mt-1">
@@ -80,7 +79,6 @@
                     <% end %>
                   </div>
                 </td>
-                <!-- Columna: Cliente / Vendedor -->
                 <td>
                   <div class="fw-semibold text-dark">
                     <%= delivery.dig("client", "name") %>
@@ -90,12 +88,10 @@
                     Vendedor: <%= delivery["seller_code"] %>
                   </div>
                 </td>
-                <!-- Columna: Productos (El corazón de la vista) -->
                 <td class="py-3">
                   <% delivery["items"].each do |item| %>
                     <% decoding = ProductDecoder.decode(item["product_name"]) %>
                     <div class="mb-3 p-3 rounded-3 <%= decoding[:has_variants] ? 'bg-primary-subtle border-start border-4 border-primary' : 'bg-light border-start border-4 border-secondary' %>">
-                      <!-- Cabecera del Item -->
                       <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="h6 mb-0 fw-bold">
                           <span class="badge bg-white text-primary border border-primary me-2">
@@ -104,7 +100,6 @@
                           <code class="text-dark"><%= item["product_name"] %></code>
                         </span>
                       </div>
-                      <!-- Desglose Técnico -->
                       <div class="ms-2">
                         <% if decoding[:base_product] %>
                           <div class="mb-2">
@@ -165,7 +160,6 @@
                     </div>
                   <% end %>
                 </td>
-                <!-- Columna: Estado -->
                 <td class="text-center pe-4">
                   <%
                     status_class = case delivery["status"]
@@ -199,26 +193,3 @@
     </div>
   </div>
 </div>
-<style>
-  /* Estilos personalizados para mejorar la UX */
-  .bg-primary-subtle { background-color: #e7f1ff !important; }
-  .bg-success-subtle { background-color: #d1e7dd !important; }
-  .bg-warning-subtle { background-color: #fff3cd !important; }
-  .bg-dark-subtle { background-color: #e2e3e5 !important; }
-
-  .table-hover tbody tr:hover {
-    background-color: rgba(0,0,0,0.01);
-  }
-
-  .border-secondary-alpha-20 {
-    border-color: rgba(108, 117, 125, 0.2) !important;
-  }
-
-  code {
-    font-size: 0.9rem;
-    color: #d63384;
-    word-wrap: break-word;
-  }
-
-  .italic { font-style: italic; }
-</style>
