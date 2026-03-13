@@ -10,12 +10,18 @@
           <i class="bi bi-pencil me-1"></i> Editar
         <% end %>
       <% end %>
+      <% if @purchase_order.provider.email.present? %>
+        <a href="<%= @purchase_order.mailto_url %>"
+          class="btn btn-outline-success rounded-pill px-4 shadow-sm">
+          <i class="bi bi-envelope-at me-2"></i> Enviar al Proveedor
+        </a>
+      <% end %>
       <button onclick="window.print();" class="btn btn-dark rounded-pill px-4 shadow-sm">
         <i class="bi bi-printer me-2"></i> Imprimir OC
       </button>
     </div>
   </div>
-  <!-- Cabecera de la OC (estilo PDF) -->
+  <!-- Cabecera de la OC -->
   <div class="card shadow-sm border-0 mb-4">
     <div class="card-body p-4">
       <div class="row align-items-start">
@@ -94,7 +100,7 @@
       </div>
     </div>
   </div>
-  <!-- Tabla de Items (igual al PDF) -->
+  <!-- Tabla de Items -->
   <div class="card border-0 shadow-sm mb-4">
     <div class="table-responsive">
       <table class="table align-middle mb-0">
@@ -151,7 +157,11 @@
 <style>
   @media print {
     .no-print { display: none !important; }
+    .btn, .navbar, footer { display: none !important; }
+    body { background: white !important; font-size: 13px; -webkit-print-color-adjust: exact; }
+    .container { width: 100% !important; max-width: 100% !important; }
     .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
-    body { font-size: 13px; }
+    .table thead th { background-color: #212529 !important; color: white !important; }
+    tr { page-break-inside: avoid; }
   }
 </style>

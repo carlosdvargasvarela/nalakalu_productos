@@ -42,7 +42,7 @@
           <tr data-purchase-order-calculator-target="row">
             <td class="ps-3 py-2">
               <div class="fw-semibold lh-sm">
-                <%= item_f.object.variant.name %>
+                <%= item_f.object.variant.name %> - <%= item_f.object.variant.variant_type.name %>
               </div>
               <% if item_f.object.description_override.present? %>
                 <small class="text-muted">
@@ -135,6 +135,14 @@
       </button>
     <% end %>
     <div class="d-flex gap-2">
+      <%# Botón de correo — solo si ya está guardado y tiene email %>
+      <% if purchase_order.persisted? && purchase_order.provider.email.present? %>
+        <a href="<%= purchase_order.mailto_url %>"
+          class="btn btn-outline-success btn-sm px-3"
+          title="Abrir cliente de correo con la OC lista">
+          <i class="bi bi-envelope-at me-1"></i> Enviar
+        </a>
+      <% end %>
       <%= f.submit "Guardar Borrador",
             class: "btn btn-outline-primary px-4",
             name: "commit",

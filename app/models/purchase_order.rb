@@ -15,6 +15,17 @@ class PurchaseOrder < ApplicationRecord
     purchase_order_items.reject(&:marked_for_destruction?).sum(&:total)
   end
 
+  def mailto_url
+    subject = "Orden de Compra #{number} - Nalakalú Solutions"
+    body = "Estimados #{provider.name},\n\n" \
+           "Adjunto enviamos la Orden de Compra #{number} " \
+           "por un total de ₡#{ActionController::Base.helpers.number_with_delimiter(total_amount.to_f, delimiter: ".")}.\n\n" \
+           "Favor confirmar recepción y fecha estimada de entrega.\n\n" \
+           "Saludos cordiales,\nNalakalú Solutions S.A."
+
+    "mailto:#{provider.email}?subject=#{ERB::Util.url_encode(subject)}&body=#{ERB::Util.url_encode(body)}"
+  end
+
   private
 
   def set_defaults
