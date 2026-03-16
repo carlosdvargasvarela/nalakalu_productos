@@ -6,6 +6,13 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => "/sidekiq"
   end
 
+  resources :users do
+    member do
+      get :edit_password
+      patch :update_password
+    end
+  end
+
   root "home#index"
 
   resources :sales, only: [:new] do

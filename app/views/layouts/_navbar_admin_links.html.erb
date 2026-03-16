@@ -41,6 +41,7 @@
     <li>
       <span class="dropdown-header small text-uppercase opacity-50">Sistema</span>
     </li>
+    <li><%= link_to "Gestión de Usuarios", users_path, class: "dropdown-item py-2" %></li>
     <li>
       <%= link_to "/sidekiq", class: "dropdown-item d-flex align-items-center gap-2", target: "_blank" do %>
         <i class="bi bi-activity"></i> Sidekiq Jobs

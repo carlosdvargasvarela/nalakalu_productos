@@ -1,6 +1,9 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    RubyInline (3.14.3)
+      ZenTest (~> 4.3)
+    ZenTest (4.12.2)
     actioncable (7.2.3)
       actionpack (= 7.2.3)
       activesupport (= 7.2.3)
@@ -126,6 +129,9 @@ GEM
       logger
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
+    fuzzy-string-match (1.0.1)
+      RubyInline (>= 3.8.6)
+    fuzzy_match (2.1.0)
     globalid (1.3.0)
       activesupport (>= 6.1)
     i18n (1.14.8)
@@ -382,6 +388,8 @@ DEPENDENCIES
   devise
   dotenv-rails
   faraday
+  fuzzy-string-match
+  fuzzy_match
   importmap-rails
   jbuilder
   pg

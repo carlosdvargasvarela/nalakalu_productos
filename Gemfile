@@ -16,6 +16,8 @@ gem "sidekiq"
 gem "redis", "~> 5.0"
 gem "csv"
 gem "faraday"
+gem "fuzzy_match"
+gem "fuzzy-string-match"
 
 group :development, :test do
   gem "dotenv-rails"

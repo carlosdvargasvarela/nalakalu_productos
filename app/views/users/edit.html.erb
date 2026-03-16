@@ -1,0 +1,20 @@
+<div class="row justify-content-center mt-4">
+  <div class="col-md-8 col-lg-6">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <%= link_to users_path, class: "btn btn-light btn-sm rounded-circle shadow-sm p-2 d-flex align-items-center justify-content-center", style: "width: 35px; height: 35px;" do %>
+        <i class="bi bi-arrow-left"></i>
+      <% end %>
+      <div>
+        <h2 class="fw-bold mb-0 h4 text-dark">Editar Usuario</h2>
+        <p class="text-muted mb-0 small">Modificando perfil de: <strong><%= @user.email %></strong></p>
+      </div>
+    </div>
+    <%= render "form", user: @user %>
+    <div class="mt-4 text-center">
+      <div class="alert alert-info border-0 shadow-sm small py-2 px-3 d-inline-block">
+        <i class="bi bi-info-circle me-2"></i>
+        Para cambiar la contraseña, usa el icono de la llave <i class="bi bi-key text-warning mx-1"></i> en el listado.
+      </div>
+    </div>
+  </div>
+</div>

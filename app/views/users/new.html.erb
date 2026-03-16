@@ -1,0 +1,14 @@
+<div class="row justify-content-center mt-4">
+  <div class="col-md-8 col-lg-6">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <%= link_to users_path, class: "btn btn-light btn-sm rounded-circle shadow-sm p-2 d-flex align-items-center justify-content-center", style: "width: 35px; height: 35px;" do %>
+        <i class="bi bi-arrow-left"></i>
+      <% end %>
+      <div>
+        <h2 class="fw-bold mb-0 h4 text-dark">Nuevo Usuario</h2>
+        <p class="text-muted mb-0 small">Crea una cuenta para un vendedor o administrador</p>
+      </div>
+    </div>
+    <%= render "form", user: @user %>
+  </div>
+</div>

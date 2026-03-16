@@ -1,0 +1,35 @@
+<%= form_with(model: user, class: "card border-0 shadow-sm p-4") do |f| %>
+  <% if user.errors.any? %>
+    <div class="alert alert-danger small">
+      <ul class="mb-0">
+        <% user.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <%= f.label :email, "Correo Electrónico", class: "form-label fw-bold small" %>
+      <%= f.email_field :email, class: "form-control", placeholder: "ejemplo@nalakalu.com" %>
+    </div>
+    <div class="col-md-6">
+      <%= f.label :role, "Rol en el Sistema", class: "form-label fw-bold small" %>
+      <%= f.select :role, User::ROLES.map { |r| [r.capitalize, r] }, {}, class: "form-select" %>
+    </div>
+    <% if user.new_record? %>
+      <div class="col-md-6">
+        <%= f.label :password, "Contraseña", class: "form-label fw-bold small" %>
+        <%= f.password_field :password, class: "form-control" %>
+      </div>
+      <div class="col-md-6">
+        <%= f.label :password_confirmation, "Confirmar Contraseña", class: "form-label fw-bold small" %>
+        <%= f.password_field :password_confirmation, class: "form-control" %>
+      </div>
+    <% end %>
+    <div class="col-12 mt-4 pt-3 border-top d-flex gap-2">
+      <%= f.submit "Guardar Usuario", class: "btn btn-primary px-4 fw-bold" %>
+      <%= link_to "Cancelar", users_path, class: "btn btn-light px-4" %>
+    </div>
+  </div>
+<% end %>
