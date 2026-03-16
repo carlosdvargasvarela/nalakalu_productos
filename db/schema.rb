@@ -169,7 +169,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_16_225149) do
     t.string "name"
     t.string "code"
     t.string "provider_sku"
-    t.decimal "cost"
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

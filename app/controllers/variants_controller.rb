@@ -87,10 +87,11 @@ class VariantsController < ApplicationController
       :display_name,
       :code,
       :provider_sku,
-      :cost,
       :active,
       :technical_description,
-      compatible_variant_ids: []
+      compatible_product_ids: [],
+      compatible_variant_ids: [],
+      variant_properties_attributes: [:id, :property_value_id, :_destroy]
     )
   end
 end

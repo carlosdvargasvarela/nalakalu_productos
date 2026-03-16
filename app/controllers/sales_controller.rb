@@ -21,29 +21,29 @@ class SalesController < ApplicationController
   end
 
   def variants_for_product
-    product = Product.includes(product_variant_rules: {variant_type: :variants})
-      .find(params[:product_id])
+    @product = Product.includes(product_variant_rules: :variant_type).find(params[:product_id])
 
-    rules = product.product_variant_rules.order(:position).map do |rule|
+    rules = @product.product_variant_rules.order(:position).map do |rule|
+      # FILTRO: Solo variantes compatibles con este producto específico
+      scope = @product.compatible_variants_for(rule.variant_type)
+
       {
         rule_id: rule.id,
-        variant_type_id: rule.variant_type.id,
         variant_type_name: rule.label.presence || rule.variant_type.name,
-        label: rule.label,
         required: rule.required,
         separator: rule.separator,
-        variants: rule.variant_type.variants.where(active: true).order(:name).map do |v|
+        variants: scope.where(active: true).order(:name).map do |v|
           {
             id: v.id,
-            name: v.display_name.presence || v.name,
+            name: v.seller_name,
+            # Usamos display_name para el código final, fallback al name
             display_name: v.display_name.presence || v.name,
-            code: v.code,
-            compatible_with: v.compatible_variant_ids
+            compatible_with: v.compatibilities.where(compatible_type: "Variant").pluck(:compatible_id)
           }
         end
       }
     end
 
-    render json: {base_code: product.base_code, rules: rules}
+    render json: {base_code: @product.base_code, rules: rules}
   end
 end

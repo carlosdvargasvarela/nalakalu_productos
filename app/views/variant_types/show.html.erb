@@ -68,7 +68,6 @@
                     <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Nombre</th>
                     <th class="py-3 text-muted small fw-bold text-uppercase">Código</th>
                     <th class="py-3 text-muted small fw-bold text-uppercase">Proveedor</th>
-                    <th class="py-3 text-muted small fw-bold text-uppercase text-end">Costo</th>
                     <th class="py-3 pe-4 text-muted small fw-bold text-uppercase text-center">Estado</th>
                   </tr>
                 </thead>
@@ -87,15 +86,6 @@
                       </td>
                       <td class="py-3">
                         <%= link_to(variant.provider.name, variant.provider, class: "text-decoration-none text-muted small") if variant.provider %>
-                      </td>
-                      <td class="py-3 text-end">
-                        <% if variant.cost.present? %>
-                          <span class="fw-bold small">
-                            <%= number_to_currency(variant.cost, unit: "$") %>
-                          </span>
-                        <% else %>
-                          <span class="text-muted">—</span>
-                        <% end %>
                       </td>
                       <td class="py-3 pe-4 text-center">
                         <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">

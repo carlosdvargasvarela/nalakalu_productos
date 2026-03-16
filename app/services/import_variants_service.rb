@@ -72,12 +72,6 @@ class ImportVariantsService
       variant.provider_sku = CsvImportHelper.normalize_string(row["sku_proveedor"]).presence || code
       variant.active = true
 
-      cost_raw = CsvImportHelper.normalize_string(row["costo"])
-      if cost_raw.present?
-        parsed = cost_raw.gsub(/[^0-9.,]/, "").tr(",", ".").to_d
-        variant.cost = parsed if parsed > 0
-      end
-
       variant.save!
       is_new ? @created += 1 : @updated += 1
     end

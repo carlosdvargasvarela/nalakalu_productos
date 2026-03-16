@@ -71,13 +71,6 @@
                       <%= variant.provider_sku.presence || "—" %>
                     </span>
                   </td>
-                  <td class="py-3 text-end">
-                    <% if variant.cost.present? %>
-                      <span class="fw-bold"><%= number_to_currency(variant.cost, unit: "$") %></span>
-                    <% else %>
-                      <span class="text-muted">—</span>
-                    <% end %>
-                  </td>
                   <td class="py-3 text-center">
                     <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
                       <%= variant.active ? 'Activa' : 'Inactiva' %>

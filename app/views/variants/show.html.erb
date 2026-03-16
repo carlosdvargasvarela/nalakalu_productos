@@ -67,10 +67,6 @@
             <div class="small text-muted fw-bold mb-1">SKU / Código Color Prov.</div>
             <code class="bg-light px-2 py-1 rounded"><%= @variant.provider_sku.presence || "—" %></code>
           </div>
-          <div class="list-group-item px-4 py-3">
-            <div class="small text-muted fw-bold mb-1">Costo</div>
-            <span class="fw-bold fs-5"><%= @variant.cost.present? ? number_to_currency(@variant.cost, unit: "$") : "No especificado" %></span>
-          </div>
         </div>
       </div>
       <% if @variant.technical_description.present? %>

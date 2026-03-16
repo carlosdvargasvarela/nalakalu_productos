@@ -12,12 +12,6 @@
   <td class="py-3">
     <%= f.text_field :code, class: "form-control form-control-sm border-0 bg-light text-center fw-bold font-monospace shadow-none", placeholder: "LG" %>
   </td>
-  <td class="py-3">
-    <div class="input-group input-group-sm">
-      <span class="input-group-text border-0 bg-light text-muted">$</span>
-      <%= f.number_field :cost, step: 0.01, class: "form-control border-0 bg-light shadow-none text-end", placeholder: "0.00" %>
-    </div>
-  </td>
   <td class="py-3 text-center">
     <div class="form-check form-switch d-inline-block">
       <%= f.check_box :active, class: "form-check-input cursor-pointer" %>

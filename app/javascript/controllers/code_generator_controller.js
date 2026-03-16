@@ -1,3 +1,4 @@
+// app/javascript/controllers/code_generator_controller.js
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
@@ -25,8 +26,8 @@ export default class extends Controller {
   connect() {
     this.baseCode = "";
     this.rules = [];
-    this.selections = {};
-    this.selections_ids = {};
+    this.selections = {}; // ruleId -> display_name de la variante
+    this.selections_ids = {}; // ruleId -> id de la variante
     this.searchTimeout = null;
 
     this._outsideClick = (e) => {
@@ -94,6 +95,7 @@ export default class extends Controller {
         item.innerHTML = `
           <div>
             <div class="fw-bold text-dark">${product.name}</div>
+            <code class="text-muted small">${product.base_code || ""}</code>
           </div>
           <i class="bi bi-chevron-right text-muted"></i>`;
         item.addEventListener("click", () => this.selectProduct(product));
@@ -112,7 +114,7 @@ export default class extends Controller {
       .classList.add("d-none");
     this.selectedProductTarget.classList.remove("d-none");
     this.selectedProductNameTarget.textContent = product.name;
-    this.selectedProductCodeTarget.textContent = "";
+    this.selectedProductCodeTarget.textContent = product.base_code || "";
     this.loadProduct(product.id);
   }
 
@@ -141,8 +143,8 @@ export default class extends Controller {
     fetch(`${this.variantsUrlValue}?product_id=${productId}`)
       .then((res) => res.json())
       .then((data) => {
-        this.baseCode = data.base_code;
-        this.rules = data.rules;
+        this.baseCode = data.base_code || "";
+        this.rules = data.rules || [];
         this.selections = {};
         this.selections_ids = {};
         this.renderVariantSelectors();
@@ -171,7 +173,7 @@ export default class extends Controller {
         .map(
           (v) =>
             `<option value="${v.id}"
-                    data-code="${v.code}"
+                    data-code="${v.code || ""}"
                     data-display="${v.display_name}"
                     data-compatible='${JSON.stringify(v.compatible_with)}'>
               ${v.name}
@@ -179,9 +181,8 @@ export default class extends Controller {
         )
         .join("");
 
-      const labelText = rule.variant_type_name;
       const requiredMark = rule.required
-        ? '<span class="text-danger">*</span>'
+        ? '<span class="text-danger"></span>'
         : "";
 
       wrapper.innerHTML = `
@@ -193,21 +194,21 @@ export default class extends Controller {
           ${options}
         </select>
         <label for="rule_${rule.rule_id}">
-          ${labelText} ${requiredMark}
+          ${rule.variant_type_name} ${requiredMark}
         </label>`;
 
       this.variantsContainerTarget.appendChild(wrapper);
     });
   }
 
-  // ─── VARIANTES ───────────────────────────────────────────────────────────────
+  // ─── SELECCIÓN Y FILTRADO ────────────────────────────────────────────────────
 
   onVariantChange(event) {
     const select = event.target;
     const ruleId = select.dataset.ruleId;
     const selectedOption = select.selectedOptions[0];
 
-    // Usar display_name para el código generado
+    // Guardamos el display_name de la VARIANTE para construir el código
     this.selections[ruleId] = selectedOption?.dataset.display || "";
     this.selections_ids[ruleId] = selectedOption?.value || null;
 
@@ -237,6 +238,7 @@ export default class extends Controller {
         if (!option.dataset.originalName)
           option.dataset.originalName = originalName;
 
+        // Si la variante no declara compatibilidades, siempre está disponible
         if (compatibleWith.length === 0) {
           option.disabled = false;
           option.text = originalName;
@@ -252,6 +254,7 @@ export default class extends Controller {
           ? originalName
           : `${originalName} (Incompatible)`;
 
+        // Si la opción seleccionada se vuelve incompatible, la limpiamos
         if (!isCompatible && option.selected) {
           select.value = "";
           this.selections[rule.rule_id] = "";
@@ -261,33 +264,30 @@ export default class extends Controller {
     });
   }
 
-  // ─── GENERACIÓN DE CÓDIGO ────────────────────────────────────────────────────
-
-  labelPrefix(rule) {
-    if (!rule?.label) return "";
-    const s = rule.label.trim();
-    if (s.length === 0) return "";
-    return s.substring(0, 3).toUpperCase() + " ";
-  }
+  // ─── CONSTRUCCIÓN DEL CÓDIGO ─────────────────────────────────────────────────
 
   buildSegments() {
     const segments = [];
 
     this.rules.forEach((rule) => {
-      const part = this.selections[rule.rule_id];
-      if (!part) return;
+      const val = this.selections[rule.rule_id];
+      if (!val) return;
 
-      const prefix = this.labelPrefix(rule);
+      // El prefijo de label (ej: "Sobre" -> "SOB ") solo si el label existe
+      const prefix = rule.label
+        ? `${rule.label.substring(0, 3).toUpperCase()} `
+        : "";
+
       segments.push({
-        text: `${prefix}${part}`,
+        text: `${prefix}${val}`.trim(),
         separator: rule.separator || "-",
       });
     });
 
-    // Stock de sala al final (si el checkbox está marcado)
+    // Situación 3: Stock de Sala al final
     if (this.hasStockSalaTarget && this.stockSalaTarget.checked) {
       segments.push({
-        text: "Stock de sala",
+        text: "STOCK DE SALA",
         separator: "-",
       });
     }
@@ -297,82 +297,71 @@ export default class extends Controller {
 
   wrapSegments(segments, maxChars = 30, maxLines = 5) {
     const lines = [];
-    let current = "";
+    let currentLine = ""; // ← Sin baseCode
 
-    segments.forEach((seg, index) => {
-      if (index === 0) {
-        current = seg.text;
-        return;
-      }
-
-      const glue = seg.separator ?? "-";
+    segments.forEach((seg) => {
+      const glue = seg.separator || "-";
       const candidate =
-        current.length === 0 ? seg.text : `${current}${glue}${seg.text}`;
+        currentLine.length > 0 ? `${currentLine}${glue}${seg.text}` : seg.text; // ← Primera línea arranca directo con el segmento
 
-      if (current.length === 0) {
-        current = seg.text;
-      } else if (candidate.length <= maxChars) {
-        current = candidate;
+      if (candidate.length <= maxChars) {
+        currentLine = candidate;
       } else {
-        lines.push(current);
-        current = seg.text;
+        if (currentLine.length > 0) lines.push(currentLine);
+        currentLine = seg.text;
       }
     });
 
-    if (current.length > 0) lines.push(current);
+    if (currentLine.length > 0) lines.push(currentLine);
 
-    const overflowed = lines.length > maxLines;
     return {
-      lines: lines.slice(0, maxLines),
-      totalLines: lines.length,
-      overflowed,
+      lines,
+      overflowed: lines.length > maxLines,
     };
   }
 
   updateResult() {
     let allRequiredFilled = true;
-
     this.rules.forEach((rule) => {
-      const part = this.selections[rule.rule_id];
-      if (rule.required && !part) allRequiredFilled = false;
+      if (rule.required && !this.selections[rule.rule_id]) {
+        allRequiredFilled = false;
+      }
     });
 
     const segments = this.buildSegments();
-
-    if (segments.length === 0) {
-      this.resultTarget.value = "";
-      this.copyButtonTarget.disabled = true;
-      if (this.hasLineWarningTarget)
-        this.lineWarningTarget.classList.add("d-none");
-      return;
-    }
-
     const wrapped = this.wrapSegments(segments, 30, 5);
+
     this.resultTarget.value = wrapped.lines.join("\n");
 
+    // Manejo de advertencias
     if (this.hasLineWarningTarget) {
       if (wrapped.overflowed) {
         this.lineWarningTarget.classList.remove("d-none");
-        this.lineWarningTarget.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i> El código excede las 5 líneas permitidas.`;
+        this.lineWarningTarget.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> El código excede las 5 líneas del CRM.`;
+        this.copyButtonTarget.disabled = true;
+        return;
       } else {
         this.lineWarningTarget.classList.add("d-none");
       }
     }
 
-    this.copyButtonTarget.disabled = !allRequiredFilled;
+    this.copyButtonTarget.disabled =
+      !allRequiredFilled || segments.length === 0;
   }
 
   // ─── COPIAR ──────────────────────────────────────────────────────────────────
 
   copy() {
     const content = this.resultTarget.value;
+    if (!content) return;
+
     navigator.clipboard.writeText(content).then(() => {
-      const originalText = this.copyButtonTarget.innerHTML;
+      const originalHTML = this.copyButtonTarget.innerHTML;
       this.copyButtonTarget.innerHTML =
-        '<i class="bi bi-check2-all"></i> ¡Copiado!';
+        '<i class="bi bi-check2-all me-2"></i>¡Copiado!';
       this.copyButtonTarget.classList.replace("btn-primary", "btn-success");
       setTimeout(() => {
-        this.copyButtonTarget.innerHTML = originalText;
+        this.copyButtonTarget.innerHTML = originalHTML;
         this.copyButtonTarget.classList.replace("btn-success", "btn-primary");
       }, 2000);
     });
