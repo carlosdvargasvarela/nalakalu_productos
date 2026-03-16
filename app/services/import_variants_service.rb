@@ -41,40 +41,37 @@ class ImportVariantsService
     name = CsvImportHelper.normalize_string(row["nombre"])
     code = CsvImportHelper.normalize_string(row["codigo"])
 
-    return if type_name.blank? || name.blank? || code.blank?
+    return if type_name.blank? || name.blank?
 
     ActiveRecord::Base.transaction do
-      # Buscar el VariantType por nombre (no por ID)
       variant_type = VariantType.find_by(name: type_name)
       unless variant_type
         @errors << "Fila #{line_number}: Tipo de variante '#{type_name}' no encontrado. Créalo primero."
         raise ActiveRecord::Rollback
       end
 
-      # Buscar proveedor por nombre si se proporcionó
       provider = nil
       provider_name = CsvImportHelper.normalize_string(row["proveedor"])
       if provider_name.present?
         provider = Provider.find_by(name: provider_name)
         unless provider
           @errors << "Fila #{line_number}: Proveedor '#{provider_name}' no encontrado. Se ignorará."
-          # No hacemos rollback, simplemente dejamos provider en nil
         end
       end
 
       variant = Variant.find_or_initialize_by(
         variant_type: variant_type,
-        code: code
+        name: name
       )
       is_new = variant.new_record?
 
       variant.name = name
       variant.display_name = name
+      variant.code = code.presence
       variant.provider = provider
       variant.provider_sku = CsvImportHelper.normalize_string(row["sku_proveedor"]).presence || code
       variant.active = true
 
-      # Costo solo si viene en el CSV y es un número válido
       cost_raw = CsvImportHelper.normalize_string(row["costo"])
       if cost_raw.present?
         parsed = cost_raw.gsub(/[^0-9.,]/, "").tr(",", ".").to_d

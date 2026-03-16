@@ -2,8 +2,7 @@ class Variant < ApplicationRecord
   belongs_to :variant_type
   belongs_to :provider, optional: true # Ahora es opcional
 
-  validates :name, :code, presence: true
-  validates :code, uniqueness: {scope: :variant_type_id, message: "ya existe para este tipo de variante"}
+  validates :name, presence: true
 
   # Variantes relacionadas para precios alternativos
   has_many :variant_pricings, dependent: :destroy

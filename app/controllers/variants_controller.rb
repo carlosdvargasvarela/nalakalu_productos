@@ -32,7 +32,8 @@ class VariantsController < ApplicationController
       notice = "Importación exitosa: #{result[:created]} creados, #{result[:updated]} actualizados."
       redirect_to variants_path, notice: notice
     else
-      alert = "Importación con errores: #{result[:errors].join(", ")}"
+      print "Errores de importación: #{result[:errors].join(", ")}"
+      alert = "Importación con errores: #{result[:errors].count} errores encontrados."
       redirect_to variants_path, alert: alert
     end
   end
