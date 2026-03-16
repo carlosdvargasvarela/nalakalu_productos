@@ -1,13 +1,17 @@
 class Product < ApplicationRecord
   belongs_to :family, optional: true
-
   has_many :product_variant_rules, -> { order(:position) }, dependent: :destroy
   has_many :variant_types, through: :product_variant_rules
 
-  accepts_nested_attributes_for :product_variant_rules, allow_destroy: true, reject_if: :all_blank
+  # Esta es la relación que permite filtrar qué variantes ve la vendedora
+  has_many :reverse_compatibilities, as: :compatible, class_name: "Compatibility"
+  has_many :allowed_variants, through: :reverse_compatibilities, source: :variant
 
-  before_save :flag_family_change
-  after_save :sync_variant_rules_from_family
+  # MÉTODO CLAVE PARA LA UI:
+  # Devuelve las variantes de un tipo que son aptas para este producto
+  def compatible_variants_for(variant_type)
+    allowed_variants.where(variant_type: variant_type)
+  end
 
   def effective_rules
     product_variant_rules.any? ? product_variant_rules : []

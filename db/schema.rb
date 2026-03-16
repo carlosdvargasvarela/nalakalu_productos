@@ -10,14 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_16_225149) do
   create_table "compatibilities", force: :cascade do |t|
     t.integer "variant_id", null: false
-    t.integer "compatible_variant_id", null: false
+    t.integer "compatible_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["compatible_variant_id"], name: "index_compatibilities_on_compatible_variant_id"
-    t.index ["variant_id", "compatible_variant_id"], name: "index_compatibilities_on_variant_id_and_compatible_variant_id", unique: true
+    t.string "compatible_type", default: "Variant"
+    t.index ["compatible_id"], name: "index_compatibilities_on_compatible_id"
+    t.index ["variant_id", "compatible_id"], name: "index_compatibilities_on_variant_id_and_compatible_id", unique: true
     t.index ["variant_id"], name: "index_compatibilities_on_variant_id"
   end
 
@@ -40,6 +41,16 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
     t.datetime "updated_at", null: false
     t.index ["family_id"], name: "index_family_variant_rules_on_family_id"
     t.index ["variant_type_id"], name: "index_family_variant_rules_on_variant_type_id"
+  end
+
+  create_table "product_variant_prices", force: :cascade do |t|
+    t.integer "product_id", null: false
+    t.integer "variant_id", null: false
+    t.decimal "price", precision: 15, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_product_variant_prices_on_product_id"
+    t.index ["variant_id"], name: "index_product_variant_prices_on_variant_id"
   end
 
   create_table "product_variant_rules", force: :cascade do |t|
@@ -66,6 +77,24 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
     t.index ["family_id"], name: "index_products_on_family_id"
   end
 
+  create_table "properties", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_properties_on_name", unique: true
+  end
+
+  create_table "property_values", force: :cascade do |t|
+    t.integer "property_id", null: false
+    t.string "value", null: false
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["property_id", "value"], name: "index_property_values_on_property_id_and_value", unique: true
+    t.index ["property_id"], name: "index_property_values_on_property_id"
+  end
+
   create_table "providers", force: :cascade do |t|
     t.string "name"
     t.string "contact_name"
@@ -81,7 +110,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
   create_table "purchase_order_items", force: :cascade do |t|
     t.integer "purchase_order_id", null: false
     t.integer "variant_id", null: false
-    t.integer "variant_pricing_id"
     t.decimal "quantity"
     t.string "unit"
     t.decimal "unit_cost"
@@ -90,7 +118,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
     t.string "description_override"
     t.index ["purchase_order_id"], name: "index_purchase_order_items_on_purchase_order_id"
     t.index ["variant_id"], name: "index_purchase_order_items_on_variant_id"
-    t.index ["variant_pricing_id"], name: "index_purchase_order_items_on_variant_pricing_id"
   end
 
   create_table "purchase_orders", force: :cascade do |t|
@@ -118,14 +145,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  create_table "variant_pricings", force: :cascade do |t|
+  create_table "variant_properties", force: :cascade do |t|
     t.integer "variant_id", null: false
-    t.string "unit", null: false
-    t.decimal "cost", precision: 15, scale: 2, default: "0.0"
-    t.boolean "is_default", default: false
+    t.integer "property_value_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["variant_id"], name: "index_variant_pricings_on_variant_id"
+    t.index ["property_value_id"], name: "index_variant_properties_on_property_value_id"
+    t.index ["variant_id", "property_value_id"], name: "index_variant_properties_on_variant_id_and_property_value_id", unique: true
+    t.index ["variant_id"], name: "index_variant_properties_on_variant_id"
   end
 
   create_table "variant_types", force: :cascade do |t|
@@ -153,17 +180,20 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_13_134910) do
   end
 
   add_foreign_key "compatibilities", "variants"
-  add_foreign_key "compatibilities", "variants", column: "compatible_variant_id"
+  add_foreign_key "compatibilities", "variants", column: "compatible_id"
   add_foreign_key "family_variant_rules", "families"
   add_foreign_key "family_variant_rules", "variant_types"
+  add_foreign_key "product_variant_prices", "products"
+  add_foreign_key "product_variant_prices", "variants"
   add_foreign_key "product_variant_rules", "products"
   add_foreign_key "product_variant_rules", "variant_types"
   add_foreign_key "products", "families"
+  add_foreign_key "property_values", "properties"
   add_foreign_key "purchase_order_items", "purchase_orders"
-  add_foreign_key "purchase_order_items", "variant_pricings"
   add_foreign_key "purchase_order_items", "variants"
   add_foreign_key "purchase_orders", "providers"
-  add_foreign_key "variant_pricings", "variants"
+  add_foreign_key "variant_properties", "property_values"
+  add_foreign_key "variant_properties", "variants"
   add_foreign_key "variants", "providers"
   add_foreign_key "variants", "variant_types"
 end

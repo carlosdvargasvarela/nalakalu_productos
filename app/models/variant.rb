@@ -1,21 +1,25 @@
 class Variant < ApplicationRecord
   belongs_to :variant_type
-  belongs_to :provider, optional: true # Ahora es opcional
+  belongs_to :provider, optional: true
+
+  has_many :variant_properties, dependent: :destroy
+  has_many :property_values, through: :variant_properties
+  has_many :properties, through: :property_values
+
+  has_many :compatibilities, dependent: :destroy
+
+  # Precios específicos cuando se usa en un producto determinado
+  has_many :product_variant_prices, dependent: :destroy
 
   validates :name, presence: true
 
-  # Variantes relacionadas para precios alternativos
-  has_many :variant_pricings, dependent: :destroy
-  accepts_nested_attributes_for :variant_pricings, allow_destroy: true
-
-  # Relación de compatibilidad
-  has_many :compatibilities, dependent: :destroy
-  has_many :compatible_variants, through: :compatibilities, source: :compatible_variant
-
-  # Lógica de respaldo (Fallback) antes de validar y guardar
   before_validation :ensure_technical_data
 
-  # Lo que ve el vendedor en el generador (Ej: "Azul Petróleo")
+  # Helper para obtener el valor de una propiedad (ej: variant.get_prop("Acabado"))
+  def get_prop(prop_name)
+    property_values.joins(:property).find_by(properties: {name: prop_name})&.value
+  end
+
   def seller_name
     display_name.presence || name
   end
@@ -25,16 +29,6 @@ class Variant < ApplicationRecord
     parts = [name]
     parts << "Ref: #{provider_sku}" if provider_sku.present?
     parts.join(" - ")
-  end
-
-  def compatible_with?(other_variant)
-    return true if compatible_variants.empty?
-    compatible_variants.include?(other_variant)
-  end
-
-  # Helper para obtener el precio por defecto o el primero disponible
-  def default_pricing
-    variant_pricings.find_by(is_default: true) || variant_pricings.first
   end
 
   private
