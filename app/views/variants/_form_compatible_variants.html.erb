@@ -1,13 +1,16 @@
 <%
-  other_types = VariantType.where.not(id: variant.variant_type_id).where(active: true).order(:name)
+  other_types = VariantType.where.not(id: variant.variant_type_id)
+                           .where(active: true)
+                           .order(:name)
 %>
-<div class="card border-0 shadow-sm rounded-4 mb-4">
+<div class="card border-0 shadow-sm rounded-4 mb-4" data-controller="variant-compat">
   <div class="card-header bg-white py-3 border-bottom">
     <h5 class="fw-bold mb-0">
       <i class="bi bi-diagram-3 me-2 text-primary"></i>Reglas de Compatibilidad entre Variantes
     </h5>
     <p class="text-muted small mb-0 mt-1">
       Define qué variantes deben seleccionarse <strong>antes</strong> para que esta sea visible.
+      Si no seleccionás ninguna en un tipo, será compatible con todas las de ese tipo.
     </p>
   </div>
   <div class="card-body p-0">
@@ -16,62 +19,82 @@
         <% other_types.each_with_index do |type, index| %>
           <% 
             type_variants = type.variants.where(active: true).where.not(id: variant.id).order(:name)
-            selected_count = (type_variants.map(&:id) & variant.compatible_variant_ids).count
           %>
           <div class="accordion-item border-bottom">
             <h2 class="accordion-header">
-              <button class="accordion-button collapsed py-3 px-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapseType<%= type.id %>">
+              <button class="accordion-button collapsed py-3 px-4" type="button" 
+                      data-bs-toggle="collapse" data-bs-target="#collapseType<%= type.id %>">
                 <div class="d-flex justify-content-between align-items-center w-100 me-3">
                   <div>
                     <span class="fw-bold text-dark"><%= type.name %></span>
-                    <span class="badge bg-light text-muted border rounded-pill ms-2 x-small"><%= type_variants.count %></span>
+                    <span class="badge bg-light text-muted border rounded-pill ms-2 x-small">
+                      <%= type_variants.count %> totales
+                    </span>
                   </div>
-                  <% if selected_count > 0 %>
-                    <span class="badge bg-primary rounded-pill px-2"><%= selected_count %> seleccionadas</span>
-                  <% end %>
+                  <span class="badge bg-primary rounded-pill px-2 d-none" 
+                        data-variant-compat-target="badge" 
+                        data-type-id="<​%= type.id %>">
+                  </span>
                 </div>
               </button>
             </h2>
             <div id="collapseType<%= type.id %>" class="accordion-collapse collapse" data-bs-parent="#compatAccordion">
               <div class="accordion-body bg-light p-4">
-                <!-- Buscador interno para el tipo -->
-                <input type="text" class="form-control form-control-sm mb-3 border-2 shadow-none" 
-                       placeholder="Filtrar <%= type.name %>..." 
-                       onkeyup="filterVariants(this, 'list-<%= type.id %>')">
-                <div class="row g-2" id="list-<%= type.id %>">
-                  <%= f.collection_check_boxes(:compatible_variant_ids, type_variants, :id, :display_name) do |b| %>
-                    <div class="col-md-4 variant-item-check">
-                      <div class="form-check p-2 border rounded-3 bg-white shadow-sm h-100">
-                        <%= b.check_box(class: "form-check-input ms-0 me-2") %>
-                        <%= b.label(class: "form-check-label small fw-bold d-block") do %>
-                          <%= b.object.display_name.presence || b.object.name %>
-                          <code class="d-block text-muted x-small mt-1"><%= b.object.code %></code>
-                        <% end %>
+                <!-- Buscador interno -->
+                <div class="input-group input-group-sm mb-3 shadow-sm">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                  <input type="text" class="form-control border-start-0 shadow-none" 
+                         placeholder="Filtrar <%= type.name %>..." 
+                         data-action="input->variant-compat#filter"
+                  data-accordion-id="<​%= type.id %>">
+                  </div>
+                  <div class="row g-2">
+                    <%= f.collection_check_boxes(:compatible_variant_ids, type_variants, :id, :display_name) do |b| %>
+                      <div class="col-md-4" 
+                         data-variant-compat-target="item" 
+                         data-accordion-id="<​%= type.id %>"
+                        data-search-text="<%= b.object.display_name.presence || b.object.name %> <%= b.object.code %>">
+                        <div class="form-check p-2 border rounded-3 bg-white shadow-sm h-100 transition-all">
+                          <%= b.check_box(
+                              class: "form-check-input ms-0 me-2",
+                              data: { 
+                                variant_compat_target: "checkbox",
+                                action: "change->variant-compat#updateBadges",
+                                type_id: type.id 
+                              }
+                            ) %>
+                          <%= b.label(class: "form-check-label small fw-bold d-block cursor-pointer") do %>
+                            <%= b.object.display_name.presence || b.object.name %>
+                            <code class="d-block text-muted x-small mt-1"><%= b.object.code %></code>
+                          <% end %>
+                        </div>
                       </div>
+                    <% end %>
+                  </div>
+                  <% if type_variants.empty? %>
+                    <div class="text-center py-3 text-muted small">
+                      <i class="bi bi-info-circle me-1"></i>No hay variantes activas para este tipo.
                     </div>
                   <% end %>
                 </div>
               </div>
             </div>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <div class="p-5 text-center text-muted">
-        <i class="bi bi-diagram-2 fs-1 opacity-25"></i>
-        <p class="mt-2">No hay otros tipos de variante para crear reglas.</p>
-      </div>
-    <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="p-5 text-center text-muted">
+          <i class="bi bi-diagram-2 fs-1 opacity-25"></i>
+          <p class="mt-2">No hay otros tipos de variante para crear reglas.</p>
+        </div>
+      <% end %>
+    </div>
   </div>
-</div>
-<script>
-  // Función simple para filtrar dentro del acordeón
-  function filterVariants(input, listId) {
-    const filter = input.value.toLowerCase();
-    const items = document.getElementById(listId).getElementsByClassName('variant-item-check');
-    for (let i = 0; i < items.length; i++) {
-      const text = items[i].innerText.toLowerCase();
-      items[i].style.display = text.includes(filter) ? "" : "none";
+  <style>
+    .accordion-button:not(.collapsed) {
+      background-color: rgba(13, 110, 253, 0.05);
+      color: #0d6efd;
     }
-  }
-</script>
+    .transition-all { transition: all 0.2s ease-in-out; }
+    .form-check:hover { border-color: #0d6efd !important; }
+    .cursor-pointer { cursor: pointer; }
+  </style>
