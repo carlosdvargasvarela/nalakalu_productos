@@ -1,0 +1,89 @@
+<%
+  products = Product.where(active: true).order(:name)
+  current_product_ids = variant.compatibilities
+                               .where(compatible_type: "Product")
+                               .pluck(:compatible_id)
+%>
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-box-seam me-2 text-success"></i>Productos donde se puede usar
+      </h5>
+      <p class="text-muted small mb-0 mt-1">
+        Esta variante aparecerá en el generador de códigos
+        <strong>solo</strong> para los productos seleccionados.
+      </p>
+    </div>
+    <% if current_product_ids.any? %>
+      <span class="badge bg-success rounded-pill px-3">
+        <%= current_product_ids.count %> asignado<%= 's' if current_product_ids.count != 1 %>
+      </span>
+    <% else %>
+      <span class="badge bg-warning text-dark rounded-pill px-3">Sin asignar</span>
+    <% end %>
+  </div>
+  <div class="card-body p-4" data-controller="product-compat">
+    <% if products.any? %>
+      <!-- Buscador inline -->
+      <div class="mb-3">
+        <div class="input-group input-group-sm shadow-sm">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input type="text"
+                 class="form-control border-start-0 shadow-none"
+                 placeholder="Filtrar productos..."
+                 autocomplete="off"
+                 data-product-compat-target="search"
+                 data-action="input->product-compat#filter">
+        </div>
+      </div>
+      <!-- Lista de productos -->
+      <div class="border rounded-3 bg-light p-3" style="max-height: 260px; overflow-y: auto;">
+        <% products.each do |product| %>
+          <div class="form-check py-1"
+               data-product-compat-target="item"
+               data-name="<%= product.name.downcase %>">
+            <input type="checkbox"
+                   class="form-check-input"
+                   name="variant[compatible_product_ids][]"
+                   value="<%= product.id %>"
+            id="product_compat_<%= product.id %>"
+            data-product-compat-target="checkbox"
+            <%= "checked" if current_product_ids.include?(product.id) %>>
+            <label class="form-check-label small d-flex align-items-center gap-2"
+                   for="product_compat_<%= product.id %>">
+              <span class="fw-bold"><%= product.name %></span>
+              <% if product.base_code.present? %>
+                <code class="text-muted bg-white border rounded px-1"
+                      style="font-size: 0.65rem;">
+                  <%= product.base_code %>
+                </code>
+              <% end %>
+            </label>
+          </div>
+        <% end %>
+      </div>
+      <!-- Campo oculto para array vacío -->
+      <input type="hidden" name="variant[compatible_product_ids][]" value="">
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <div class="form-text x-small mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          Si no seleccionás ningún producto, esta variante
+          <strong>no aparecerá</strong> en el generador.
+        </div>
+        <button type="button"
+                class="btn btn-link btn-sm text-muted text-decoration-none x-small p-0"
+                data-action="click->product-compat#clear">
+          <i class="bi bi-x-circle me-1"></i>Limpiar selección
+        </button>
+      </div>
+    <% else %>
+      <div class="text-center py-4 text-muted">
+        <i class="bi bi-box-seam fs-2 d-block mb-2 opacity-25"></i>
+        <small>No hay productos activos creados todavía.</small>
+      </div>
+    <% end %>
+  </div>
+</div>

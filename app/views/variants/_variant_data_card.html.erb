@@ -1,0 +1,38 @@
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-header bg-white py-3 border-bottom">
+    <h5 class="fw-bold mb-0">
+      <i class="bi bi-info-circle me-2 text-primary"></i>Datos de la Variante
+    </h5>
+  </div>
+  <div class="list-group list-group-flush rounded-4">
+    <div class="list-group-item px-4 py-3">
+      <div class="small text-muted fw-bold mb-1">Código en CRM / QB</div>
+      <code class="fs-4 text-dark"><%= variant.code %></code>
+    </div>
+    <div class="list-group-item px-4 py-3">
+      <div class="small text-muted fw-bold mb-1">Nombre Comercial (Vendedor)</div>
+      <span class="fw-bold text-primary">
+        <%= variant.display_name.presence || "Igual al técnico" %>
+      </span>
+    </div>
+    <div class="list-group-item px-4 py-3">
+      <div class="small text-muted fw-bold mb-1">Nombre Técnico (Compra)</div>
+      <span class="fw-bold"><%= variant.name %></span>
+    </div>
+    <div class="list-group-item px-4 py-3">
+      <div class="small text-muted fw-bold mb-1">SKU / Código Color Prov.</div>
+      <code class="bg-light px-2 py-1 rounded">
+        <%= variant.provider_sku.presence || "—" %>
+      </code>
+    </div>
+    <div class="list-group-item px-4 py-3">
+      <div class="small text-muted fw-bold mb-1">Proveedor</div>
+      <% if variant.provider %>
+        <%= link_to variant.provider.name, variant.provider,
+            class: "text-decoration-none fw-bold text-primary" %>
+      <% else %>
+        <span class="badge bg-light text-dark border">Uso Interno / Genérico</span>
+      <% end %>
+    </div>
+  </div>
+</div>

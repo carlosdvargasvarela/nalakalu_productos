@@ -1,0 +1,13 @@
+<%= turbo_stream.append "eav-properties-grid" do %>
+  <%= render "variants/form_property_row",
+        prop: @property,
+        variant: @variant || Variant.new,
+        selected_map: {},
+        existing_vp: nil %>
+<% end %>
+<%= turbo_stream.replace "quick_property_form" do %>
+  <%= render "properties/quick_form", property: Property.new %>
+<% end %>
+<%= turbo_stream.replace "quick-property-status" do %>
+  <span id="quick-property-status" data-saved="true"></span>
+<% end %>

@@ -1,0 +1,43 @@
+<div class="card border-0 shadow-sm rounded-4">
+  <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-link-45deg me-2 text-primary"></i>Compatibilidades entre Variantes
+      </h5>
+      <p class="text-muted small mb-0 mt-1">
+        Variantes con las que esta opción puede combinarse.
+      </p>
+    </div>
+    <span class="badge bg-primary rounded-pill px-3">
+      <%= variant.compatible_variants.count %>
+    </span>
+  </div>
+  <div class="card-body p-0">
+    <% if variant.compatible_variants.any? %>
+      <% variant.compatible_variants
+               .includes(:variant_type)
+               .group_by(&:variant_type)
+               .each do |type, variants| %>
+        <div class="px-4 py-3 border-bottom">
+          <p class="small fw-bold text-muted text-uppercase mb-2">
+            <i class="bi bi-tags me-1"></i><%= type.name %>
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <% variants.each do |v| %>
+              <span class="badge bg-light text-dark border rounded-pill px-3 py-2">
+                <code class="me-1 text-primary" style="font-size: 0.7rem;"><%= v.code %></code>
+                <%= v.display_name.presence || v.name %>
+              </span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-link fs-1 d-block mb-2 opacity-25"></i>
+        <p class="mb-1 fw-bold">Sin restricciones de compatibilidad.</p>
+        <small>Esta variante es compatible con todas las demás por defecto.</small>
+      </div>
+    <% end %>
+  </div>
+</div>

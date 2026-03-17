@@ -17,7 +17,6 @@
       <% end %>
     </div>
   <% else %>
-    <%# Agrupamos por tipo de variante %>
     <% @variants.group_by(&:variant_type).each do |type, variants| %>
       <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
@@ -28,7 +27,7 @@
             <div>
               <span class="fw-bold text-dark"><%= type.name %></span>
               <span class="text-muted small ms-2">
-                <%= variants.count(& :active) %> activas · <%= variants.count %> totales
+                <%= variants.count(&:active) %> activas · <%= variants.count %> totales
               </span>
             </div>
           </div>
@@ -53,78 +52,7 @@
               </thead>
               <tbody>
                 <% variants.each do |variant| %>
-                  <tr class="<%= 'opacity-50' unless variant.active %>">
-                    <td class="px-4 py-3">
-                      <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-3 p-2 flex-shrink-0" style="background-color: #f0ebff;">
-                          <i class="bi bi-palette fs-5" style="color: #7c3aed;"></i>
-                        </div>
-                        <div>
-                          <div class="fw-bold text-dark">
-                            <%= variant.display_name.presence || variant.name %>
-                          </div>
-                          <% if variant.display_name.present? && variant.display_name != variant.name %>
-                            <div class="text-muted" style="font-size: 0.72rem;">
-                              <i class="bi bi-truck me-1"></i><%= variant.name %>
-                            </div>
-                          <% end %>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="py-3">
-                      <code class="bg-light px-2 py-1 rounded text-dark fw-bold">
-                        <%= variant.code %>
-                      </code>
-                    </td>
-                    <td class="py-3">
-                      <% pvs = variant.property_values %>
-                      <% if pvs.any? %>
-                        <div class="d-flex flex-wrap gap-1">
-                          <% pvs.includes(:property).each do |pv| %>
-                            <span class="badge bg-light text-dark border rounded-pill px-2"
-                                  style="font-size: 0.7rem;"
-                                  title="<%= pv.property.name %>">
-                              <%= pv.value %>
-                            </span>
-                          <% end %>
-                        </div>
-                      <% else %>
-                        <span class="text-muted small fst-italic">—</span>
-                      <% end %>
-                    </td>
-                    <td class="py-3">
-                      <% if variant.provider %>
-                        <%= link_to variant.provider.name, variant.provider,
-                            class: "text-decoration-none text-muted small" %>
-                      <% else %>
-                        <span class="text-muted small fst-italic">Interno</span>
-                      <% end %>
-                    </td>
-                    <td class="py-3">
-                      <span class="text-muted small font-monospace">
-                        <%= variant.provider_sku.presence || "—" %>
-                      </span>
-                    </td>
-                    <td class="py-3 text-center">
-                      <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
-                        <%= variant.active ? 'Activa' : 'Inactiva' %>
-                      </span>
-                    </td>
-                    <td class="py-3 pe-4 text-end">
-                      <div class="d-flex gap-1 justify-content-end">
-                        <%= link_to variant,
-                            class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
-                            title: "Ver detalle" do %>
-                          <i class="bi bi-eye"></i>
-                        <% end %>
-                        <%= link_to edit_variant_path(variant),
-                            class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
-                            title: "Editar" do %>
-                          <i class="bi bi-pencil"></i>
-                        <% end %>
-                      </div>
-                    </td>
-                  </tr>
+                  <%= render "variant_row", variant: variant %>
                 <% end %>
               </tbody>
             </table>
@@ -172,4 +100,5 @@
 <style>
   .bg-success-soft   { background-color: #e1f6eb; }
   .bg-secondary-soft { background-color: #f0f2f5; }
+  .x-small { font-size: 0.7rem; }
 </style>

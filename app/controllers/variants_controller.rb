@@ -160,15 +160,14 @@ class VariantsController < ApplicationController
 
   def variant_params
     params.require(:variant).permit(
-      :variant_type_id,
-      :provider_id,
-      :name,
-      :display_name,
-      :code,
-      :provider_sku,
-      :active,
+      :name, :display_name, :code, :provider_sku,
+      :variant_type_id, :provider_id, :active,
       :technical_description,
-      variant_properties_attributes: [:id, :property_value_id, :_destroy]
+      compatible_product_ids: [],
+      compatible_variant_ids: [],
+      variant_properties_attributes: [
+        :id, :property_id, :property_value_id, :_destroy
+      ]
     )
   end
 end

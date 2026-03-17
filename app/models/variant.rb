@@ -14,7 +14,9 @@ class Variant < ApplicationRecord
   has_many :product_variant_prices, dependent: :destroy
   has_many :priced_products, through: :product_variant_prices, source: :product
 
-  accepts_nested_attributes_for :variant_properties, allow_destroy: true
+  accepts_nested_attributes_for :variant_properties,
+    allow_destroy: true,
+    reject_if: ->(attrs) { attrs["property_value_id"].blank? }
 
   validates :name, presence: true
 
@@ -86,5 +88,18 @@ class Variant < ApplicationRecord
   # Precio que tiene esta variante para un producto concreto
   def price_for_product(product)
     product_variant_prices.find_by(product_id: product.id)&.price
+  end
+
+  # Genera: "Material: Porcelanato, Grosor: 12mm, Acabado: Mate"
+  def technical_specs_string
+    property_values.includes(:property)
+      .order("properties.name")
+      .map { |pv| "#{pv.property.name}: #{pv.value}" }
+      .join(", ")
+  end
+
+  # Para órdenes de compra: "Bottega Caliza | Material: Porcelanato, Grosor: 12mm"
+  def full_purchase_description
+    [name, technical_specs_string].reject(&:blank?).join(" | ")
   end
 end

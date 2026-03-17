@@ -1,0 +1,34 @@
+<%= form_with(model: property, url: properties_path, id: "quick_property_form") do |pf| %>
+  <% if property.errors.any? %>
+    <div class="alert alert-danger border-0 rounded-3 small py-2 px-3">
+      <ul class="mb-0 ps-3">
+        <% property.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div class="mb-3">
+    <%= pf.label :name, "Nombre de la Propiedad", class: "form-label small fw-bold text-muted" %>
+    <%= pf.text_field :name,
+        class: "form-control border-2 shadow-none",
+        placeholder: "Ej: Grosor, Material, Acabado...",
+        autofocus: true %>
+  </div>
+  <div class="mb-4">
+    <label class="form-label small fw-bold text-muted">Primer Valor <span class="text-muted fw-normal">(Opcional)</span></label>
+    <input type="text"
+           name="first_value"
+           class="form-control border-2 shadow-none"
+           placeholder="Ej: 18mm, Roble, Mate...">
+  </div>
+  <div class="d-flex justify-content-end gap-2">
+    <button type="button"
+            class="btn btn-light rounded-pill px-4 fw-bold"
+            data-bs-dismiss="modal">
+      Cancelar
+    </button>
+    <%= pf.submit "Crear y Usar",
+        class: "btn btn-primary rounded-pill px-4 fw-bold shadow-sm" %>
+  </div>
+<% end %>

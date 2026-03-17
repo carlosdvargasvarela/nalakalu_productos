@@ -1,0 +1,57 @@
+<%
+  pvs = variant.property_values.includes(:property).order("properties.name")
+%>
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+  <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-sliders me-2 text-primary"></i>Ficha Técnica
+      </h5>
+      <% if pvs.any? %>
+        <span class="x-small text-muted"><%= pvs.count %> atributo<%= 's' if pvs.count != 1 %> definido<%= 's' if pvs.count != 1 %></span>
+      <% end %>
+    </div>
+    <%= link_to edit_variant_path(variant),
+        class: "btn btn-sm btn-light rounded-pill border px-3",
+        title: "Editar propiedades" do %>
+      <i class="bi bi-pencil me-1"></i><span class="small">Editar</span>
+    <% end %>
+  </div>
+  <% if pvs.any? %>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <tbody>
+          <% pvs.each do |pv| %>
+            <tr>
+              <td class="ps-4 py-3 small fw-bold text-uppercase text-muted"
+                  style="width: 42%; background-color: #f8f9fa; border-right: 1px solid #dee2e6;">
+                <%= pv.property.name %>
+              </td>
+              <td class="ps-3 py-3 fw-bold text-dark">
+                <%= pv.value %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer bg-white border-top py-2 px-4">
+      <span class="x-small text-muted fst-italic">
+        <i class="bi bi-info-circle me-1"></i>
+        Estos datos se incluyen automáticamente en las órdenes de compra.
+      </span>
+    </div>
+  <% else %>
+    <div class="card-body text-center py-5 bg-light bg-opacity-50">
+      <i class="bi bi-clipboard-x d-block fs-2 mb-2 opacity-25"></i>
+      <p class="mb-1 small fw-bold text-muted">Sin atributos técnicos definidos.</p>
+      <p class="x-small text-muted mb-3">
+        Agrega propiedades como Material, Grosor o Acabado.
+      </p>
+      <%= link_to edit_variant_path(variant),
+          class: "btn btn-sm btn-outline-primary rounded-pill px-4" do %>
+        <i class="bi bi-plus-lg me-1"></i>Agregar Propiedades
+      <% end %>
+    </div>
+  <% end %>
+</div>

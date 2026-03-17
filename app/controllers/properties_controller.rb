@@ -23,9 +23,19 @@ class PropertiesController < ApplicationController
   def create
     @property = Property.new(property_params)
     if @property.save
-      redirect_to @property, notice: "Propiedad creada exitosamente."
+      if params[:first_value].present?
+        @property.property_values.create(value: params[:first_value], active: true)
+      end
+
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to @property, notice: "Propiedad creada exitosamente." }
+      end
     else
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("quick_property_form", partial: "properties/quick_form", locals: {property: @property}) }
+        format.html { render :new, status: :unprocessable_entity }
+      end
     end
   end
 
