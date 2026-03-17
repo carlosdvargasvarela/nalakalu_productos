@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_16_225149) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_17_224110) do
   create_table "compatibilities", force: :cascade do |t|
     t.integer "variant_id", null: false
     t.integer "compatible_id", null: false
@@ -18,7 +18,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_16_225149) do
     t.datetime "updated_at", null: false
     t.string "compatible_type", default: "Variant"
     t.index ["compatible_id"], name: "index_compatibilities_on_compatible_id"
-    t.index ["variant_id", "compatible_id"], name: "index_compatibilities_on_variant_id_and_compatible_id", unique: true
+    t.index ["compatible_type", "compatible_id"], name: "index_compatibilities_on_compatible_type_and_compatible_id"
+    t.index ["variant_id", "compatible_id", "compatible_type"], name: "index_compatibilities_unique_composite", unique: true
     t.index ["variant_id"], name: "index_compatibilities_on_variant_id"
   end
 
@@ -179,7 +180,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_16_225149) do
   end
 
   add_foreign_key "compatibilities", "variants"
-  add_foreign_key "compatibilities", "variants", column: "compatible_id"
   add_foreign_key "family_variant_rules", "families"
   add_foreign_key "family_variant_rules", "variant_types"
   add_foreign_key "product_variant_prices", "products"

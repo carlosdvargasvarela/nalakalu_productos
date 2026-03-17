@@ -78,8 +78,19 @@ class FamiliesController < ApplicationController
     @family = Family.find(params[:id])
     @product = @family.products.find(params[:product_id])
 
-    @product.update!(family_id: nil)
-    redirect_to @family, notice: "#{@product.name} desvinculado de #{@family.name}."
+    ActiveRecord::Base.transaction do
+      # 1. Limpiar compatibilidades de variantes generadas por las reglas de la familia
+      # (Opcional: solo si quieres que el producto quede totalmente limpio)
+      @product.compatibilities.destroy_all
+
+      # 2. Borrar las reglas de variantes que heredó de la familia
+      @product.product_variant_rules.destroy_all
+
+      # 3. Desvincular de la familia
+      @product.update!(family_id: nil)
+    end
+
+    redirect_to @family, notice: "#{@product.name} desvinculado y reglas limpiadas."
   rescue ActiveRecord::RecordNotFound
     redirect_to @family, alert: "Producto no encontrado en esta familia."
   end
