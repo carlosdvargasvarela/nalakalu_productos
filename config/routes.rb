@@ -45,6 +45,9 @@ Rails.application.routes.draw do
   end
 
   resources :products do
+    member do
+      post :update_compatibilities
+    end
     collection do
       post :import
     end

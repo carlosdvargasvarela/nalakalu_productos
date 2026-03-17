@@ -8,6 +8,7 @@ class Product < ApplicationRecord
   # Compatibilidades: qué variantes son válidas para este producto
   has_many :reverse_compatibilities, as: :compatible, class_name: "Compatibility"
   has_many :allowed_variants, through: :reverse_compatibilities, source: :variant
+  has_many :compatibilities, as: :compatible, class_name: "Compatibility"
 
   # Precios de variantes para este producto
   has_many :product_variant_prices, dependent: :destroy

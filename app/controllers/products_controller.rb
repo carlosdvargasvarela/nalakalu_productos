@@ -43,6 +43,33 @@ class ProductsController < ApplicationController
     end
   end
 
+  def update_compatibilities
+    @product = Product.find(params[:id])
+    variant_type_id = params[:variant_type_id]
+
+    new_variant_ids = Array(params[:variant_ids]).map(&:to_i).reject(&:zero?)
+
+    # Usamos la relación correcta definida en tu modelo Product
+    # Si en Product pusiste: has_many :reverse_compatibilities, as: :compatible, class_name: 'Compatibility'
+    current_assigned_ids = @product.reverse_compatibilities
+      .joins(:variant)
+      .where(variants: {variant_type_id: variant_type_id})
+      .pluck(:variant_id)
+
+    ActiveRecord::Base.transaction do
+      # Eliminar desmarcados
+      @product.reverse_compatibilities.where(variant_id: (current_assigned_ids - new_variant_ids)).destroy_all
+
+      # Crear nuevos
+      (new_variant_ids - current_assigned_ids).each do |vid|
+        @product.reverse_compatibilities.create!(variant_id: vid)
+      end
+    end
+
+    # Redirigir con un ancla para que el usuario vuelva a la misma sección
+    redirect_to product_path(@product, anchor: "variant-mgmt"), notice: "Variantes actualizadas."
+  end
+
   def destroy
     @product.destroy!
 
