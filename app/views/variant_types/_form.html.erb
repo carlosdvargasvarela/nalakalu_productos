@@ -1,7 +1,9 @@
 <%= form_with(model: variant_type) do |f| %>
   <% if variant_type.errors.any? %>
     <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
-      <h6 class="fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</h6>
+      <h6 class="fw-bold">
+        <i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:
+      </h6>
       <ul class="mb-0 ps-3 small">
         <% variant_type.errors.full_messages.each do |message| %>
           <li><%= message %></li>
@@ -16,30 +18,34 @@
       </h5>
     </div>
     <div class="card-body p-4">
-      <div class="mb-3">
-        <%= f.label :name, "Nombre del Tipo de Variante", class: "form-label small fw-bold text-muted" %>
+      <div class="mb-4">
+        <%= f.label :name, "Nombre del Tipo de Variante",
+            class: "form-label small fw-bold text-muted" %>
         <%= f.text_field :name,
             class: "form-control form-control-lg border-2 shadow-none",
-            placeholder: "Ej: Tela, Madera, Acabado, Color..." %>
+            placeholder: "Ej: Acabado, Tela, Madera, Color..." %>
         <div class="form-text mt-2">
           <i class="bi bi-info-circle me-1"></i>
-          Este nombre aparecerá como etiqueta en el generador de códigos cuando el vendedor configure un producto.
+          Este nombre aparecerá como etiqueta en el generador de códigos.
         </div>
       </div>
-      <div class="alert alert-info border-0 rounded-3 bg-info bg-opacity-10 mt-3 mb-0">
+      <div class="alert alert-info border-0 rounded-3 bg-info bg-opacity-10 mb-0">
         <div class="d-flex gap-2 align-items-start">
           <i class="bi bi-lightbulb-fill text-info mt-1 flex-shrink-0"></i>
           <div class="small">
-            <strong>Ejemplos de tipos:</strong> Tela Principal, Tela Secundaria, Tipo de Madera,
-            Acabado, Color de Hilo, Dimensión, Patas... Cada tipo agrupa variantes del mismo
-            "grupo de decisión" al configurar un producto.
+            <strong>Ejemplos de tipos:</strong> Acabado, Tela Principal, Tela Secundaria,
+            Tipo de Madera, Color de Hilo, Dimensión, Patas...<br>
+            Cada tipo agrupa variantes del mismo "grupo de decisión" al configurar un producto.
+            Las <strong>propiedades EAV</strong> (Acabado, Material, etc.) se asignan
+            a cada variante individual, no al tipo.
           </div>
         </div>
       </div>
     </div>
   </div>
   <div class="d-flex justify-content-between align-items-center">
-    <%= link_to variant_types_path, class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
+    <%= link_to variant_types_path,
+        class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
       <i class="bi bi-x-lg me-2"></i>Descartar
     <% end %>
     <%= f.submit variant_type.new_record? ? "Crear Tipo" : "Guardar Cambios",
