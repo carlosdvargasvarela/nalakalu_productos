@@ -28,30 +28,29 @@ class VariantsController < ApplicationController
 
   def import
     file = params[:file]
-
     if file.blank?
       redirect_to variants_path, alert: "Por favor, selecciona un archivo CSV."
       return
     end
 
     result = ImportVariantsService.call(file.tempfile.path)
-
     if result[:success]
-      notice = "Importación exitosa: #{result[:created]} creados, #{result[:updated]} actualizados."
-      redirect_to variants_path, notice: notice
+      redirect_to variants_path,
+        notice: "Importación exitosa: #{result[:created]} creados, #{result[:updated]} actualizados."
     else
-      alert = "Importación con errores: #{result[:errors].count} errores encontrados."
-      redirect_to variants_path, alert: alert
+      redirect_to variants_path,
+        alert: "Importación con errores: #{result[:errors].count} errores encontrados."
     end
   end
 
   def create
     @variant = Variant.new(variant_params)
     sync_property_values
-    sync_compatible_products
 
     respond_to do |format|
       if @variant.save
+        sync_compatible_products  # ← DESPUÉS del save, ya tiene ID
+        sync_compatible_variants
         format.html { redirect_to @variant, notice: "Variante creada exitosamente." }
         format.json { render :show, status: :created, location: @variant }
       else
@@ -64,10 +63,11 @@ class VariantsController < ApplicationController
   def update
     @variant.assign_attributes(variant_params)
     sync_property_values
-    sync_compatible_products
 
     respond_to do |format|
       if @variant.save
+        sync_compatible_products  # ← DESPUÉS del save también, por consistencia
+        sync_compatible_variants
         format.html { redirect_to @variant, notice: "Variante actualizada exitosamente." }
         format.json { render :show, status: :ok, location: @variant }
       else
@@ -79,7 +79,6 @@ class VariantsController < ApplicationController
 
   def destroy
     @variant.destroy!
-
     respond_to do |format|
       format.html { redirect_to variants_path, status: :see_other, notice: "Variante eliminada." }
       format.json { head :no_content }
@@ -92,10 +91,8 @@ class VariantsController < ApplicationController
     @variant = Variant.find(params[:id])
   end
 
-  # Sincroniza property_value_ids: un valor por propiedad
-  # Viene como params[:variant][:property_value_ids] => { "1" => "5", "2" => "" }
   def sync_property_values
-    return unless params[:variant][:property_value_ids].present?
+    return unless params.dig(:variant, :property_value_ids).present?
 
     selected_ids = params[:variant][:property_value_ids]
       .values
@@ -103,38 +100,61 @@ class VariantsController < ApplicationController
       .map(&:to_i)
       .uniq
 
-    # Destruir los que ya no están
     @variant.variant_properties
-      .where.not(property_value_id: selected_ids)
-      .destroy_all
+      .reject(&:new_record?)
+      .select { |vp| selected_ids.exclude?(vp.property_value_id) }
+      .each(&:mark_for_destruction)
 
-    # Agregar los nuevos
-    existing = @variant.variant_properties.pluck(:property_value_id)
+    existing = @variant.variant_properties
+      .reject(&:marked_for_destruction?)
+      .map(&:property_value_id)
+
     (selected_ids - existing).each do |pv_id|
       @variant.variant_properties.build(property_value_id: pv_id)
     end
   end
 
-  # Sincroniza compatibilidades con Productos
+  # ← Ahora siempre corre DESPUÉS de save, con ID garantizado
   def sync_compatible_products
-    return unless params[:variant][:compatible_product_ids].present?
-
-    ids = params[:variant][:compatible_product_ids]
+    ids = Array(params.dig(:variant, :compatible_product_ids))
       .reject(&:blank?)
       .map(&:to_i)
       .uniq
 
+    # Borrar los que ya no están marcados
     @variant.compatibilities
       .where(compatible_type: "Product")
       .where.not(compatible_id: ids)
       .destroy_all
 
+    # Crear los nuevos
     existing = @variant.compatibilities
       .where(compatible_type: "Product")
       .pluck(:compatible_id)
 
     (ids - existing).each do |pid|
-      @variant.compatibilities.build(compatible_type: "Product", compatible_id: pid)
+      @variant.compatibilities.create!(compatible_type: "Product", compatible_id: pid)
+    end
+  end
+
+  # Sincroniza compatibilidades entre variantes (sección 4 del form)
+  def sync_compatible_variants
+    ids = Array(params.dig(:variant, :compatible_variant_ids))
+      .reject(&:blank?)
+      .map(&:to_i)
+      .uniq
+
+    @variant.compatibilities
+      .where(compatible_type: "Variant")
+      .where.not(compatible_id: ids)
+      .destroy_all
+
+    existing = @variant.compatibilities
+      .where(compatible_type: "Variant")
+      .pluck(:compatible_id)
+
+    (ids - existing).each do |vid|
+      @variant.compatibilities.create!(compatible_type: "Variant", compatible_id: vid)
     end
   end
 
@@ -148,7 +168,6 @@ class VariantsController < ApplicationController
       :provider_sku,
       :active,
       :technical_description,
-      compatible_variant_ids: [],
       variant_properties_attributes: [:id, :property_value_id, :_destroy]
     )
   end

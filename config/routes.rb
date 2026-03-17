@@ -67,4 +67,6 @@ Rails.application.routes.draw do
       post :create_from_delivery
     end
   end
+
+  resources :product_variant_prices, only: [:create]
 end

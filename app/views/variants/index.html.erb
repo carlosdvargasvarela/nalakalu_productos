@@ -53,7 +53,7 @@
               </thead>
               <tbody>
                 <% variants.each do |variant| %>
-                  <tr class="<​%= 'opacity-50' unless variant.active %>">
+                  <tr class="<%= 'opacity-50' unless variant.active %>">
                     <td class="px-4 py-3">
                       <div class="d-flex align-items-center gap-3">
                         <div class="rounded-3 p-2 flex-shrink-0" style="background-color: #f0ebff;">
@@ -83,7 +83,7 @@
                           <% pvs.includes(:property).each do |pv| %>
                             <span class="badge bg-light text-dark border rounded-pill px-2"
                                   style="font-size: 0.7rem;"
-                                  title="<​%= pv.property.name %>">
+                                  title="<%= pv.property.name %>">
                               <%= pv.value %>
                             </span>
                           <% end %>

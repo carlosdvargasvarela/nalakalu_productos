@@ -1,4 +1,3 @@
-# app/models/variant.rb
 class Variant < ApplicationRecord
   belongs_to :variant_type
   belongs_to :provider, optional: true
@@ -7,12 +6,13 @@ class Variant < ApplicationRecord
   has_many :property_values, through: :variant_properties
   has_many :properties, through: :property_values
 
-  has_many :compatibilities, dependent: :destroy      # variant -> compatible (Variant/Product)
-  has_many :reverse_compatibilities,                  # compatible(Product/Variant) -> this variant
+  has_many :compatibilities, dependent: :destroy
+  has_many :reverse_compatibilities,
     as: :compatible,
     class_name: "Compatibility"
 
   has_many :product_variant_prices, dependent: :destroy
+  has_many :products_with_price, through: :product_variant_prices, source: :product
 
   accepts_nested_attributes_for :variant_properties, allow_destroy: true
 
@@ -74,5 +74,17 @@ class Variant < ApplicationRecord
 
   def compatible_products
     Product.where(id: compatibilities.where(compatible_type: "Product").pluck(:compatible_id))
+  end
+
+  # --------- Precios por producto ----------
+
+  # Devuelve todos los precios que tiene esta variante en productos
+  def prices_by_product
+    product_variant_prices.includes(:product)
+  end
+
+  # Precio que tiene esta variante para un producto concreto
+  def price_for_product(product)
+    product_variant_prices.find_by(product_id: product.id)&.price
   end
 end

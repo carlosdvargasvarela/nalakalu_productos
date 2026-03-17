@@ -8,9 +8,10 @@ export default class extends Controller {
     e.preventDefault();
     const content = this.templateTarget.innerHTML.replace(
       /NEW_RECORD/g,
-      new Date().getTime().toString()
+      new Date().getTime().toString(),
     );
-    this.targetTarget.insertAdjacentHTML("beforebegin", content);
+    // Insertar DENTRO del target, no antes de él
+    this.targetTarget.insertAdjacentHTML("beforeend", content);
     this.updatePositions();
   }
 
@@ -27,12 +28,13 @@ export default class extends Controller {
   }
 
   updatePositions() {
-    // Actualiza automáticamente el campo position basado en el orden visual
-    this.element
+    // Buscar dentro del targetTarget, ignorar los ocultos (_destroy=1)
+    this.targetTarget
       .querySelectorAll(this.wrapperSelectorValue)
       .forEach((wrapper, index) => {
+        if (wrapper.style.display === "none") return;
         const positionInput = wrapper.querySelector(
-          "input[data-role='position']"
+          "input[data-role='position']",
         );
         if (positionInput) positionInput.value = index + 1;
       });

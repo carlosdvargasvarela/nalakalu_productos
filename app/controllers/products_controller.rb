@@ -85,8 +85,8 @@ class ProductsController < ApplicationController
       :base_code,
       :description,
       :active,
+      :family_id,
       product_variant_rules_attributes: [
-        :id,
         :variant_type_id,
         :position,
         :required,

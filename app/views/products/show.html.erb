@@ -14,7 +14,7 @@
           </nav>
           <div class="d-flex align-items-center gap-3 flex-wrap">
             <h2 class="fw-bold mb-0"><%= @product.name %></h2>
-            <span class="badge <%= @product.active ? 'bg-success' : 'bg-secondary' %> rounded-pill">
+            <span class="badge <%= @product.active ? 'bg-success' : 'bg-secondary' %> rounded-pill px-3">
               <%= @product.active ? 'Activo' : 'Inactivo' %>
             </span>
             <%= supplier_type_badge(@product) %>
@@ -49,7 +49,7 @@
     </div>
   </div>
   <div class="row g-4">
-    <!-- Columna Izquierda -->
+    <!-- ===== COLUMNA IZQUIERDA ===== -->
     <div class="col-lg-7">
       <!-- Estructura del Código -->
       <div class="card border-0 shadow-sm rounded-4 mb-4">
@@ -76,7 +76,7 @@
                     <%= rule.separator %>
                   </span>
                   <span class="badge bg-primary rounded-pill px-3 fs-6">
-                    <%= rule.display_name %>
+                    <%= rule.label.presence || rule.variant_type.name %>
                     <% unless rule.required %>
                       <span class="opacity-75 ms-1 small">(opt)</span>
                     <% end %>
@@ -110,9 +110,11 @@
           <% end %>
         </div>
       </div>
+      <!-- Tabla de Precios por Variante -->
+      <%= render "variant_prices_table", product: @product %>
       <!-- Pasos del Código + Variantes disponibles por paso -->
       <% if (rules = @product.effective_rules).any? %>
-        <div class="card border-0 shadow-sm rounded-4">
+        <div class="card border-0 shadow-sm rounded-4 mt-4">
           <div class="card-header bg-white py-3 border-bottom">
             <h5 class="mb-0 fw-bold">
               <i class="bi bi-list-ol me-2 text-primary"></i>Pasos del Código
@@ -131,16 +133,17 @@
                     <%= i + 1 %>
                   </div>
                   <div class="flex-grow-1">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                      <span class="fw-bold"><%= rule.display_name %></span>
-                      <span class="badge <%= rule.required ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary' %> rounded-pill small">
+                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                      <span class="fw-bold">
+                        <%= rule.label.presence || rule.variant_type.name %>
+                      </span>
+                      <span class="badge <%= rule.required ? 'bg-danger bg-opacity-10 text-danger' : 'bg-secondary bg-opacity-10 text-secondary' %> rounded-pill small">
                         <%= rule.required ? 'Obligatorio' : 'Opcional' %>
                       </span>
                       <span class="badge bg-light text-muted border rounded-pill small">
                         Sep: <code><%= rule.separator %></code>
                       </span>
                     </div>
-                    <%# Variantes compatibles con este producto para este tipo %>
                     <% compatible = @product.compatible_variants_for(rule.variant_type)
                                             .where(active: true).order(:name) %>
                     <% if compatible.any? %>
@@ -155,8 +158,8 @@
                       </div>
                     <% else %>
                       <div class="mt-2">
-                        <span class="badge bg-warning-soft text-warning border border-warning
-                                     border-opacity-25 rounded-pill px-2 small">
+                        <span class="badge bg-warning bg-opacity-10 text-warning border
+                                     border-warning border-opacity-25 rounded-pill px-2 small">
                           <i class="bi bi-exclamation-triangle me-1"></i>
                           Sin variantes compatibles asignadas
                         </span>
@@ -170,7 +173,7 @@
         </div>
       <% end %>
     </div>
-    <!-- Columna Derecha -->
+    <!-- ===== COLUMNA DERECHA ===== -->
     <div class="col-lg-5">
       <!-- Información del Producto -->
       <div class="card border-0 shadow-sm rounded-4 mb-4">
@@ -214,7 +217,7 @@
           </div>
         </div>
       </div>
-      <!-- Variantes asignadas a este producto (por tipo) -->
+      <!-- Variantes Asignadas -->
       <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
           <h5 class="mb-0 fw-bold">
@@ -237,7 +240,7 @@
                 compatible_type: "Product",
                 compatible_id: @product.id
               })
-              .includes(:variant_type, :property_values)
+              .includes(:variant_type, :property_values => :property)
               .order("variant_types.name, variants.name")
               .joins(:variant_type)
           %>
@@ -258,18 +261,28 @@
                         <% pvs = v.property_values %>
                         <% if pvs.any? %>
                           <div class="d-flex flex-wrap gap-1 mt-1">
-                            <% pvs.includes(:property).each do |pv| %>
+                            <% pvs.each do |pv| %>
                               <span class="badge bg-white border text-muted rounded-pill px-2"
                                     style="font-size: 0.65rem;">
+                                <span class="text-muted opacity-75"><%= pv.property.name %>:</span>
                                 <%= pv.value %>
                               </span>
                             <% end %>
                           </div>
                         <% end %>
                       </div>
-                      <code class="text-primary fw-bold" style="font-size: 0.75rem;">
-                        <%= v.code %>
-                      </code>
+                      <div class="d-flex flex-column align-items-end gap-1 ms-2">
+                        <code class="text-primary fw-bold" style="font-size: 0.75rem;">
+                          <%= v.code %>
+                        </code>
+                        <% price = @product.price_for(v) %>
+                        <% if price %>
+                          <span class="badge bg-success bg-opacity-10 text-success rounded-pill"
+                                style="font-size: 0.65rem;">
+                            ₡ <%= number_with_delimiter(price.to_i) %>
+                          </span>
+                        <% end %>
+                      </div>
                     </div>
                   <% end %>
                 </div>
