@@ -1,0 +1,119 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item">
+            <%= link_to "Propiedades", properties_path, class: "text-decoration-none" %>
+          </li>
+          <li class="breadcrumb-item active fw-bold"><%= @property.name %></li>
+        </ol>
+      </nav>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-primary bg-opacity-10 p-3 rounded-3">
+            <i class="bi bi-sliders fs-3 text-primary"></i>
+          </div>
+          <div>
+            <h2 class="fw-bold mb-0"><%= @property.name %></h2>
+            <span class="badge <%= @property.active ? 'bg-success' : 'bg-secondary' %> rounded-pill mt-1">
+              <%= @property.active ? 'Activa' : 'Inactiva' %>
+            </span>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <%= link_to edit_property_path(@property), class: "btn btn-outline-primary rounded-pill px-4" do %>
+            <i class="bi bi-pencil me-2"></i>Editar
+          <% end %>
+          <%= button_to @property, method: :delete,
+              class: "btn btn-outline-danger rounded-pill px-4",
+              form: { data: { turbo_confirm: "¿Eliminar la propiedad \"#{@property.name}\" y todos sus valores?" } } do %>
+            <i class="bi bi-trash me-2"></i>Eliminar
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-4">
+    <!-- Valores existentes -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-list-ul me-2 text-primary"></i>Valores de "<%= @property.name %>"
+          </h5>
+          <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">
+            <%= @property_values.count %>
+          </span>
+        </div>
+        <% if @property_values.any? %>
+          <div class="list-group list-group-flush">
+            <% @property_values.each do |pv| %>
+              <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center border-0">
+                <div class="d-flex align-items-center gap-3">
+                  <span class="badge <%= pv.active ? 'bg-success' : 'bg-secondary' %> rounded-circle p-1" style="width:10px;height:10px;"></span>
+                  <span class="fw-bold"><%= pv.value %></span>
+                  <% unless pv.active %>
+                    <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill x-small">Inactivo</span>
+                  <% end %>
+                </div>
+                <div class="d-flex gap-2">
+                  <%= link_to edit_property_value_path(pv),
+                      class: "btn btn-sm btn-light rounded-pill border px-3" do %>
+                    <i class="bi bi-pencil"></i>
+                  <% end %>
+                  <%= button_to property_value_path(pv), method: :delete,
+                      class: "btn btn-sm btn-outline-danger rounded-pill px-3",
+                      form: { data: { turbo_confirm: "¿Eliminar \"#{pv.value}\"?" } } do %>
+                    <i class="bi bi-trash"></i>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="card-body text-center py-5 text-muted">
+            <i class="bi bi-tag fs-1 d-block mb-2 opacity-25"></i>
+            <p class="mb-0 small">Aún no hay valores. Añade el primero desde el panel derecho.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    <!-- Formulario rápido para añadir valor -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-plus-circle me-2 text-success"></i>Añadir Valor
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <%= form_with model: [@property, @new_value] do |f| %>
+            <div class="mb-3">
+              <%= f.label :value, "Valor", class: "form-label small fw-bold text-muted" %>
+              <%= f.text_field :value,
+                  class: "form-control border-2 shadow-none",
+                  placeholder: "Ej: Bottega Caliza",
+                  autofocus: true %>
+              <div class="form-text x-small">
+                Debe ser único dentro de esta propiedad.
+              </div>
+            </div>
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <%= f.check_box :active, class: "form-check-input", checked: true %>
+                <%= f.label :active, "Activo", class: "form-check-label small fw-bold" %>
+              </div>
+            </div>
+            <%= f.submit "Añadir Valor",
+                class: "btn btn-success w-100 rounded-pill fw-bold shadow-sm" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .x-small { font-size: 0.72rem; }
+</style>

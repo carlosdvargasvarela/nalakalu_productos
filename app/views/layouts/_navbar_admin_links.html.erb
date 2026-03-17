@@ -1,50 +1,66 @@
 <li class="nav-item dropdown">
   <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" 
      href="#" role="button" data-bs-toggle="dropdown">
-    <i class="bi bi-gear-fill"></i>
+    <i class="bi bi-gear-fill text-warning"></i>
     <span>Administración</span>
   </a>
-  <ul class="dropdown-menu dropdown-menu-dark border-0 shadow">
+  <ul class="dropdown-menu dropdown-menu-dark border-0 shadow-lg" style="min-width: 240px;">
+    <!-- SECCIÓN: ESTRUCTURA -->
+    <li><span class="dropdown-header small text-uppercase opacity-50">Estructura</span></li>
     <li>
-      <span class="dropdown-header small text-uppercase opacity-50">Catálogos</span>
-    </li>
-    <li>
-      <%= link_to families_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'families'}" do %>
-        <i class="bi bi-collection"></i> Familias
+      <%= link_to families_path, class: "dropdown-item d-flex align-items-center justify-content-between gap-2 #{'active' if controller_name == 'families'}" do %>
+        <span><i class="bi bi-collection me-2"></i>Familias</span>
+        <span class="badge rounded-pill bg-light text-dark opacity-75 small"><%= Family.count %></span>
       <% end %>
     </li>
     <li>
-      <%= link_to products_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'products'}" do %>
-        <i class="bi bi-box"></i> Productos Base
-      <% end %>
-    </li>
-    <li><hr class="dropdown-divider opacity-25"></li>
-    <li>
-      <span class="dropdown-header small text-uppercase opacity-50">Variantes</span>
-    </li>
-    <li>
-      <%= link_to providers_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'providers'}" do %>
-        <i class="bi bi-building"></i> Proveedores
-      <% end %>
-    </li>
-    <li>
-      <%= link_to variant_types_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'variant_types'}" do %>
-        <i class="bi bi-tags"></i> Tipos de Variante
-      <% end %>
-    </li>
-    <li>
-      <%= link_to variants_path, class: "dropdown-item d-flex align-items-center gap-2 #{'active' if controller_name == 'variants'}" do %>
-        <i class="bi bi-palette"></i> Variantes
+      <%= link_to products_path, class: "dropdown-item d-flex align-items-center justify-content-between gap-2 #{'active' if controller_name == 'products'}" do %>
+        <span><i class="bi bi-box me-2"></i>Productos Base</span>
+        <span class="badge rounded-pill bg-light text-dark opacity-75 small"><%= Product.count %></span>
       <% end %>
     </li>
     <li><hr class="dropdown-divider opacity-25"></li>
+    <!-- SECCIÓN: ATRIBUTOS (EAV) -->
+    <li><span class="dropdown-header small text-uppercase opacity-50">Atributos (EAV)</span></li>
     <li>
-      <span class="dropdown-header small text-uppercase opacity-50">Sistema</span>
+      <%= link_to properties_path, class: "dropdown-item d-flex align-items-center justify-content-between gap-2 #{'active' if controller_name == 'properties'}" do %>
+        <span><i class="bi bi-sliders me-2"></i>Propiedades</span>
+        <span class="badge rounded-pill bg-primary small"><%= Property.count %></span>
+      <% end %>
     </li>
-    <li><%= link_to "Gestión de Usuarios", users_path, class: "dropdown-item py-2" %></li>
+    <li><hr class="dropdown-divider opacity-25"></li>
+    <!-- SECCIÓN: VARIANTES -->
+    <li><span class="dropdown-header small text-uppercase opacity-50">Variantes</span></li>
+    <li>
+      <%= link_to providers_path, class: "dropdown-item d-flex align-items-center justify-content-between gap-2 #{'active' if controller_name == 'providers'}" do %>
+        <span><i class="bi bi-building me-2"></i>Proveedores</span>
+        <span class="badge rounded-pill bg-light text-dark opacity-75 small"><%= Provider.count %></span>
+      <% end %>
+    </li>
+    <li>
+      <%= link_to variant_types_path, class: "dropdown-item d-flex align-items-center justify-content-between gap-2 #{'active' if controller_name == 'variant_types'}" do %>
+        <span><i class="bi bi-tags me-2"></i>Tipos de Variante</span>
+        <span class="badge rounded-pill bg-light text-dark opacity-75 small"><%= VariantType.count %></span>
+      <% end %>
+    </li>
+    <li>
+      <%= link_to variants_path, class: "dropdown-item d-flex align-items-center justify-content-between gap-2 #{'active' if controller_name == 'variants'}" do %>
+        <span><i class="bi bi-palette me-2"></i>Variantes</span>
+        <span class="badge rounded-pill bg-info text-dark small fw-bold"><%= Variant.count %></span>
+      <% end %>
+    </li>
+    <li><hr class="dropdown-divider opacity-25"></li>
+    <!-- SECCIÓN: SISTEMA -->
+    <li><span class="dropdown-header small text-uppercase opacity-50">Sistema</span></li>
+    <li>
+      <%= link_to users_path, class: "dropdown-item d-flex align-items-center justify-content-between gap-2" do %>
+        <span><i class="bi bi-people me-2"></i>Usuarios</span>
+        <span class="badge rounded-pill bg-secondary small"><%= User.count %></span>
+      <% end %>
+    </li>
     <li>
       <%= link_to "/sidekiq", class: "dropdown-item d-flex align-items-center gap-2", target: "_blank" do %>
-        <i class="bi bi-activity"></i> Sidekiq Jobs
+        <i class="bi bi-activity text-danger"></i> Sidekiq Jobs
       <% end %>
     </li>
   </ul>

@@ -3,16 +3,12 @@ class ProductVariantPrice < ApplicationRecord
   belongs_to :product
   belongs_to :variant
 
-  validates :product_id, :variant_id, presence: true
-  validates :price, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
+  validates :price, presence: true, numericality: {greater_than_or_equal_to: 0}
+  # Evitamos duplicados: un producto solo puede tener un precio para una variante específica
+  validates :variant_id, uniqueness: {scope: :product_id, message: "ya tiene un precio asignado para este producto"}
 
-  validates :variant_id, uniqueness: {
-    scope: :product_id,
-    message: "ya tiene un precio definido para este producto"
-  }
-
-  # Para la UI
-  def display_label
-    "#{product.name} - #{variant.seller_name} (#{variant.code})"
+  # Helper para mostrar el precio formateado
+  def formatted_price
+    ActionController::Base.helpers.number_to_currency(price)
   end
 end

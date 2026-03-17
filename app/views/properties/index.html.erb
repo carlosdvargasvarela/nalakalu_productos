@@ -1,0 +1,82 @@
+<div class="container-fluid py-4">
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-sliders me-2 text-primary"></i>Propiedades</h2>
+        <p class="text-muted small mb-0">
+          Atributos globales que describen las variantes (Acabado, Material, Grosor, etc.)
+        </p>
+      </div>
+      <%= link_to new_property_path, class: "btn btn-primary rounded-pill px-4 fw-bold shadow-sm" do %>
+        <i class="bi bi-plus-lg me-2"></i>Nueva Propiedad
+      <% end %>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <% @properties.each do |prop| %>
+      <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+          <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge <%= prop.active ? 'bg-success' : 'bg-secondary' %> rounded-circle p-1">
+                <i class="bi bi-<%= prop.active ? 'check' : 'x' %> small"></i>
+              </span>
+              <h6 class="fw-bold mb-0"><%= prop.name %></h6>
+            </div>
+            <div class="d-flex gap-1">
+              <%= link_to edit_property_path(prop), class: "btn btn-sm btn-light rounded-pill border" do %>
+                <i class="bi bi-pencil"></i>
+              <% end %>
+              <%= link_to prop, class: "btn btn-sm btn-primary rounded-pill px-3" do %>
+                <i class="bi bi-eye me-1"></i>Gestionar
+              <% end %>
+            </div>
+          </div>
+          <div class="card-body p-3">
+            <% values = prop.property_values.where(active: true).order(:value) %>
+            <% if values.any? %>
+              <div class="d-flex flex-wrap gap-1">
+                <% values.first(8).each do |pv| %>
+                  <span class="badge bg-light text-dark border rounded-pill px-2 small">
+                    <%= pv.value %>
+                  </span>
+                <% end %>
+                <% if values.count > 8 %>
+                  <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 small">
+                    +<%= values.count - 8 %> más
+                  </span>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-muted small mb-0 text-center py-2">
+                <i class="bi bi-info-circle me-1"></i>Sin valores definidos aún.
+              </p>
+            <% end %>
+          </div>
+          <div class="card-footer bg-white border-top-0 px-3 pb-3 pt-0">
+            <span class="x-small text-muted">
+              <%= prop.property_values.count %> valor<%= 'es' if prop.property_values.count != 1 %> en total
+            </span>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @properties.empty? %>
+      <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body text-center py-5 text-muted">
+            <i class="bi bi-sliders2-vertical fs-1 d-block mb-3 opacity-25"></i>
+            <h5 class="fw-bold">No hay propiedades definidas</h5>
+            <p class="small mb-3">Crea la primera para empezar a describir tus variantes.</p>
+            <%= link_to new_property_path, class: "btn btn-primary rounded-pill px-4" do %>
+              <i class="bi bi-plus-lg me-2"></i>Crear Propiedad
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+<style>.x-small { font-size: 0.72rem; }</style>

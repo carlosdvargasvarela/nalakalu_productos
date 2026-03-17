@@ -1,0 +1,35 @@
+<%= form_with model: @property, class: "row g-4" do |f| %>
+  <% if @property.errors.any? %>
+    <div class="col-12">
+      <div class="alert alert-danger border-0 rounded-4">
+        <ul class="mb-0 ps-3 small">
+          <% @property.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+  <div class="col-12">
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-4">
+        <div class="mb-3">
+          <%= f.label :name, "Nombre de la Propiedad", class: "form-label fw-bold" %>
+          <%= f.text_field :name,
+              class: "form-control border-2 shadow-none",
+              placeholder: "Ej: Acabado, Material, Grosor..." %>
+          <div class="form-text small">Debe ser único. Aparecerá en el formulario de todas las variantes.</div>
+        </div>
+        <div class="form-check form-switch">
+          <%= f.check_box :active, class: "form-check-input" %>
+          <%= f.label :active, "Propiedad activa", class: "form-check-label fw-bold" %>
+        </div>
+      </div>
+      <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center">
+        <%= link_to "Cancelar", properties_path, class: "btn btn-link text-muted text-decoration-none" %>
+        <%= f.submit @property.new_record? ? "Crear Propiedad" : "Guardar Cambios",
+            class: "btn btn-primary rounded-pill px-5 fw-bold shadow-sm" %>
+      </div>
+    </div>
+  </div>
+<% end %>

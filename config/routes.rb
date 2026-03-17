@@ -72,4 +72,8 @@ Rails.application.routes.draw do
   end
 
   resources :product_variant_prices, only: [:create]
+
+  resources :properties do
+    resources :property_values, shallow: true
+  end
 end

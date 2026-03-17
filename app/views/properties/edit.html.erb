@@ -1,0 +1,15 @@
+<%# app/views/properties/edit.html.erb %>
+<div class="container-fluid py-4">
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><%= link_to "Propiedades", properties_path, class: "text-decoration-none" %></li>
+          <li class="breadcrumb-item"><%= link_to @property.name, @property, class: "text-decoration-none" %></li>
+          <li class="breadcrumb-item active">Editar</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+  <%= render "form" %>
+</div>
