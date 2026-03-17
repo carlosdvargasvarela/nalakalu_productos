@@ -12,7 +12,7 @@ class Variant < ApplicationRecord
     class_name: "Compatibility"
 
   has_many :product_variant_prices, dependent: :destroy
-  has_many :products_with_price, through: :product_variant_prices, source: :product
+  has_many :priced_products, through: :product_variant_prices, source: :product
 
   accepts_nested_attributes_for :variant_properties, allow_destroy: true
 

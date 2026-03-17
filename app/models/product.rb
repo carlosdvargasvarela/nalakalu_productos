@@ -77,7 +77,7 @@ class Product < ApplicationRecord
 
   # Devuelve el precio configurado para una variante específica
   def price_for(variant)
-    product_variant_prices.find_by(variant_id: variant.id)&.price
+    product_variant_prices.find_by(variant: variant)&.price || 0
   end
 
   # Crea o actualiza el precio para una variante

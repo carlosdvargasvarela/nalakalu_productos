@@ -43,31 +43,31 @@ class ProductsController < ApplicationController
     end
   end
 
+  # app/controllers/products_controller.rb
   def update_compatibilities
     @product = Product.find(params[:id])
-    variant_type_id = params[:variant_type_id]
+    variant_type = VariantType.find(params[:variant_type_id])
+    new_variant_ids = params[:variant_ids] || []
 
-    new_variant_ids = Array(params[:variant_ids]).map(&:to_i).reject(&:zero?)
+    # 1. Obtenemos las variantes actuales de este tipo para este producto
+    current_variants = @product.compatible_variants_for(variant_type)
+    current_ids = current_variants.pluck(:id).map(&:to_s)
 
-    # Usamos la relación correcta definida en tu modelo Product
-    # Si en Product pusiste: has_many :reverse_compatibilities, as: :compatible, class_name: 'Compatibility'
-    current_assigned_ids = @product.reverse_compatibilities
-      .joins(:variant)
-      .where(variants: {variant_type_id: variant_type_id})
-      .pluck(:variant_id)
+    # 2. Identificamos cuáles quitar y cuáles poner
+    to_remove = current_ids - new_variant_ids
+    to_add = new_variant_ids - current_ids
 
-    ActiveRecord::Base.transaction do
-      # Eliminar desmarcados
-      @product.reverse_compatibilities.where(variant_id: (current_assigned_ids - new_variant_ids)).destroy_all
+    Compatibility.transaction do
+      # Eliminar las que ya no están seleccionadas
+      @product.compatibilities.where(variant_id: to_remove).destroy_all if to_remove.any?
 
-      # Crear nuevos
-      (new_variant_ids - current_assigned_ids).each do |vid|
-        @product.reverse_compatibilities.create!(variant_id: vid)
+      # Crear las nuevas
+      to_add.each do |v_id|
+        @product.compatibilities.create!(variant_id: v_id)
       end
     end
 
-    # Redirigir con un ancla para que el usuario vuelva a la misma sección
-    redirect_to product_path(@product, anchor: "variant-mgmt"), notice: "Variantes actualizadas."
+    redirect_to @product, notice: "Compatibilidades de #{variant_type.name} actualizadas."
   end
 
   def destroy
