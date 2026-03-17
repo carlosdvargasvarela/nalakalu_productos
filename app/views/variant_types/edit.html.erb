@@ -18,13 +18,8 @@
             Editando: <span class="text-primary"><%= @variant_type.name %></span>
           </h2>
           <p class="text-muted small mb-0">
-            <span class="fw-bold text-success">
-              <%= @variant_type.variants.where(active: true).count %> activas
-            </span>
-            ·
-            <span class="fw-bold text-info">
-              <%= @variant_type.variants.count %> totales
-            </span>
+            <span class="fw-bold text-info"><%= @variant_type.variants.count %> variantes</span>
+            asociadas a este tipo.
           </p>
         </div>
         <%= link_to @variant_type, class: "btn btn-outline-secondary rounded-pill px-4" do %>

@@ -33,7 +33,7 @@
                   </div>
                   <span class="badge bg-primary rounded-pill px-2 d-none" 
                         data-variant-compat-target="badge" 
-                        data-type-id="<​%= type.id %>">
+                        data-type-id="<%= type.id %>">
                   </span>
                 </div>
               </button>
@@ -46,16 +46,16 @@
                   <input type="text" class="form-control border-start-0 shadow-none" 
                          placeholder="Filtrar <%= type.name %>..." 
                          data-action="input->variant-compat#filter"
-                  data-accordion-id="<​%= type.id %>">
-                  </div>
-                  <div class="row g-2">
-                    <%= f.collection_check_boxes(:compatible_variant_ids, type_variants, :id, :display_name) do |b| %>
-                      <div class="col-md-4" 
+                  data-accordion-id="<%= type.id %>">
+                </div>
+                <div class="row g-2">
+                  <%= f.collection_check_boxes(:compatible_variant_ids, type_variants, :id, :display_name) do |b| %>
+                    <div class="col-md-4" 
                          data-variant-compat-target="item" 
-                         data-accordion-id="<​%= type.id %>"
+                         data-accordion-id="<%= type.id %>"
                         data-search-text="<%= b.object.display_name.presence || b.object.name %> <%= b.object.code %>">
-                        <div class="form-check p-2 border rounded-3 bg-white shadow-sm h-100 transition-all">
-                          <%= b.check_box(
+                      <div class="form-check p-2 border rounded-3 bg-white shadow-sm h-100 transition-all">
+                        <%= b.check_box(
                               class: "form-check-input ms-0 me-2",
                               data: { 
                                 variant_compat_target: "checkbox",
@@ -63,38 +63,38 @@
                                 type_id: type.id 
                               }
                             ) %>
-                          <%= b.label(class: "form-check-label small fw-bold d-block cursor-pointer") do %>
-                            <%= b.object.display_name.presence || b.object.name %>
-                            <code class="d-block text-muted x-small mt-1"><%= b.object.code %></code>
-                          <% end %>
-                        </div>
+                        <%= b.label(class: "form-check-label small fw-bold d-block cursor-pointer") do %>
+                          <%= b.object.display_name.presence || b.object.name %>
+                          <code class="d-block text-muted x-small mt-1"><%= b.object.code %></code>
+                        <% end %>
                       </div>
-                    <% end %>
-                  </div>
-                  <% if type_variants.empty? %>
-                    <div class="text-center py-3 text-muted small">
-                      <i class="bi bi-info-circle me-1"></i>No hay variantes activas para este tipo.
                     </div>
                   <% end %>
                 </div>
+                <% if type_variants.empty? %>
+                  <div class="text-center py-3 text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>No hay variantes activas para este tipo.
+                  </div>
+                <% end %>
               </div>
             </div>
-          <% end %>
-        </div>
-      <% else %>
-        <div class="p-5 text-center text-muted">
-          <i class="bi bi-diagram-2 fs-1 opacity-25"></i>
-          <p class="mt-2">No hay otros tipos de variante para crear reglas.</p>
-        </div>
-      <% end %>
-    </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-5 text-center text-muted">
+        <i class="bi bi-diagram-2 fs-1 opacity-25"></i>
+        <p class="mt-2">No hay otros tipos de variante para crear reglas.</p>
+      </div>
+    <% end %>
   </div>
-  <style>
-    .accordion-button:not(.collapsed) {
-      background-color: rgba(13, 110, 253, 0.05);
-      color: #0d6efd;
-    }
-    .transition-all { transition: all 0.2s ease-in-out; }
-    .form-check:hover { border-color: #0d6efd !important; }
-    .cursor-pointer { cursor: pointer; }
-  </style>
+</div>
+<style>
+  .accordion-button:not(.collapsed) {
+    background-color: rgba(13, 110, 253, 0.05);
+    color: #0d6efd;
+  }
+  .transition-all { transition: all 0.2s ease-in-out; }
+  .form-check:hover { border-color: #0d6efd !important; }
+  .cursor-pointer { cursor: pointer; }
+</style>

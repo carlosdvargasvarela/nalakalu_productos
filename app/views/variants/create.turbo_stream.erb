@@ -1,0 +1,10 @@
+<%# 1. Agregar a la tabla %>
+<%= turbo_stream.prepend "variants-table-body" do %>
+  <%= render "variant_types/variant_row", variant: @variant %>
+<% end %>
+<%# 2. Señal para cerrar el modal %>
+<%= turbo_stream.replace "variant-modal-signal" do %>
+  <div id="variant-modal-signal" data-variant-modal-target="signal"></div>
+<% end %>
+<%# 3. Limpiar mensaje de "No hay variantes" %>
+<%= turbo_stream.remove "empty-variants-state" %>

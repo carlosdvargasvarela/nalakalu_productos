@@ -91,22 +91,28 @@ class Product < ApplicationRecord
   private
 
   def flag_family_change
-    @should_sync_rules = family_id_changed? && family.present?
+    # Detectamos si el family_id cambió y no es nulo
+    @should_sync_rules = will_save_change_to_family_id? && family_id.present?
   end
 
   def sync_variant_rules_from_family
     return unless @should_sync_rules
 
-    product_variant_rules.destroy_all
+    # Usamos una transacción para asegurar consistencia
+    ActiveRecord::Base.transaction do
+      # 1. Limpiar reglas actuales
+      product_variant_rules.destroy_all
 
-    family.family_variant_rules.each do |fr|
-      product_variant_rules.create!(
-        variant_type_id: fr.variant_type_id,
-        position: fr.position,
-        required: fr.required,
-        separator: fr.separator,
-        label: fr.label
-      )
+      # 2. Clonar reglas de la familia
+      family.family_variant_rules.each do |fr|
+        product_variant_rules.create!(
+          variant_type_id: fr.variant_type_id,
+          position: fr.position,
+          required: fr.required,
+          separator: fr.separator,
+          label: fr.label
+        )
+      end
     end
 
     @should_sync_rules = false

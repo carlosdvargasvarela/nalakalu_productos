@@ -1,0 +1,8 @@
+<%# 1. Actualizar la fila en la tabla %>
+<%= turbo_stream.replace dom_id(@variant) do %>
+  <%= render "variant_types/variant_row", variant: @variant %>
+<% end %>
+<%# 2. Señal para cerrar el modal %>
+<%= turbo_stream.replace "variant-modal-signal" do %>
+  <div id="variant-modal-signal" data-variant-modal-target="signal"></div>
+<% end %>

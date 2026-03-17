@@ -24,7 +24,7 @@
     <% if existing_vp&.persisted? %>
       <input type="hidden"
              name="variant[variant_properties_attributes][<%= prop.id %>][id]"
-             value="<​%= existing_vp.id %>">
+             value="<%= existing_vp.id %>">
     <% end %>
   <% else %>
     <div class="form-control border-2 bg-light text-muted small d-flex align-items-center" style="height: 38px;">

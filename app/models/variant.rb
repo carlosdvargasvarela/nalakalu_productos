@@ -20,6 +20,8 @@ class Variant < ApplicationRecord
 
   validates :name, presence: true
 
+  after_create :auto_link_to_products, if: :active?
+
   # --------- Helpers EAV ----------
   def get_prop(prop_name)
     property_values.joins(:property).find_by(properties: {name: prop_name})&.value
@@ -101,5 +103,20 @@ class Variant < ApplicationRecord
   # Para órdenes de compra: "Bottega Caliza | Material: Porcelanato, Grosor: 12mm"
   def full_purchase_description
     [name, technical_specs_string].reject(&:blank?).join(" | ")
+  end
+
+  private
+
+  def auto_link_to_products
+    # Buscamos qué productos tienen reglas para el tipo de esta nueva variante
+    product_ids = ProductVariantRule.where(variant_type_id: variant_type_id).pluck(:product_id).uniq
+
+    product_ids.each do |pid|
+      Compatibility.find_or_create_by!(
+        variant_id: id,
+        compatible_type: "Product",
+        compatible_id: pid
+      )
+    end
   end
 end

@@ -1,0 +1,109 @@
+<%
+  products_using_type = Product
+    .joins(product_variant_rules: :variant_type)
+    .where(variant_types: { id: variant_type.id })
+    .distinct
+    .order(:name)
+%>
+<!-- Resumen Estadístico -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-header bg-white py-3 border-bottom">
+    <h6 class="fw-bold mb-0">
+      <i class="bi bi-bar-chart me-2 text-info"></i>Resumen
+    </h6>
+  </div>
+  <div class="list-group list-group-flush rounded-bottom-4">
+    <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+      <span class="small text-muted fw-bold">Total variantes</span>
+      <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 fw-bold">
+        <%= variant_type.variants.count %>
+      </span>
+    </div>
+    <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+      <span class="small text-muted fw-bold">Activas</span>
+      <span class="badge bg-success-soft text-success rounded-pill px-3 fw-bold">
+        <%= variant_type.variants.where(active: true).count %>
+      </span>
+    </div>
+    <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+      <span class="small text-muted fw-bold">Inactivas</span>
+      <span class="badge bg-secondary-soft text-secondary rounded-pill px-3 fw-bold">
+        <%= variant_type.variants.where(active: false).count %>
+      </span>
+    </div>
+    <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+      <span class="small text-muted fw-bold">Con propiedades EAV</span>
+      <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 fw-bold">
+        <%= variant_type.variants.joins(:variant_properties).distinct.count %>
+      </span>
+    </div>
+    <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+      <span class="small text-muted fw-bold">Asignadas a productos</span>
+      <span class="badge bg-success-soft text-success rounded-pill px-3 fw-bold">
+        <%= variant_type.variants
+              .joins(:compatibilities)
+              .where(compatibilities: { compatible_type: "Product" })
+              .distinct.count %>
+      </span>
+    </div>
+  </div>
+</div>
+<!-- Productos que usan este tipo -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+    <h6 class="fw-bold mb-0">
+      <i class="bi bi-box-seam me-2 text-primary"></i>Productos que lo usan
+    </h6>
+    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2">
+      <%= products_using_type.count %>
+    </span>
+  </div>
+  <div class="card-body p-3">
+    <% if products_using_type.any? %>
+      <div class="d-flex flex-column gap-1">
+        <% products_using_type.limit(8).each do |p| %>
+          <%= link_to p, class: "text-decoration-none" do %>
+            <div class="d-flex align-items-center justify-content-between
+                        bg-light rounded-3 px-3 py-2 hover-shadow">
+              <span class="small fw-bold text-dark"><%= p.name %></span>
+              <code class="text-muted" style="font-size: 0.7rem;"><%= p.base_code %></code>
+            </div>
+          <% end %>
+        <% end %>
+        <% if products_using_type.count > 8 %>
+          <p class="text-muted small text-center mb-0 mt-1">
+            +<%= products_using_type.count - 8 %> productos más
+          </p>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-3 text-muted">
+        <i class="bi bi-box fs-3 opacity-25 d-block mb-2"></i>
+        <p class="small fst-italic mb-0">Ningún producto usa este tipo aún.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+<!-- Acciones Rápidas -->
+<div class="card border-0 shadow-sm rounded-4">
+  <div class="card-header bg-white py-3 border-bottom">
+    <h6 class="fw-bold mb-0">
+      <i class="bi bi-lightning me-2 text-warning"></i>Acciones Rápidas
+    </h6>
+  </div>
+  <div class="card-body p-3 d-grid gap-2">
+    <%= link_to new_variant_path(variant_type_id: variant_type.id),
+        data: { action: "click->variant-modal#openNew" },
+        class: "btn btn-info text-white rounded-pill fw-bold shadow-sm" do %>
+      <i class="bi bi-plus-lg me-2"></i>Nueva Variante
+    <% end %>
+    <%= link_to edit_variant_type_path(variant_type),
+        class: "btn btn-outline-primary rounded-pill" do %>
+      <i class="bi bi-pencil me-2"></i>Editar Tipo
+    <% end %>
+    <%= link_to variant_types_path,
+        class: "btn btn-link text-muted text-decoration-none" do %>
+      <i class="bi bi-arrow-left me-2"></i>Volver a Tipos
+    <% end %>
+  </div>
+</div>
