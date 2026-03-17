@@ -3,45 +3,61 @@
     <h5 class="mb-0 fw-bold">
       <i class="bi bi-box-seam me-2 text-primary"></i>Variantes de este Proveedor
     </h5>
-    <span class="badge bg-primary rounded-pill px-3"><%= provider.variants.count %></span>
+    <span class="badge bg-primary rounded-pill px-3">
+      <%= provider.variants.count %>
+    </span>
   </div>
   <div class="card-body p-0">
-    <div class="table-responsive" style="max-height: 400px;">
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
       <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
+        <thead class="table-light sticky-top">
           <tr>
             <th class="ps-4 py-2 small fw-bold text-muted text-uppercase">Tipo / Nombre</th>
             <th class="py-2 small fw-bold text-muted text-uppercase text-center">Código</th>
+            <th class="py-2 small fw-bold text-muted text-uppercase text-center">SKU Proveedor</th>
             <th class="py-2 pe-4 text-end small fw-bold text-muted text-uppercase">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <% provider.variants.includes(:variant_type).order("variant_types.name, variants.name").each do |variant| %>
+          <% if provider.variants.any? %>
+            <% provider.variants
+                       .includes(:variant_type)
+                       .order("variant_types.name, variants.name")
+                       .joins(:variant_type)
+                       .each do |variant| %>
+              <tr>
+                <td class="ps-4 py-3">
+                  <span class="badge bg-light text-dark border rounded-pill px-2 mb-1"
+                        style="font-size: 0.7rem;">
+                    <%= variant.variant_type.name %>
+                  </span>
+                  <div class="fw-bold small">
+                    <%= variant.display_name.presence || variant.name %>
+                  </div>
+                </td>
+                <td class="text-center py-3">
+                  <code class="small fw-bold text-primary"><%= variant.code %></code>
+                </td>
+                <td class="text-center py-3">
+                  <span class="text-muted small font-monospace">
+                    <%= variant.provider_sku.presence || "—" %>
+                  </span>
+                </td>
+                <td class="text-end pe-4 py-3">
+                  <%= button_to unassign_variant_provider_path(provider, variant_id: variant.id),
+                      method: :delete,
+                      class: "btn btn-sm btn-outline-danger rounded-pill px-3",
+                      form: { data: { turbo_confirm: "¿Desvincular '#{variant.name}'? Pasará a ser una variante genérica sin proveedor." } } do %>
+                    <i class="bi bi-x-circle me-1"></i>Quitar
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
             <tr>
-              <td class="ps-4">
-                <span class="badge bg-light text-dark border rounded-pill px-2 mb-1" style="font-size: 0.7rem;">
-                  <%= variant.variant_type.name %>
-                </span>
-                <div class="fw-bold small"><%= variant.display_name.presence || variant.name %></div>
-              </td>
-              <td class="text-center">
-                <code class="small fw-bold text-primary"><%= variant.code %></code>
-              </td>
-              <td class="text-end pe-4">
-                <%= button_to unassign_variant_provider_path(provider, variant_id: variant.id),
-                    method: :delete,
-                    class: "btn btn-sm btn-outline-danger rounded-pill px-3",
-                    form: { data: { turbo_confirm: "¿Desvincular '#{variant.name}'? Pasará a ser una variante de uso interno/genérica." } } do %>
-                  <i class="bi bi-x-circle me-1"></i>Quitar
-                <% end %>
-              </td>
-            </tr>
-          <% end %>
-          <% if provider.variants.empty? %>
-            <tr>
-              <td colspan="3" class="text-center py-5 text-muted">
+              <td colspan="4" class="text-center py-5 text-muted">
                 <i class="bi bi-info-circle d-block fs-2 mb-2 opacity-50"></i>
-                No hay variantes asignadas.
+                No hay variantes asignadas a este proveedor.
               </td>
             </tr>
           <% end %>

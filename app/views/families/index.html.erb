@@ -1,57 +1,75 @@
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="fw-bold mb-0">Familias de Productos</h1>
-      <p class="text-muted">Gestiona las estructuras de código base por categorías.</p>
+      <h1 class="fw-bold mb-0 text-dark">Familias de Producto</h1>
+      <p class="text-muted mb-0">Define estructuras de código comunes para grupos de productos.</p>
     </div>
-    <%= link_to new_family_path, class: "btn btn-primary shadow-sm rounded-pill px-4" do %>
+    <%= link_to new_family_path, class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
       <i class="bi bi-plus-lg me-2"></i>Nueva Familia
     <% end %>
   </div>
-  <div class="row g-4">
-    <% @families.each do |family| %>
-      <div class="col-md-6 col-xl-4">
-        <div class="card h-100 border-0 shadow-sm hover-shadow transition-all rounded-4">
-          <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <div class="bg-primary bg-opacity-10 p-3 rounded-3">
-                <i class="bi bi-diagram-3 fs-3 text-primary"></i>
+  <% if @families.empty? %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-diagram-3 d-block fs-1 mb-3 opacity-25"></i>
+      <p class="fw-bold">No hay familias registradas aún.</p>
+      <%= link_to new_family_path, class: "btn btn-primary rounded-pill px-4" do %>
+        <i class="bi bi-plus-lg me-2"></i>Crear primera familia
+      <% end %>
+    </div>
+  <% else %>
+    <div class="row g-4">
+      <% @families.each do |family| %>
+        <div class="col-md-6 col-xl-4">
+          <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="bg-info bg-opacity-10 p-3 rounded-3">
+                  <i class="bi bi-diagram-3 fs-3 text-info"></i>
+                </div>
+                <span class="badge <%= family.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
+                  <%= family.active ? 'Activa' : 'Inactiva' %>
+                </span>
               </div>
-              <span class="badge <%= family.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
-                <%= family.active ? 'Activa' : 'Inactiva' %>
-              </span>
-            </div>
-            <h4 class="fw-bold mb-2"><%= family.name %></h4>
-            <p class="text-muted small mb-4 text-truncate-2" style="height: 3rem;">
-              <%= family.description.presence || "Sin descripción disponible." %>
-            </p>
-            <div class="row g-2 mb-4">
-              <div class="col-6">
-                <div class="p-2 border rounded-3 bg-light text-center">
-                  <div class="fw-bold text-dark"><%= family.products.count %></div>
-                  <div class="text-muted x-small uppercase fw-bold">Productos</div>
+              <h5 class="fw-bold mb-1"><%= family.name %></h5>
+              <p class="text-muted small mb-3"><%= truncate(family.description, length: 80) %></p>
+              <div class="mb-4">
+                <p class="small fw-bold text-muted mb-2">Estructura Heredable:</p>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge bg-dark rounded-pill opacity-50">BASE</span>
+                  <% family.family_variant_rules.order(:position).each do |rule| %>
+                    <span class="badge bg-info-soft text-info border border-info border-opacity-25 rounded-pill">
+                      <%= rule.separator %><%= rule.label.presence || rule.variant_type.name %>
+                    </span>
+                  <% end %>
+                  <% if family.family_variant_rules.empty? %>
+                    <span class="text-muted small fst-italic">Sin reglas definidas</span>
+                  <% end %>
                 </div>
               </div>
-              <div class="col-6">
-                <div class="p-2 border rounded-3 bg-light text-center">
-                  <div class="fw-bold text-dark"><%= family.family_variant_rules.count %></div>
-                  <div class="text-muted x-small uppercase fw-bold">Reglas DNA</div>
+              <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-auto">
+                <div class="text-muted small">
+                  <strong class="text-dark"><%= family.products.count %></strong> productos
+                </div>
+                <div class="d-flex gap-1">
+                  <%= link_to family, class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <%= link_to edit_family_path(family), class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm" do %>
+                    <i class="bi bi-pencil"></i>
+                  <% end %>
                 </div>
               </div>
-            </div>
-            <div class="d-grid">
-              <%= link_to family, class: "btn btn-outline-primary rounded-pill" do %>
-                Gestionar Familia <i class="bi bi-arrow-right ms-2"></i>
-              <% end %>
             </div>
           </div>
         </div>
-      </div>
-    <% end %>
-  </div>
-  <div class="mt-4">
-    <%= link_to root_path, class: "btn btn-link text-decoration-none text-muted" do %>
-      <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
-    <% end %>
-  </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
+<style>
+  .hover-card { transition: all 0.2s ease; }
+  .hover-card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important; }
+  .bg-success-soft { background-color: #e1f6eb; }
+  .bg-info-soft { background-color: #e0f4ff; }
+  .bg-secondary-soft { background-color: #f0f2f5; }
+</style>

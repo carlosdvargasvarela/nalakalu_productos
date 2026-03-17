@@ -12,13 +12,17 @@
   <td class="py-3">
     <%= f.text_field :code, class: "form-control form-control-sm border-0 bg-light text-center fw-bold font-monospace shadow-none", placeholder: "LG" %>
   </td>
+  <td class="py-3">
+    <%= f.text_field :provider_sku, class: "form-control form-control-sm border-0 bg-light text-center shadow-none", placeholder: "SKU-123" %>
+  </td>
   <td class="py-3 text-center">
     <div class="form-check form-switch d-inline-block">
       <%= f.check_box :active, class: "form-check-input cursor-pointer" %>
     </div>
   </td>
   <td class="py-3 pe-4 text-end">
-    <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle p-1" data-action="nested-form#remove">
+    <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle p-1"
+            data-action="nested-form#remove">
       <i class="bi bi-trash3-fill"></i>
     </button>
   </td>
