@@ -1,7 +1,8 @@
+# app/controllers/variants_controller.rb
 class VariantsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_variant, only: %i[show edit update destroy]
+  before_action :set_variant, only: %i[show edit update destroy move_to_type]
 
   def index
     @variants = Variant.all
@@ -11,12 +12,16 @@ class VariantsController < ApplicationController
   end
 
   def show
-    @compatible_products = @variant.compatibilities
-      .where(compatible_type: "Product")
-      .includes(:compatible)
-      .map(&:compatible)
-      .compact
-      .sort_by(&:name)
+    # Compatible products ahora se obtienen a través de ProductVariantRule
+    rule_ids = @variant.compatibilities
+      .where(compatible_type: "ProductVariantRule")
+      .pluck(:compatible_id)
+
+    @compatible_products = Product
+      .joins(:product_variant_rules)
+      .where(product_variant_rules: {id: rule_ids})
+      .distinct
+      .order(:name)
   end
 
   def new
@@ -39,14 +44,16 @@ class VariantsController < ApplicationController
     sync_property_values
 
     if @variant.save
-      sync_compatible_products
       sync_compatible_variants
       respond_to do |format|
         format.html { redirect_to @variant.variant_type, notice: "Variante creada." }
         format.turbo_stream
       end
     else
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { render :new, status: :unprocessable_entity }
+        format.turbo_stream { render :new, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -55,14 +62,57 @@ class VariantsController < ApplicationController
     sync_property_values
 
     if @variant.save
-      sync_compatible_products
       sync_compatible_variants
       respond_to do |format|
         format.html { redirect_to @variant.variant_type, notice: "Variante actualizada." }
         format.turbo_stream
       end
     else
-      render :edit, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { render :edit, status: :unprocessable_entity }
+        format.turbo_stream { render :edit, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def destroy
+    type = @variant.variant_type
+    @variant.destroy
+
+    respond_to do |format|
+      format.html { redirect_to variant_type_path(type), notice: "Variante eliminada." }
+      format.turbo_stream { render turbo_stream: turbo_stream.remove(@variant) }
+    end
+  end
+
+  def move_to_type
+    old_type = @variant.variant_type
+    new_type = VariantType.find(params[:new_type_id])
+
+    # Limpiar compatibilidades con reglas del tipo anterior
+    old_rule_ids = ProductVariantRule.where(variant_type_id: old_type.id).pluck(:id)
+    Compatibility.where(
+      variant_id: @variant.id,
+      compatible_type: "ProductVariantRule",
+      compatible_id: old_rule_ids
+    ).destroy_all
+
+    if @variant.update(variant_type: new_type)
+      # Vincular manualmente a las reglas del nuevo tipo
+      # (after_create no se dispara en update)
+      ProductVariantRule.where(variant_type_id: new_type.id).each do |rule|
+        Compatibility.find_or_create_by!(
+          variant_id: @variant.id,
+          compatible_type: "ProductVariantRule",
+          compatible_id: rule.id
+        )
+      end
+
+      redirect_to variant_type_path(new_type),
+        notice: "Variante movida a '#{new_type.name}' exitosamente."
+    else
+      redirect_to variant_type_path(old_type),
+        alert: "No se pudo mover la variante."
     end
   end
 
@@ -80,14 +130,6 @@ class VariantsController < ApplicationController
     else
       redirect_to variants_path,
         alert: "Importación con errores: #{result[:errors].count} errores encontrados."
-    end
-  end
-
-  def destroy
-    @variant.destroy!
-    respond_to do |format|
-      format.html { redirect_to variants_path, status: :see_other, notice: "Variante eliminada." }
-      format.json { head :no_content }
     end
   end
 
@@ -120,44 +162,22 @@ class VariantsController < ApplicationController
     end
   end
 
-  def sync_compatible_products
-    ids = Array(params.dig(:variant, :compatible_product_ids))
-      .reject(&:blank?)
-      .map(&:to_i)
-      .uniq
-
-    # Si no se enviaron IDs explícitos, no tocamos nada.
-    # El after_create :auto_link_to_products se encargó al crear.
-    return if ids.empty?
-
-    @variant.compatibilities
-      .where(compatible_type: "Product")
-      .where.not(compatible_id: ids)
-      .destroy_all
-
-    existing = @variant.compatibilities
-      .where(compatible_type: "Product")
-      .pluck(:compatible_id)
-
-    (ids - existing).each do |pid|
-      @variant.compatibilities.find_or_create_by!(
-        compatible_type: "Product",
-        compatible_id: pid
-      )
-    end
-  end
-
+  # Las compatibilidades con productos ahora son automáticas via
+  # ProductVariantRule#after_create y Variant#after_create.
+  # Solo gestionamos compatibilidades entre variantes (cross-selling, etc.)
   def sync_compatible_variants
     ids = Array(params.dig(:variant, :compatible_variant_ids))
       .reject(&:blank?)
       .map(&:to_i)
       .uniq
 
+    # Eliminar las que ya no están
     @variant.compatibilities
       .where(compatible_type: "Variant")
       .where.not(compatible_id: ids)
       .destroy_all
 
+    # Crear las nuevas
     existing = @variant.compatibilities
       .where(compatible_type: "Variant")
       .pluck(:compatible_id)
@@ -172,11 +192,8 @@ class VariantsController < ApplicationController
       :name, :display_name, :code, :provider_sku,
       :variant_type_id, :provider_id, :active,
       :technical_description,
-      compatible_product_ids: [],
       compatible_variant_ids: [],
-      variant_properties_attributes: [
-        :id, :property_id, :property_value_id, :_destroy
-      ]
+      variant_properties_attributes: [:id, :property_id, :property_value_id, :_destroy]
     )
   end
 end

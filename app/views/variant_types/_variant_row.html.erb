@@ -24,11 +24,17 @@
     <div class="btn-group shadow-sm rounded-pill overflow-hidden">
       <%= link_to edit_variant_path(variant), 
           data: { action: "click->variant-modal#openEdit" },
-          class: "btn btn-sm btn-white border-end" do %>
+          class: "btn btn-sm btn-white border-end", title: "Editar" do %>
         <i class="bi bi-pencil text-primary"></i>
       <% end %>
-      <%= link_to variant_path(variant), class: "btn btn-sm btn-white" do %>
+      <%= link_to variant_path(variant), class: "btn btn-sm btn-white border-end", title: "Ver" do %>
         <i class="bi bi-eye text-info"></i>
+      <% end %>
+      <%# Botón Eliminar con Turbo Stream %>
+      <%= button_to variant_path(variant), method: :delete,
+          form: { data: { turbo_confirm: "¿Eliminar permanentemente?" } },
+          class: "btn btn-sm btn-white text-danger", title: "Eliminar" do %>
+        <i class="bi bi-trash"></i>
       <% end %>
     </div>
   </td>

@@ -4,15 +4,14 @@ export default class extends Controller {
   static targets = ["modal", "formContainer"];
 
   connect() {
+    // Inicializar el modal de Bootstrap
     this.modal = new bootstrap.Modal(this.modalTarget);
 
-    // Observamos cambios en el modal para detectar la señal de cierre
-    this.observer = new MutationObserver(() => {
+    // Escuchar la señal de cierre que viene desde Turbo Stream
+    this.observer = new MutationObserver((mutations) => {
       const signal = document.getElementById("variant-modal-signal");
-      // Si el elemento existe y tiene el atributo de target (significa que fue reemplazado por Turbo)
       if (signal && signal.hasAttribute("data-variant-modal-target")) {
         this.close();
-        // Limpiamos la señal para futuros usos
         signal.removeAttribute("data-variant-modal-target");
       }
     });
@@ -41,11 +40,15 @@ export default class extends Controller {
   }
 
   async fetchForm(url) {
-    const response = await fetch(url, {
-      headers: { Accept: "text/vnd.turbo-stream.html" },
-    });
-    const html = await response.text();
-    Turbo.renderStreamMessage(html);
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: "text/vnd.turbo-stream.html" },
+      });
+      const html = await response.text();
+      Turbo.renderStreamMessage(html);
+    } catch (error) {
+      console.error("Error fetching form:", error);
+    }
   }
 
   resetForm() {
@@ -57,5 +60,11 @@ export default class extends Controller {
 
   close() {
     this.modal.hide();
+    // Limpiar el backdrop de bootstrap si se queda pegado
+    const backdrop = document.querySelector(".modal-backdrop");
+    if (backdrop) backdrop.remove();
+    document.body.classList.remove("modal-open");
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
   }
 }

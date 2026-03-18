@@ -1,5 +1,5 @@
 <div class="container-fluid py-4" data-controller="variant-modal">
-  <!-- HEADER -->
+  <!-- HEADER (Igual al tuyo) -->
   <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
     <div class="card-body p-4">
       <div class="row align-items-center">
@@ -45,7 +45,7 @@
   <div class="row g-4">
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white py-3 border-bottom">
           <h5 class="fw-bold mb-0"><i class="bi bi-list-ul me-2 text-info"></i>Listado de Variantes</h5>
         </div>
         <div class="card-body p-0">
@@ -80,8 +80,9 @@
       <%= render "variant_types/sidebar_stats", variant_type: @variant_type %>
     </div>
   </div>
-  <!-- MODAL ÚNICO PARA VARIANTES -->
-  <div class="modal fade" id="variantModal" tabindex="-1" data-variant-modal-target="modal">
+  <!-- MODAL ÚNICO PARA VARIANTES (Gestionado por Stimulus) -->
+  <div class="modal fade" id="variantModal" tabindex="-1" 
+       data-variant-modal-target="modal" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content border-0 shadow-lg rounded-4">
         <div class="modal-header border-0 pb-0">
@@ -89,9 +90,7 @@
           <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
-          <!-- Contenedor para la señal de cierre de Turbo -->
           <div id="variant-modal-signal"></div>
-          <!-- Contenedor para el formulario -->
           <div id="variant-form-container" data-variant-modal-target="formContainer">
             <div class="text-center py-5">
               <div class="spinner-border text-info" role="status"></div>

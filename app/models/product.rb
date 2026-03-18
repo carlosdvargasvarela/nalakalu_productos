@@ -92,7 +92,10 @@ class Product < ApplicationRecord
     return unless @should_sync_rules
     ActiveRecord::Base.transaction do
       product_variant_rules.destroy_all
+
       family.family_variant_rules.each do |fr|
+        # Usamos create! que dispara el after_create de ProductVariantRule
+        # y genera las compatibilidades automáticamente
         product_variant_rules.create!(
           variant_type_id: fr.variant_type_id,
           position: fr.position,

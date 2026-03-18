@@ -39,6 +39,9 @@ Rails.application.routes.draw do
   end
 
   resources :variants do
+    member do
+      patch :move_to_type
+    end
     collection do
       post :import
     end

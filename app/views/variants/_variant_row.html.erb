@@ -1,4 +1,4 @@
-<tr class="<%= 'opacity-50' unless variant.active %>">
+<tr id="<%= dom_id(variant) %>" class="<%= 'opacity-50' unless variant.active %>">
   <td class="px-4 py-3">
     <div class="d-flex align-items-center gap-3">
       <div class="rounded-3 p-2 flex-shrink-0" style="background-color: #f0ebff;">
@@ -27,8 +27,7 @@
       <div class="d-flex flex-wrap gap-1" style="max-width: 260px;">
         <% pvs.each do |pv| %>
           <span class="badge bg-white text-dark border rounded-pill px-2 py-1 shadow-sm"
-                style="font-size: 0.65rem;"
-                title="<%= pv.property.name %>">
+                style="font-size: 0.65rem;" title="<%= pv.property.name %>">
             <span class="text-muted fw-normal"><%= pv.property.name %>:</span>
             <span class="fw-bold"><%= pv.value %></span>
           </span>
@@ -70,6 +69,12 @@
           class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
           title: "Editar" do %>
         <i class="bi bi-pencil"></i>
+      <% end %>
+      <%= button_to variant_path(variant), method: :delete,
+          form: { data: { turbo_confirm: "¿Eliminar '#{variant.display_name.presence || variant.name}'? Se borrarán sus precios y compatibilidades. Esta acción no se puede deshacer." } },
+          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm text-danger",
+          title: "Eliminar" do %>
+        <i class="bi bi-trash"></i>
       <% end %>
     </div>
   </td>

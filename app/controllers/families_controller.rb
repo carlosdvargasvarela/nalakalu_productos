@@ -1,7 +1,7 @@
 class FamiliesController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_family, only: %i[show edit update destroy]
+  before_action :set_family, only: %i[show edit update destroy assign_products unassign_product]
 
   def index
     @families = Family.all.includes(:family_variant_rules)
@@ -40,7 +40,6 @@ class FamiliesController < ApplicationController
   end
 
   def assign_products
-    @family = Family.find(params[:id])
     product_ids = params[:product_ids]
 
     if product_ids.blank?
@@ -49,44 +48,34 @@ class FamiliesController < ApplicationController
     end
 
     products = Product.where(id: product_ids)
+    count = 0
 
     ActiveRecord::Base.transaction do
       products.each do |product|
-        # 1. Asignar familia
+        # El callback sync_variant_rules_from_family se dispara automáticamente
+        # al cambiar family_id, clonando las reglas y creando compatibilidades
         product.update!(family_id: @family.id)
-
-        # 2. Borrar reglas actuales del producto (si existieran)
-        product.product_variant_rules.destroy_all
-
-        # 3. Clonar las reglas de la familia
-        @family.family_variant_rules.each do |fr|
-          product.product_variant_rules.create!(
-            variant_type_id: fr.variant_type_id,
-            position: fr.position,
-            required: fr.required,
-            separator: fr.separator,
-            label: fr.label
-          )
-        end
+        count += 1
       end
     end
 
-    redirect_to @family, notice: "#{products.count} productos asignados y configurados para #{@family.name}."
+    redirect_to @family, notice: "#{count} productos asignados a #{@family.name}."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to @family, alert: "Error al asignar productos: #{e.message}"
   end
 
   def unassign_product
-    @family = Family.find(params[:id])
     @product = @family.products.find(params[:product_id])
 
     ActiveRecord::Base.transaction do
-      # 1. Limpiar compatibilidades de variantes generadas por las reglas de la familia
-      # (Opcional: solo si quieres que el producto quede totalmente limpio)
-      @product.compatibilities.destroy_all
+      # Limpiar compatibilidades generadas por las reglas de la familia
+      rule_ids = @product.product_variant_rules.pluck(:id)
+      Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: rule_ids).destroy_all
 
-      # 2. Borrar las reglas de variantes que heredó de la familia
+      # Borrar las reglas del producto
       @product.product_variant_rules.destroy_all
 
-      # 3. Desvincular de la familia
+      # Desvincular de la familia
       @product.update!(family_id: nil)
     end
 
@@ -104,7 +93,9 @@ class FamiliesController < ApplicationController
   def family_params
     params.require(:family).permit(
       :name, :description, :active,
-      family_variant_rules_attributes: [:id, :variant_type_id, :position, :required, :separator, :label, :_destroy]
+      family_variant_rules_attributes: [
+        :id, :variant_type_id, :position, :required, :separator, :label, :_destroy
+      ]
     )
   end
 end

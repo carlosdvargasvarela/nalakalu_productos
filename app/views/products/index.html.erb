@@ -59,8 +59,7 @@
                   </span>
                 <% end %>
                 <% if product.product_variant_rules.empty? && product.family.present? %>
-                  <span class="badge bg-info-soft text-info border border-info
-                               border-opacity-50 rounded-pill small">
+                  <span class="badge bg-info-soft text-info border border-info border-opacity-50 rounded-pill small">
                     <i class="bi bi-arrow-up-circle me-1"></i>Hereda de Familia
                   </span>
                 <% end %>
@@ -96,10 +95,12 @@
                     class: "btn btn-sm btn-outline-secondary rounded-pill flex-fill" do %>
                   <i class="bi bi-pencil me-1"></i>Editar
                 <% end %>
-                <%= button_to product, method: :delete,
-                    class: "btn btn-sm btn-outline-danger rounded-pill",
-                    form: { data: { turbo_confirm: "¿Eliminar '#{product.name}'? Esta acción no se puede deshacer." } } do %>
-                  <i class="bi bi-trash"></i>
+                <%= form_with url: product_path(product), method: :delete,
+                    data: { turbo_confirm: "¿Eliminar '#{product.name}'? Esta acción no se puede deshacer." },
+                    style: "display:inline" do %>
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
+                    <i class="bi bi-trash"></i>
+                  </button>
                 <% end %>
               </div>
             </div>
