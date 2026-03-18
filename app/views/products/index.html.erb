@@ -67,8 +67,9 @@
               </div>
               <!-- Conteo de variantes asignadas -->
               <%
+                rule_ids = product.product_variant_rules.pluck(:id)
                 assigned_count = Compatibility
-                  .where(compatible_type: "Product", compatible_id: product.id)
+                  .where(compatible_type: "ProductVariantRule", compatible_id: rule_ids)
                   .count
               %>
               <% if assigned_count > 0 %>

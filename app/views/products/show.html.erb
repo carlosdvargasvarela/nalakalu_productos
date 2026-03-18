@@ -113,7 +113,7 @@
                     </div>
                     <div>
                       <span class="fw-bold"><%= rule.label.presence || rule.variant_type.name %></span>
-                      <% count = @product.compatible_variants_for(rule.variant_type).where(active: true).count %>
+                      <% count = rule.allowed_variants.where(active: true).count %>
                       <div class="text-muted small">
                         <%= count %> variante<%= 's' if count != 1 %> asignada<%= 's' if count != 1 %>
                       </div>
@@ -178,12 +178,17 @@
           <h5 class="mb-0 fw-bold">
             <i class="bi bi-palette me-2 text-primary"></i>Catálogo Aplicable
           </h5>
+          <%# NUEVA LÓGICA: Contamos compatibilidades de todas las reglas de este producto %>
+          <% rule_ids = @product.product_variant_rules.pluck(:id) %>
           <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">
-            <%= Compatibility.where(compatible: @product).count %>
+            <%= Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: rule_ids).count %>
           </span>
         </div>
         <div class="card-body p-3">
-          <% assigned_variants = Variant.joins(:compatibilities).where(compatibilities: { compatible: @product }).includes(:variant_type).order("variant_types.name, variants.name") %>
+          <%# NUEVA LÓGICA: Obtenemos variantes únicas vinculadas a las reglas %>
+          <% assigned_variants = Variant.joins(:compatibilities)
+          .where(compatibilities: { compatible_type: "ProductVariantRule", compatible_id: rule_ids })
+          .includes(:variant_type).distinct.order("variant_types.name, variants.name") %>
           <% if assigned_variants.any? %>
             <% assigned_variants.group_by(&:variant_type).each do |type, variants| %>
               <div class="mb-3">

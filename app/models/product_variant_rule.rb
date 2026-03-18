@@ -2,14 +2,17 @@ class ProductVariantRule < ApplicationRecord
   belongs_to :product
   belongs_to :variant_type
 
+  # La regla es dueña de sus variantes permitidas
+  has_many :compatibilities, as: :compatible, class_name: "Compatibility", dependent: :destroy
+  has_many :allowed_variants, through: :compatibilities, source: :variant
+
   validates :position, presence: true
   validates :variant_type_id, uniqueness: {
     scope: [:product_id, :label],
     message: "ya está asignado con esta etiqueta en este producto"
   }
 
-  # MAGIA: Al crear la regla, vinculamos las variantes al producto
-  after_create :auto_link_variants_to_product
+  after_create :auto_link_variants_to_rule
 
   def display_name
     label.present? ? "#{variant_type.name} (#{label})" : variant_type.name
@@ -17,17 +20,12 @@ class ProductVariantRule < ApplicationRecord
 
   private
 
-  def auto_link_variants_to_product
-    # Buscamos todas las variantes activas de este tipo
-    variants_to_link = variant_type.variants.where(active: true)
-
-    variants_to_link.each do |variant|
-      # Creamos la compatibilidad polimórfica: Variante -> Producto
-      # Usamos find_or_create_by para evitar errores si ya existía
+  def auto_link_variants_to_rule
+    variant_type.variants.where(active: true).each do |variant|
       Compatibility.find_or_create_by!(
         variant_id: variant.id,
-        compatible_type: "Product",
-        compatible_id: product_id
+        compatible_type: "ProductVariantRule",
+        compatible_id: id
       )
     end
   end

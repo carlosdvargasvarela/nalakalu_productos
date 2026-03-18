@@ -1,32 +1,37 @@
 <div class="modal fade" id="modalRule<%= rule.id %>" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content border-0 rounded-4 shadow">
-      <%# El helper correcto es update_compatibilities_product_path %>
       <%= form_with url: update_compatibilities_product_path(product), method: :post do |f| %>
-        <%= hidden_field_tag :variant_type_id, rule.variant_type_id %>
+        <%= hidden_field_tag :rule_id, rule.id %>
         <div class="modal-header border-bottom-0 p-4 pb-2">
-          <h5 class="modal-title fw-bold">Asignar <%= rule.variant_type.name %></h5>
+          <h5 class="modal-title fw-bold">
+            Asignar <%= rule.label.presence || rule.variant_type.name %>
+          </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4 pt-0" data-controller="compatibility-selector">
           <div class="input-group mb-3 sticky-top bg-white pt-2">
             <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control bg-light border-0 shadow-none" 
-                   placeholder="Buscar variante..." data-action="input->compatibility-selector#filter">
+            <input type="text" class="form-control bg-light border-0 shadow-none"
+                   placeholder="Buscar variante..."
+                   data-action="input->compatibility-selector#filter">
           </div>
           <div class="form-check mb-2 pb-2 border-bottom">
-            <input type="checkbox" class="form-check-input" id="checkAll<%= rule.id %>" 
+            <input type="checkbox" class="form-check-input" id="checkAll<%= rule.id %>"
                    data-action="change->compatibility-selector#toggleAll">
-            <label class="form-check-label small fw-bold" for="checkAll<%= rule.id %>">Seleccionar visibles</label>
+            <label class="form-check-label small fw-bold" for="checkAll<%= rule.id %>">
+              Seleccionar visibles
+            </label>
           </div>
           <div class="list-group list-group-flush">
             <% Variant.where(variant_type_id: rule.variant_type_id, active: true).order(:name).each do |v| %>
-              <% is_compatible = product.compatible_variants_for(rule.variant_type).include?(v) %>
-              <label class="list-group-item border-0 px-0 d-flex align-items-center gap-3 cursor-pointer" 
-                     data-compatibility-selector-target="item" data-search-text="<%= v.name %> <%= v.code %>">
-                <%# CORREGIDO: Asegúrate de que no haya espacios en el tag de Ruby %>
-                <input type="checkbox" name="variant_ids[]" value="<%= v.id %>" 
-                class="form-check-input flex-shrink-0" <%= 'checked' if is_compatible %>>
+              <% is_compatible = rule.allowed_variants.include?(v) %>
+              <label class="list-group-item border-0 px-0 d-flex align-items-center gap-3 cursor-pointer"
+                     data-compatibility-selector-target="item"
+                     data-search-text="<%= v.name %> <%= v.code %>">
+                <input type="checkbox" name="variant_ids[]" value="<%= v.id %>"
+                class="form-check-input flex-shrink-0"
+                <%= 'checked' if is_compatible %>>
                 <div class="flex-grow-1">
                   <div class="small fw-bold"><%= v.display_name.presence || v.name %></div>
                   <code class="x-small text-primary"><%= v.code %></code>

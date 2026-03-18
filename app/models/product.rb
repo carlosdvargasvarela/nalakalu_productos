@@ -5,30 +5,28 @@ class Product < ApplicationRecord
   has_many :variant_types, through: :product_variant_rules
   accepts_nested_attributes_for :product_variant_rules, allow_destroy: true
 
-  # Compatibilidades: qué variantes son válidas para este producto
-  has_many :reverse_compatibilities, as: :compatible, class_name: "Compatibility"
-  has_many :allowed_variants, through: :reverse_compatibilities, source: :variant
-  has_many :compatibilities, as: :compatible, class_name: "Compatibility"
-
-  # Precios de variantes para este producto
   has_many :product_variant_prices, dependent: :destroy
   has_many :priced_variants, through: :product_variant_prices, source: :variant
 
-  # Callbacks para heredar reglas de la familia
   before_save :flag_family_change, if: :will_save_change_to_family_id?
   after_save :sync_variant_rules_from_family, if: -> { @should_sync_rules }
 
   validates :name, presence: true, uniqueness: true
   validates :base_code, presence: true
 
-  # --- MÉTODOS CLAVE PARA UI ---
-
-  # Variantes de un tipo que son aptas para este producto (por compatibilidad)
-  def compatible_variants_for(variant_type)
-    allowed_variants.where(variant_type: variant_type)
+  # Variantes permitidas para una regla específica
+  def compatible_variants_for_rule(rule)
+    rule.allowed_variants
   end
 
-  # Reglas efectivas (por ahora: solo las propias del producto)
+  # Todas las variantes permitidas para un tipo (unión de todas las reglas de ese tipo)
+  def compatible_variants_for(variant_type)
+    rule_ids = product_variant_rules.where(variant_type: variant_type).pluck(:id)
+    Variant.joins(:compatibilities)
+      .where(compatibilities: {compatible_type: "ProductVariantRule", compatible_id: rule_ids})
+      .distinct
+  end
+
   def effective_rules
     product_variant_rules.any? ? product_variant_rules : []
   end
@@ -44,7 +42,6 @@ class Product < ApplicationRecord
     parts.join("")
   end
 
-  # Tipo de proveedor según las variantes que requiere este producto
   def supplier_type
     type_ids = variant_types.pluck(:id)
     return "sin_definir" if type_ids.empty?
@@ -52,8 +49,7 @@ class Product < ApplicationRecord
     provider_categories = Variant.where(variant_type_id: type_ids)
       .joins("LEFT JOIN providers ON providers.id = variants.provider_id")
       .pluck("providers.category")
-      .compact
-      .uniq
+      .compact.uniq
 
     if provider_categories.include?("interno") && provider_categories.include?("externo")
       "mixto"
@@ -75,12 +71,10 @@ class Product < ApplicationRecord
     end
   end
 
-  # Devuelve el precio configurado para una variante específica
   def price_for(variant)
     product_variant_prices.find_by(variant: variant)&.price || 0
   end
 
-  # Crea o actualiza el precio para una variante
   def set_price_for!(variant, price)
     record = product_variant_prices.find_or_initialize_by(variant_id: variant.id)
     record.price = price
@@ -91,19 +85,13 @@ class Product < ApplicationRecord
   private
 
   def flag_family_change
-    # Detectamos si el family_id cambió y no es nulo
     @should_sync_rules = will_save_change_to_family_id? && family_id.present?
   end
 
   def sync_variant_rules_from_family
     return unless @should_sync_rules
-
-    # Usamos una transacción para asegurar consistencia
     ActiveRecord::Base.transaction do
-      # 1. Limpiar reglas actuales
       product_variant_rules.destroy_all
-
-      # 2. Clonar reglas de la familia
       family.family_variant_rules.each do |fr|
         product_variant_rules.create!(
           variant_type_id: fr.variant_type_id,
@@ -114,7 +102,6 @@ class Product < ApplicationRecord
         )
       end
     end
-
     @should_sync_rules = false
   end
 end

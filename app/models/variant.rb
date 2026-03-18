@@ -7,9 +7,7 @@ class Variant < ApplicationRecord
   has_many :properties, through: :property_values
 
   has_many :compatibilities, dependent: :destroy
-  has_many :reverse_compatibilities,
-    as: :compatible,
-    class_name: "Compatibility"
+  has_many :reverse_compatibilities, as: :compatible, class_name: "Compatibility"
 
   has_many :product_variant_prices, dependent: :destroy
   has_many :priced_products, through: :product_variant_prices, source: :product
@@ -20,29 +18,18 @@ class Variant < ApplicationRecord
 
   validates :name, presence: true
 
-  after_create :auto_link_to_products, if: :active?
+  after_create :auto_link_to_rules, if: :active?
 
   # --------- Helpers EAV ----------
   def get_prop(prop_name)
     property_values.joins(:property).find_by(properties: {name: prop_name})&.value
   end
 
-  # --------- Helpers compatibilidad para formularios ----------
+  # --------- Helpers compatibilidad ----------
   def compatible_product_ids
-    compatibilities.where(compatible_type: "Product").pluck(:compatible_id)
-  end
-
-  def compatible_product_ids=(ids)
-    ids = Array(ids).reject(&:blank?).map(&:to_i).uniq
-
-    compatibilities.where(compatible_type: "Product")
-      .where.not(compatible_id: ids)
-      .destroy_all
-
-    existing_ids = compatibilities.where(compatible_type: "Product").pluck(:compatible_id)
-    (ids - existing_ids).each do |pid|
-      compatibilities.build(compatible_type: "Product", compatible_id: pid)
-    end
+    # Ahora la compatibilidad es con ProductVariantRule, no con Product directamente
+    rule_ids = compatibilities.where(compatible_type: "ProductVariantRule").pluck(:compatible_id)
+    ProductVariantRule.where(id: rule_ids).pluck(:product_id).uniq
   end
 
   def compatible_variant_ids
@@ -51,15 +38,15 @@ class Variant < ApplicationRecord
 
   def compatible_variant_ids=(ids)
     ids = Array(ids).reject(&:blank?).map(&:to_i).uniq
-
-    compatibilities.where(compatible_type: "Variant")
-      .where.not(compatible_id: ids)
-      .destroy_all
-
+    compatibilities.where(compatible_type: "Variant").where.not(compatible_id: ids).destroy_all
     existing_ids = compatibilities.where(compatible_type: "Variant").pluck(:compatible_id)
     (ids - existing_ids).each do |vid|
       compatibilities.build(compatible_type: "Variant", compatible_id: vid)
     end
+  end
+
+  def compatible_variants
+    Variant.where(id: compatibilities.where(compatible_type: "Variant").pluck(:compatible_id))
   end
 
   def seller_name
@@ -72,27 +59,14 @@ class Variant < ApplicationRecord
     parts.join(" - ")
   end
 
-  def compatible_variants
-    Variant.where(id: compatibilities.where(compatible_type: "Variant").pluck(:compatible_id))
-  end
-
-  def compatible_products
-    Product.where(id: compatibilities.where(compatible_type: "Product").pluck(:compatible_id))
-  end
-
-  # --------- Precios por producto ----------
-
-  # Devuelve todos los precios que tiene esta variante en productos
   def prices_by_product
     product_variant_prices.includes(:product)
   end
 
-  # Precio que tiene esta variante para un producto concreto
   def price_for_product(product)
     product_variant_prices.find_by(product_id: product.id)&.price
   end
 
-  # Genera: "Material: Porcelanato, Grosor: 12mm, Acabado: Mate"
   def technical_specs_string
     property_values.includes(:property)
       .order("properties.name")
@@ -100,22 +74,19 @@ class Variant < ApplicationRecord
       .join(", ")
   end
 
-  # Para órdenes de compra: "Bottega Caliza | Material: Porcelanato, Grosor: 12mm"
   def full_purchase_description
     [name, technical_specs_string].reject(&:blank?).join(" | ")
   end
 
   private
 
-  def auto_link_to_products
-    # Buscamos qué productos tienen reglas para el tipo de esta nueva variante
-    product_ids = ProductVariantRule.where(variant_type_id: variant_type_id).pluck(:product_id).uniq
-
-    product_ids.each do |pid|
+  def auto_link_to_rules
+    # Vinculamos la variante a todas las reglas que usan su tipo
+    ProductVariantRule.where(variant_type_id: variant_type_id).each do |rule|
       Compatibility.find_or_create_by!(
         variant_id: id,
-        compatible_type: "Product",
-        compatible_id: pid
+        compatible_type: "ProductVariantRule",
+        compatible_id: rule.id
       )
     end
   end

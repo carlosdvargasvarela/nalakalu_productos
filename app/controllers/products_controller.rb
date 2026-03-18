@@ -43,31 +43,26 @@ class ProductsController < ApplicationController
     end
   end
 
-  # app/controllers/products_controller.rb
   def update_compatibilities
     @product = Product.find(params[:id])
-    variant_type = VariantType.find(params[:variant_type_id])
-    new_variant_ids = params[:variant_ids] || []
-
-    # 1. Obtenemos las variantes actuales de este tipo para este producto
-    current_variants = @product.compatible_variants_for(variant_type)
-    current_ids = current_variants.pluck(:id).map(&:to_s)
-
-    # 2. Identificamos cuáles quitar y cuáles poner
-    to_remove = current_ids - new_variant_ids
-    to_add = new_variant_ids - current_ids
+    rule = @product.product_variant_rules.find(params[:rule_id])
+    new_variant_ids = (params[:variant_ids] || []).map(&:to_i)
 
     Compatibility.transaction do
       # Eliminar las que ya no están seleccionadas
-      @product.compatibilities.where(variant_id: to_remove).destroy_all if to_remove.any?
+      rule.compatibilities.where.not(variant_id: new_variant_ids).destroy_all
 
       # Crear las nuevas
-      to_add.each do |v_id|
-        @product.compatibilities.create!(variant_id: v_id)
+      existing_ids = rule.compatibilities.pluck(:variant_id)
+      (new_variant_ids - existing_ids).each do |v_id|
+        rule.compatibilities.create!(
+          variant_id: v_id,
+          compatible_type: "ProductVariantRule"
+        )
       end
     end
 
-    redirect_to @product, notice: "Compatibilidades de #{variant_type.name} actualizadas."
+    redirect_to @product, notice: "Variantes de \"#{rule.display_name}\" actualizadas."
   end
 
   def destroy
@@ -114,6 +109,7 @@ class ProductsController < ApplicationController
       :active,
       :family_id,
       product_variant_rules_attributes: [
+        :id,
         :variant_type_id,
         :position,
         :required,
