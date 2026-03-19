@@ -35,6 +35,8 @@ Rails.application.routes.draw do
   resources :variant_types do
     collection do
       post :import
+      patch :bulk_move
+      patch :bulk_assign
     end
   end
 

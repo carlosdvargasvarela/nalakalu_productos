@@ -1,12 +1,14 @@
-<div class="container-fluid py-4" data-controller="variant-modal">
-  <!-- HEADER (Igual al tuyo) -->
+<div class="container-fluid py-4" data-controller="variant-modal bulk-select">
+  <!-- HEADER -->
   <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
     <div class="card-body p-4">
       <div class="row align-items-center">
         <div class="col-md-8">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
-              <li class="breadcrumb-item"><%= link_to "Tipos", variant_types_path, class: "text-decoration-none" %></li>
+              <li class="breadcrumb-item">
+                <%= link_to "Tipos", variant_types_path, class: "text-decoration-none" %>
+              </li>
               <li class="breadcrumb-item active fw-bold"><%= @variant_type.name %></li>
             </ol>
           </nav>
@@ -34,7 +36,8 @@
                 class: "btn btn-info text-white rounded-pill px-4 fw-bold shadow-sm" do %>
               <i class="bi bi-plus-lg me-2"></i>Nueva Variante
             <% end %>
-            <%= link_to edit_variant_type_path(@variant_type), class: "btn btn-outline-primary rounded-pill px-4" do %>
+            <%= link_to edit_variant_type_path(@variant_type),
+                class: "btn btn-outline-primary rounded-pill px-4" do %>
               <i class="bi bi-pencil me-2"></i>Editar Tipo
             <% end %>
           </div>
@@ -42,18 +45,39 @@
       </div>
     </div>
   </div>
+  <!-- BULK TOOLBAR (oculta hasta seleccionar) -->
+  <div class="d-none mb-3 px-4 py-3 bg-warning bg-opacity-10 border border-warning
+              border-opacity-25 rounded-4 shadow-sm align-items-center gap-3"
+       data-bulk-select-target="toolbar">
+    <i class="bi bi-check2-square text-warning fs-5"></i>
+    <span class="fw-bold text-warning">
+      <span data-bulk-select-target="counter">0</span> seleccionadas
+    </span>
+    <button class="btn btn-warning text-white rounded-pill px-3 fw-bold ms-auto"
+            data-action="click->bulk-select#openModal">
+      <i class="bi bi-arrow-left-right me-1"></i>Mover seleccionadas
+    </button>
+  </div>
   <div class="row g-4">
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm rounded-4">
         <div class="card-header bg-white py-3 border-bottom">
-          <h5 class="fw-bold mb-0"><i class="bi bi-list-ul me-2 text-info"></i>Listado de Variantes</h5>
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-list-ul me-2 text-info"></i>Listado de Variantes
+          </h5>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
               <thead class="bg-light border-bottom">
                 <tr>
-                  <th class="px-4 py-3 text-muted small fw-bold">Variante</th>
+                  <th class="px-4 py-3">
+                    <input type="checkbox"
+                           class="form-check-input"
+                           data-bulk-select-target="selectAll"
+                           data-action="change->bulk-select#toggleAll">
+                  </th>
+                  <th class="py-3 text-muted small fw-bold">Variante</th>
                   <th class="py-3 text-muted small fw-bold">Código</th>
                   <th class="py-3 text-muted small fw-bold">Propiedades</th>
                   <th class="py-3 text-muted small fw-bold text-center">Estado</th>
@@ -67,7 +91,7 @@
               </tbody>
             </table>
             <% if @variant_type.variants.empty? %>
-              <div id="empty-variants-state" class="text-center py-5 text-muted">
+              <div class="text-center py-5 text-muted">
                 <i class="bi bi-tag fs-1 opacity-25"></i>
                 <p class="mt-2">No hay variantes aún.</p>
               </div>
@@ -80,18 +104,64 @@
       <%= render "variant_types/sidebar_stats", variant_type: @variant_type %>
     </div>
   </div>
-  <!-- MODAL ÚNICO PARA VARIANTES (Gestionado por Stimulus) -->
-  <div class="modal fade" id="variantModal" tabindex="-1" 
+  <!-- MODAL BULK MOVE -->
+  <div class="modal fade" tabindex="-1" data-bulk-select-target="modal">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 rounded-4 shadow">
+        <%= form_with url: bulk_move_variant_types_path,
+                      method: :patch,
+                      local: true do |f| %>
+          <div class="modal-header border-0 p-4 pb-0">
+            <div>
+              <h5 class="fw-bold mb-1">
+                <i class="bi bi-arrow-left-right me-2 text-warning"></i>Mover Variantes
+              </h5>
+              <p class="small text-muted mb-0">
+                Se moverán
+                <strong><span data-bulk-select-target="counter">0</span></strong>
+                variantes al nuevo tipo.
+              </p>
+            </div>
+            <button type="button" class="btn-close ms-auto"
+                    data-action="click->bulk-select#closeModal"></button>
+          </div>
+          <div class="modal-body p-4 pt-3">
+            <label class="form-label fw-bold small">Nuevo Tipo de Variante</label>
+            <%= f.select :new_type_id,
+                options_from_collection_for_select(
+                  VariantType.where.not(id: @variant_type.id).order(:name),
+                  :id, :name
+                ),
+                { include_blank: "Selecciona un tipo..." },
+                class: "form-select rounded-3" %>
+          </div>
+          <div class="modal-footer border-0 p-4 pt-0">
+            <button type="button" class="btn btn-light rounded-pill px-4"
+                    data-action="click->bulk-select#closeModal">
+              Cancelar
+            </button>
+            <%= f.submit "Mover variantes",
+                data: { action: "click->bulk-select#prepareSubmit" },
+                class: "btn btn-warning text-white rounded-pill px-4 fw-bold" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL VARIANTE (Gestionado por variant-modal Stimulus) -->
+  <div class="modal fade" id="variantModal" tabindex="-1"
        data-variant-modal-target="modal" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content border-0 shadow-lg rounded-4">
         <div class="modal-header border-0 pb-0">
           <h5 class="fw-bold mb-0">Gestionar Variante</h5>
-          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close shadow-none"
+                  data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
           <div id="variant-modal-signal"></div>
-          <div id="variant-form-container" data-variant-modal-target="formContainer">
+          <div id="variant-form-container"
+               data-variant-modal-target="formContainer">
             <div class="text-center py-5">
               <div class="spinner-border text-info" role="status"></div>
             </div>

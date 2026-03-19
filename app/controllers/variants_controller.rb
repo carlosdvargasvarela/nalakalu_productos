@@ -12,7 +12,6 @@ class VariantsController < ApplicationController
   end
 
   def show
-    # Compatible products ahora se obtienen a través de ProductVariantRule
     rule_ids = @variant.compatibilities
       .where(compatible_type: "ProductVariantRule")
       .pluck(:compatible_id)
@@ -78,7 +77,6 @@ class VariantsController < ApplicationController
   def destroy
     type = @variant.variant_type
     @variant.destroy
-
     respond_to do |format|
       format.html { redirect_to variant_type_path(type), notice: "Variante eliminada." }
       format.turbo_stream { render turbo_stream: turbo_stream.remove(@variant) }
@@ -89,7 +87,6 @@ class VariantsController < ApplicationController
     old_type = @variant.variant_type
     new_type = VariantType.find(params[:new_type_id])
 
-    # Limpiar compatibilidades con reglas del tipo anterior
     old_rule_ids = ProductVariantRule.where(variant_type_id: old_type.id).pluck(:id)
     Compatibility.where(
       variant_id: @variant.id,
@@ -98,8 +95,6 @@ class VariantsController < ApplicationController
     ).destroy_all
 
     if @variant.update(variant_type: new_type)
-      # Vincular manualmente a las reglas del nuevo tipo
-      # (after_create no se dispara en update)
       ProductVariantRule.where(variant_type_id: new_type.id).each do |rule|
         Compatibility.find_or_create_by!(
           variant_id: @variant.id,
@@ -107,7 +102,6 @@ class VariantsController < ApplicationController
           compatible_id: rule.id
         )
       end
-
       redirect_to variant_type_path(new_type),
         notice: "Variante movida a '#{new_type.name}' exitosamente."
     else
@@ -122,7 +116,6 @@ class VariantsController < ApplicationController
       redirect_to variants_path, alert: "Por favor, selecciona un archivo CSV."
       return
     end
-
     result = ImportVariantsService.call(file.tempfile.path)
     if result[:success]
       redirect_to variants_path,
@@ -162,22 +155,17 @@ class VariantsController < ApplicationController
     end
   end
 
-  # Las compatibilidades con productos ahora son automáticas via
-  # ProductVariantRule#after_create y Variant#after_create.
-  # Solo gestionamos compatibilidades entre variantes (cross-selling, etc.)
   def sync_compatible_variants
     ids = Array(params.dig(:variant, :compatible_variant_ids))
       .reject(&:blank?)
       .map(&:to_i)
       .uniq
 
-    # Eliminar las que ya no están
     @variant.compatibilities
       .where(compatible_type: "Variant")
       .where.not(compatible_id: ids)
       .destroy_all
 
-    # Crear las nuevas
     existing = @variant.compatibilities
       .where(compatible_type: "Variant")
       .pluck(:compatible_id)

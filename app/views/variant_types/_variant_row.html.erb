@@ -1,4 +1,12 @@
 <tr id="<%= dom_id(variant) %>" class="<%= 'opacity-50' unless variant.active %>">
+  <%# Checkbox bulk-select %>
+  <td class="px-4 py-3">
+    <input type="checkbox"
+           class="form-check-input"
+           value="<%= variant.id %>"
+      data-bulk-select-target="checkbox"
+      data-action="change->bulk-select#toggle">
+  </td>
   <td class="px-4 py-3">
     <div class="fw-bold text-dark"><%= variant.display_name.presence || variant.name %></div>
     <small class="text-muted"><%= variant.provider&.name || "Interno" %></small>
@@ -22,15 +30,15 @@
   </td>
   <td class="py-3 pe-4 text-end">
     <div class="btn-group shadow-sm rounded-pill overflow-hidden">
-      <%= link_to edit_variant_path(variant), 
+      <%= link_to edit_variant_path(variant),
           data: { action: "click->variant-modal#openEdit" },
           class: "btn btn-sm btn-white border-end", title: "Editar" do %>
         <i class="bi bi-pencil text-primary"></i>
       <% end %>
-      <%= link_to variant_path(variant), class: "btn btn-sm btn-white border-end", title: "Ver" do %>
+      <%= link_to variant_path(variant),
+          class: "btn btn-sm btn-white border-end", title: "Ver" do %>
         <i class="bi bi-eye text-info"></i>
       <% end %>
-      <%# Botón Eliminar con Turbo Stream %>
       <%= button_to variant_path(variant), method: :delete,
           form: { data: { turbo_confirm: "¿Eliminar permanentemente?" } },
           class: "btn btn-sm btn-white text-danger", title: "Eliminar" do %>
