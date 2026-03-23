@@ -349,6 +349,7 @@ export default class extends Controller {
 
   wrapSegments(segments) {
     const lines = [];
+    let currentLine = ""; // Empezamos con el código base
 
     const maxChars = parseInt(this.config.max_chars);
     const maxLines = parseInt(this.config.max_lines);
