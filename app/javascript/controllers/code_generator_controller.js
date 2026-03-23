@@ -1,4 +1,3 @@
-// app/javascript/controllers/code_generator_controller.js
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
@@ -16,18 +15,26 @@ export default class extends Controller {
     "copyButton",
     "lineWarning",
     "stockSala",
+    "stockSalaWrapper",
   ];
 
   static values = {
     searchUrl: String,
     variantsUrl: String,
+    maxChars: { type: Number, default: 30 },
+    maxLines: { type: Number, default: 5 },
+    prefixLength: { type: Number, default: 3 },
+    usePrefixes: { type: Boolean, default: true },
+    stockLabel: { type: String, default: "STOCK DE SALA" },
+    defaultSeparator: { type: String, default: "-" },
   };
 
   connect() {
     this.baseCode = "";
     this.rules = [];
-    this.selections = {}; // ruleId -> display_name de la variante
-    this.selections_ids = {}; // ruleId -> id de la variante
+    this.selections = {};
+    this.selections_ids = {};
+    this.config = this._defaultConfig();
     this.searchTimeout = null;
 
     this._outsideClick = (e) => {
@@ -38,6 +45,36 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this._outsideClick);
+  }
+
+  // ─── CONFIG ──────────────────────────────────────────────────────────────────
+
+  _defaultConfig() {
+    return {
+      max_chars: this.maxCharsValue,
+      max_lines: this.maxLinesValue,
+      prefix_length: this.prefixLengthValue,
+      use_prefixes: this.usePrefixesValue,
+      stock_label: this.stockLabelValue,
+      default_separator: this.defaultSeparatorValue,
+      show_stock_sala: true,
+    };
+  }
+
+  _mergeConfig(serverSettings) {
+    const defaults = this._defaultConfig();
+    if (!serverSettings) return defaults;
+    return {
+      max_chars: serverSettings.max_chars ?? defaults.max_chars,
+      max_lines: serverSettings.max_lines ?? defaults.max_lines,
+      prefix_length: serverSettings.prefix_length ?? defaults.prefix_length,
+      use_prefixes: serverSettings.use_prefixes ?? defaults.use_prefixes,
+      stock_label: serverSettings.stock_label ?? defaults.stock_label,
+      default_separator:
+        serverSettings.default_separator ?? defaults.default_separator,
+      show_stock_sala:
+        serverSettings.show_stock_sala ?? defaults.show_stock_sala,
+    };
   }
 
   // ─── BÚSQUEDA ────────────────────────────────────────────────────────────────
@@ -147,6 +184,18 @@ export default class extends Controller {
         this.rules = data.rules || [];
         this.selections = {};
         this.selections_ids = {};
+        this.config = this._mergeConfig(data.settings);
+
+        // Mostrar / ocultar stock sala según configuración
+        if (this.hasStockSalaWrapperTarget) {
+          if (this.config.show_stock_sala) {
+            this.stockSalaWrapperTarget.classList.remove("d-none");
+          } else {
+            this.stockSalaWrapperTarget.classList.add("d-none");
+            if (this.hasStockSalaTarget) this.stockSalaTarget.checked = false;
+          }
+        }
+
         this.renderVariantSelectors();
         this.updateResult();
       })
@@ -182,7 +231,7 @@ export default class extends Controller {
         .join("");
 
       const requiredMark = rule.required
-        ? '<span class="text-danger"></span>'
+        ? '<span class="text-danger ms-1">*</span>'
         : "";
 
       wrapper.innerHTML = `
@@ -194,7 +243,7 @@ export default class extends Controller {
           ${options}
         </select>
         <label for="rule_${rule.rule_id}">
-          ${rule.variant_type_name} ${requiredMark}
+          ${rule.variant_type_name}${requiredMark}
         </label>`;
 
       this.variantsContainerTarget.appendChild(wrapper);
@@ -208,7 +257,6 @@ export default class extends Controller {
     const ruleId = select.dataset.ruleId;
     const selectedOption = select.selectedOptions[0];
 
-    // Guardamos el display_name de la VARIANTE para construir el código
     this.selections[ruleId] = selectedOption?.dataset.display || "";
     this.selections_ids[ruleId] = selectedOption?.value || null;
 
@@ -238,7 +286,6 @@ export default class extends Controller {
         if (!option.dataset.originalName)
           option.dataset.originalName = originalName;
 
-        // Si la variante no declara compatibilidades, siempre está disponible
         if (compatibleWith.length === 0) {
           option.disabled = false;
           option.text = originalName;
@@ -254,7 +301,6 @@ export default class extends Controller {
           ? originalName
           : `${originalName} (Incompatible)`;
 
-        // Si la opción seleccionada se vuelve incompatible, la limpiamos
         if (!isCompatible && option.selected) {
           select.value = "";
           this.selections[rule.rule_id] = "";
@@ -273,36 +319,41 @@ export default class extends Controller {
       const val = this.selections[rule.rule_id];
       if (!val) return;
 
-      // El prefijo de label (ej: "Sobre" -> "SOB ") solo si el label existe
-      const prefix = rule.label
-        ? `${rule.label.substring(0, 3).toUpperCase()} `
-        : "";
+      let prefix = "";
+      if (this.config.use_prefixes && rule.label) {
+        const len = this.config.prefix_length;
+        prefix = `${rule.label.substring(0, len).toUpperCase()} `;
+      }
 
       segments.push({
         text: `${prefix}${val}`.trim(),
-        separator: rule.separator || "-",
+        separator: rule.separator || this.config.default_separator,
       });
     });
 
-    // Situación 3: Stock de Sala al final
     if (this.hasStockSalaTarget && this.stockSalaTarget.checked) {
       segments.push({
-        text: "STOCK DE SALA",
-        separator: "-",
+        text: this.config.stock_label,
+        separator: this.config.default_separator,
       });
     }
 
     return segments;
   }
 
-  wrapSegments(segments, maxChars = 30, maxLines = 5) {
+  wrapSegments(segments) {
     const lines = [];
-    let currentLine = ""; // ← Sin baseCode
+    let currentLine = "";
+
+    const maxChars = parseInt(this.config.max_chars || 30);
+    const maxLines = parseInt(this.config.max_lines || 5);
+    const sep = this.config.default_separator || "-";
 
     segments.forEach((seg) => {
-      const glue = seg.separator || "-";
+      const glue = seg.separator || sep;
+
       const candidate =
-        currentLine.length > 0 ? `${currentLine}${glue}${seg.text}` : seg.text; // ← Primera línea arranca directo con el segmento
+        currentLine.length > 0 ? `${currentLine}${glue}${seg.text}` : seg.text;
 
       if (candidate.length <= maxChars) {
         currentLine = candidate;
@@ -322,6 +373,7 @@ export default class extends Controller {
 
   updateResult() {
     let allRequiredFilled = true;
+
     this.rules.forEach((rule) => {
       if (rule.required && !this.selections[rule.rule_id]) {
         allRequiredFilled = false;
@@ -329,15 +381,21 @@ export default class extends Controller {
     });
 
     const segments = this.buildSegments();
-    const wrapped = this.wrapSegments(segments, 30, 5);
+
+    // ✅ USAR CONFIG DIRECTAMENTE
+    const maxChars = parseInt(this.config.max_chars || 30);
+    const maxLines = parseInt(this.config.max_lines || 5);
+
+    const wrapped = this.wrapSegments(segments);
 
     this.resultTarget.value = wrapped.lines.join("\n");
 
-    // Manejo de advertencias
     if (this.hasLineWarningTarget) {
-      if (wrapped.overflowed) {
+      if (wrapped.lines.length > maxLines) {
         this.lineWarningTarget.classList.remove("d-none");
-        this.lineWarningTarget.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> El código excede las 5 líneas del CRM.`;
+        this.lineWarningTarget.innerHTML = `
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        El código excede las ${maxLines} líneas permitidas en el CRM.`;
         this.copyButtonTarget.disabled = true;
         return;
       } else {
@@ -374,14 +432,20 @@ export default class extends Controller {
     this.rules = [];
     this.selections = {};
     this.selections_ids = {};
+    this.config = this._defaultConfig();
+
     this.variantsContainerTarget.innerHTML = `
       <div class="text-muted small p-3 border rounded-3 bg-light text-center">
         <i class="bi bi-arrow-up-circle me-1"></i>Seleccione un producto primero.
       </div>`;
+
     this.resultTarget.value = "";
     this.copyButtonTarget.disabled = true;
+
     if (this.hasLineWarningTarget)
       this.lineWarningTarget.classList.add("d-none");
     if (this.hasStockSalaTarget) this.stockSalaTarget.checked = false;
+    if (this.hasStockSalaWrapperTarget)
+      this.stockSalaWrapperTarget.classList.remove("d-none");
   }
 }

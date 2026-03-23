@@ -1,0 +1,52 @@
+<div class="row g-4">
+  <div class="col-12">
+    <h5 class="text-primary border-bottom pb-2 mb-3">Límites del CRM</h5>
+  </div>
+  <div class="col-md-6">
+    <%= f.label :max_chars_per_line, "Caracteres por línea", class: "form-label fw-bold" %>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-distribute-horizontal"></i></span>
+      <%= f.number_field :max_chars_per_line, class: "form-control" %>
+    </div>
+    <div class="form-text">Ej: 30 caracteres.</div>
+  </div>
+  <div class="col-md-6">
+    <%= f.label :max_lines, "Máximo de líneas", class: "form-label fw-bold" %>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-distribute-vertical"></i></span>
+      <%= f.number_field :max_lines, class: "form-control" %>
+    </div>
+    <div class="form-text">Ej: 5 líneas.</div>
+  </div>
+  <div class="col-12 mt-2">
+    <h5 class="text-primary border-bottom pb-2 mb-3">Formato y Prefijos</h5>
+  </div>
+  <div class="col-md-6">
+    <%= f.label :default_separator, "Separador por defecto", class: "form-label fw-bold" %>
+    <%= f.text_field :default_separator, class: "form-control" %>
+  </div>
+  <div class="col-md-6">
+    <%= f.label :prefix_length, "Longitud del prefijo", class: "form-label fw-bold" %>
+    <%= f.number_field :prefix_length, class: "form-control" %>
+    <div class="form-text">Ej: 3 para "SOB" (Sobre).</div>
+  </div>
+  <div class="col-12">
+    <div class="form-check form-switch">
+      <%= f.check_box :use_prefixes, class: "form-check-input", role: "switch" %>
+      <%= f.label :use_prefixes, "Usar prefijos de etiquetas (Label)", class: "form-check-label fw-bold" %>
+    </div>
+  </div>
+  <div class="col-12 mt-2">
+    <h5 class="text-primary border-bottom pb-2 mb-3">Stock de Sala</h5>
+  </div>
+  <div class="col-md-8">
+    <%= f.label :stock_sala_label, "Texto para Stock de Sala", class: "form-label fw-bold" %>
+    <%= f.text_field :stock_sala_label, class: "form-control" %>
+  </div>
+  <div class="col-12">
+    <div class="form-check form-switch">
+      <%= f.check_box :show_stock_sala, class: "form-check-input", role: "switch" %>
+      <%= f.label :show_stock_sala, "Mostrar opción Stock de Sala en el generador", class: "form-check-label fw-bold" %>
+    </div>
+  </div>
+</div>

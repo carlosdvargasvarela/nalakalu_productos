@@ -1,0 +1,38 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-9">
+      <%# ── Configuración General ── %>
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-dark text-white p-4 rounded-top-4">
+          <h4 class="mb-0">
+            <i class="bi bi-gear-fill me-2"></i>Configuración del Generador de Códigos
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <%= form_with(model: @code_setting, url: code_setting_path, method: :patch) do |f| %>
+            <%= render "code_settings/form_fields", f: f %>
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm">
+                <i class="bi bi-save me-2"></i>Guardar Configuración
+              </button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <%# ── Orden de Tipos de Variante ── %>
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-secondary text-white p-4 rounded-top-4">
+          <h4 class="mb-0">
+            <i class="bi bi-sort-down me-2"></i>Orden Global de Tipos de Variante
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted mb-4">
+            Arrastrá para reordenar. Este orden se aplica en el generador de códigos y en todas las reglas del sistema.
+          </p>
+          <%= render "code_settings/variant_type_order", variant_types: @variant_types %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

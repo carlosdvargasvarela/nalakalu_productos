@@ -59,6 +59,11 @@
       <% end %>
     </li>
     <li>
+      <%= link_to edit_code_setting_path, class: "dropdown-item d-flex align-items-center gap-2" do %>
+        <i class="bi bi-gear text-muted"></i> Configuración CRM
+      <% end %>
+    </li>
+    <li>
       <%= link_to "/sidekiq", class: "dropdown-item d-flex align-items-center gap-2", target: "_blank" do %>
         <i class="bi bi-activity text-danger"></i> Sidekiq Jobs
       <% end %>

@@ -81,4 +81,10 @@ Rails.application.routes.draw do
   resources :properties do
     resources :property_values, shallow: true
   end
+
+  resource :code_setting, only: [:edit, :update] do
+    collection do
+      patch :update_variant_type_order
+    end
+  end
 end
