@@ -35,10 +35,16 @@ export default class extends Controller {
     this.selections = {};
     this.selections_ids = {};
     this.config = this._defaultConfig();
-    this.searchTimeout = null;
 
     this._outsideClick = (e) => {
       if (!this.searchWrapperTarget.contains(e.target)) this.closeDropdown();
+
+      // Cerrar dropdowns de variantes si se hace click fuera
+      document.querySelectorAll(".variant-dropdown-wrapper").forEach((w) => {
+        if (!w.contains(e.target)) {
+          w.querySelector(".variant-dropdown")?.classList.add("d-none");
+        }
+      });
     };
     document.addEventListener("click", this._outsideClick);
   }
@@ -46,8 +52,6 @@ export default class extends Controller {
   disconnect() {
     document.removeEventListener("click", this._outsideClick);
   }
-
-  // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
   _defaultConfig() {
     return {
@@ -77,7 +81,7 @@ export default class extends Controller {
     };
   }
 
-  // ─── BÚSQUEDA ────────────────────────────────────────────────────────────────
+  // ─── BÚSQUEDA DE PRODUCTO ──────────────────────────────────────────────────
 
   onSearchInput() {
     const query = this.searchInputTarget.value.trim();
@@ -103,7 +107,9 @@ export default class extends Controller {
     try {
       const res = await fetch(
         `${this.searchUrlValue}?q=${encodeURIComponent(query)}`,
-        { headers: { Accept: "application/json" } },
+        {
+          headers: { Accept: "application/json" },
+        },
       );
       const products = await res.json();
       this.renderDropdown(products);
@@ -119,10 +125,7 @@ export default class extends Controller {
     list.innerHTML = "";
 
     if (products.length === 0) {
-      list.innerHTML = `
-        <div class="list-group-item text-muted small text-center py-3">
-          <i class="bi bi-emoji-frown me-1"></i>Sin resultados. Intenta con otro término.
-        </div>`;
+      list.innerHTML = `<div class="list-group-item text-muted small text-center py-3">Sin resultados.</div>`;
     } else {
       products.forEach((product) => {
         const item = document.createElement("button");
@@ -139,7 +142,6 @@ export default class extends Controller {
         list.appendChild(item);
       });
     }
-
     this.searchDropdownTarget.classList.remove("d-none");
   }
 
@@ -160,8 +162,6 @@ export default class extends Controller {
       .querySelector(".input-group")
       .classList.remove("d-none");
     this.selectedProductTarget.classList.add("d-none");
-    this.searchInputTarget.value = "";
-    this.searchInputTarget.focus();
     this.reset();
   }
 
@@ -172,11 +172,6 @@ export default class extends Controller {
   // ─── CARGA DE VARIANTES ──────────────────────────────────────────────────────
 
   loadProduct(productId) {
-    if (!productId) {
-      this.reset();
-      return;
-    }
-
     fetch(`${this.variantsUrlValue}?product_id=${productId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -186,123 +181,138 @@ export default class extends Controller {
         this.selections_ids = {};
         this.config = this._mergeConfig(data.settings);
 
-        // Mostrar / ocultar stock sala según configuración
         if (this.hasStockSalaWrapperTarget) {
-          if (this.config.show_stock_sala) {
-            this.stockSalaWrapperTarget.classList.remove("d-none");
-          } else {
-            this.stockSalaWrapperTarget.classList.add("d-none");
-            if (this.hasStockSalaTarget) this.stockSalaTarget.checked = false;
-          }
+          this.stockSalaWrapperTarget.classList.toggle(
+            "d-none",
+            !this.config.show_stock_sala,
+          );
         }
 
         this.renderVariantSelectors();
         this.updateResult();
-      })
-      .catch((error) => console.error("Error cargando producto:", error));
+      });
   }
 
   renderVariantSelectors() {
     this.variantsContainerTarget.innerHTML = "";
 
     if (this.rules.length === 0) {
-      this.variantsContainerTarget.innerHTML = `
-        <div class="alert alert-light border text-muted">
-          <i class="bi bi-info-circle me-2"></i>
-          Este producto no requiere configuración de variantes.
-        </div>`;
+      this.variantsContainerTarget.innerHTML = `<div class="alert alert-light border text-muted small"><i class="bi bi-info-circle me-2"></i>Sin variantes requeridas.</div>`;
       return;
     }
 
     this.rules.forEach((rule) => {
       const wrapper = document.createElement("div");
-      wrapper.classList.add("form-floating", "mb-3", "shadow-sm");
+      wrapper.classList.add("mb-3");
+      wrapper.dataset.ruleId = rule.rule_id;
 
-      const options = rule.variants
+      const optionsHtml = rule.variants
         .map(
-          (v) =>
-            `<option value="${v.id}"
-                    data-code="${v.code || ""}"
-                    data-display="${v.display_name}"
-                    data-compatible='${JSON.stringify(v.compatible_with)}'>
-              ${v.name}
-            </option>`,
+          (v) => `
+        <button type="button" class="list-group-item list-group-item-action px-3 py-2 variant-option"
+                data-variant-id="${v.id}" data-display="${v.display_name}" data-compatible='${JSON.stringify(v.compatible_with)}'>
+          ${v.name}
+        </button>`,
         )
         .join("");
 
-      const requiredMark = rule.required
-        ? '<span class="text-danger ms-1">*</span>'
-        : "";
-
       wrapper.innerHTML = `
-        <select class="form-select"
-                id="rule_${rule.rule_id}"
-                data-rule-id="${rule.rule_id}"
-                data-action="change->code-generator#onVariantChange">
-          <option value="">${rule.required ? "— Seleccione —" : "— Ninguno (Opcional) —"}</option>
-          ${options}
-        </select>
-        <label for="rule_${rule.rule_id}">
-          ${rule.variant_type_name}${requiredMark}
-        </label>`;
+        <label class="form-label fw-semibold small text-secondary mb-1">
+          ${rule.variant_type_name}${rule.required ? '<span class="text-danger ms-1">*</span>' : ""}
+        </label>
+        <div class="position-relative variant-dropdown-wrapper">
+          <div class="input-group shadow-sm">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted small"></i></span>
+            <input type="text" class="form-control border-start-0 variant-search-input bg-white" 
+                   placeholder="${rule.required ? "— Seleccione —" : "— Ninguno (Opcional) —"}" readonly>
+            <button type="button" class="btn btn-outline-secondary border-start-0 variant-clear-btn d-none"><i class="bi bi-x-lg small"></i></button>
+          </div>
+          <div class="position-absolute w-100 z-3 d-none variant-dropdown" style="top: calc(100% + 4px);">
+            <div class="card border-0 shadow rounded-3 overflow-hidden">
+              <div class="p-2 border-bottom bg-light">
+                <input type="text" class="form-control form-control-sm variant-filter-input" placeholder="Filtrar opciones...">
+              </div>
+              <div class="list-group list-group-flush variant-options-list" style="max-height: 200px; overflow-y: auto;">
+                ${optionsHtml}
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+      const mainInput = wrapper.querySelector(".variant-search-input");
+      const dropdown = wrapper.querySelector(".variant-dropdown");
+      const filterInput = wrapper.querySelector(".variant-filter-input");
+      const clearBtn = wrapper.querySelector(".variant-clear-btn");
+
+      mainInput.addEventListener("click", () => {
+        dropdown.classList.toggle("d-none");
+        if (!dropdown.classList.contains("d-none")) filterInput.focus();
+      });
+
+      filterInput.addEventListener("input", () => {
+        const q = filterInput.value.toLowerCase();
+        wrapper.querySelectorAll(".variant-option").forEach((btn) => {
+          btn.style.display = btn.textContent.toLowerCase().includes(q)
+            ? ""
+            : "none";
+        });
+      });
+
+      wrapper.querySelectorAll(".variant-option").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          mainInput.value = btn.textContent.trim();
+          mainInput.dataset.selectedId = btn.dataset.variantId;
+          clearBtn.classList.remove("d-none");
+          dropdown.classList.add("d-none");
+          this.selections[rule.rule_id] = btn.dataset.display;
+          this.selections_ids[rule.rule_id] = btn.dataset.variantId;
+          this.filterOptions();
+          this.updateResult();
+        });
+      });
+
+      clearBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        mainInput.value = "";
+        mainInput.dataset.selectedId = "";
+        clearBtn.classList.add("d-none");
+        this.selections[rule.rule_id] = "";
+        this.selections_ids[rule.rule_id] = null;
+        this.filterOptions();
+        this.updateResult();
+      });
 
       this.variantsContainerTarget.appendChild(wrapper);
     });
   }
 
-  // ─── SELECCIÓN Y FILTRADO ────────────────────────────────────────────────────
-
-  onVariantChange(event) {
-    const select = event.target;
-    const ruleId = select.dataset.ruleId;
-    const selectedOption = select.selectedOptions[0];
-
-    this.selections[ruleId] = selectedOption?.dataset.display || "";
-    this.selections_ids[ruleId] = selectedOption?.value || null;
-
-    this.filterOptions();
-    this.updateResult();
-  }
-
   filterOptions() {
     const selectedIds = Object.values(this.selections_ids)
-      .filter((id) => id !== null && id !== "")
+      .filter((id) => id)
       .map((id) => parseInt(id));
 
     this.rules.forEach((rule) => {
-      const select = this.variantsContainerTarget.querySelector(
-        `select[data-rule-id="${rule.rule_id}"]`,
+      const wrapper = this.variantsContainerTarget.querySelector(
+        `[data-rule-id="${rule.rule_id}"]`,
       );
-      if (!select) return;
+      if (!wrapper) return;
 
-      Array.from(select.options).forEach((option) => {
-        if (option.value === "") return;
-
-        const compatibleWith = JSON.parse(option.dataset.compatible || "[]");
-        const originalName =
-          option.dataset.originalName ||
-          option.text.replace(" (Incompatible)", "");
-
-        if (!option.dataset.originalName)
-          option.dataset.originalName = originalName;
-
-        if (compatibleWith.length === 0) {
-          option.disabled = false;
-          option.text = originalName;
-          return;
-        }
-
-        const isCompatible =
+      wrapper.querySelectorAll(".variant-option").forEach((btn) => {
+        const comp = JSON.parse(btn.dataset.compatible || "[]");
+        const isComp =
+          comp.length === 0 ||
           selectedIds.length === 0 ||
-          selectedIds.some((id) => compatibleWith.includes(id));
+          selectedIds.some((id) => comp.includes(id));
 
-        option.disabled = !isCompatible;
-        option.text = isCompatible
-          ? originalName
-          : `${originalName} (Incompatible)`;
+        btn.classList.toggle("text-muted", !isComp);
+        btn.classList.toggle("text-decoration-line-through", !isComp);
+        btn.style.opacity = isComp ? "1" : "0.5";
 
-        if (!isCompatible && option.selected) {
-          select.value = "";
+        const mainInput = wrapper.querySelector(".variant-search-input");
+        if (!isComp && mainInput.dataset.selectedId === btn.dataset.variantId) {
+          mainInput.value = "";
+          mainInput.dataset.selectedId = "";
+          wrapper.querySelector(".variant-clear-btn").classList.add("d-none");
           this.selections[rule.rule_id] = "";
           this.selections_ids[rule.rule_id] = null;
         }
@@ -314,17 +324,14 @@ export default class extends Controller {
 
   buildSegments() {
     const segments = [];
-
     this.rules.forEach((rule) => {
       const val = this.selections[rule.rule_id];
       if (!val) return;
 
       let prefix = "";
       if (this.config.use_prefixes && rule.label) {
-        const len = this.config.prefix_length;
-        prefix = `${rule.label.substring(0, len).toUpperCase()} `;
+        prefix = `${rule.label.substring(0, this.config.prefix_length).toUpperCase()} `;
       }
-
       segments.push({
         text: `${prefix}${val}`.trim(),
         separator: rule.separator || this.config.default_separator,
@@ -337,69 +344,52 @@ export default class extends Controller {
         separator: this.config.default_separator,
       });
     }
-
     return segments;
   }
 
   wrapSegments(segments) {
     const lines = [];
-    let currentLine = "";
+    let currentLine = this.baseCode; // Empezamos con el código base
 
-    const maxChars = parseInt(this.config.max_chars || 30);
-    const maxLines = parseInt(this.config.max_lines || 5);
-    const sep = this.config.default_separator || "-";
+    const maxChars = parseInt(this.config.max_chars);
+    const maxLines = parseInt(this.config.max_lines);
 
     segments.forEach((seg) => {
-      const glue = seg.separator || sep;
-
+      const glue = seg.separator;
       const candidate =
         currentLine.length > 0 ? `${currentLine}${glue}${seg.text}` : seg.text;
 
       if (candidate.length <= maxChars) {
         currentLine = candidate;
       } else {
-        if (currentLine.length > 0) lines.push(currentLine);
+        lines.push(currentLine);
         currentLine = seg.text;
       }
     });
+    if (currentLine) lines.push(currentLine);
 
-    if (currentLine.length > 0) lines.push(currentLine);
-
-    return {
-      lines,
-      overflowed: lines.length > maxLines,
-    };
+    return { lines, overflowed: lines.length > maxLines };
   }
 
   updateResult() {
     let allRequiredFilled = true;
-
     this.rules.forEach((rule) => {
-      if (rule.required && !this.selections[rule.rule_id]) {
+      if (rule.required && !this.selections[rule.rule_id])
         allRequiredFilled = false;
-      }
     });
 
     const segments = this.buildSegments();
-
-    // ✅ USAR CONFIG DIRECTAMENTE
-    const maxChars = parseInt(this.config.max_chars || 30);
-    const maxLines = parseInt(this.config.max_lines || 5);
-
     const wrapped = this.wrapSegments(segments);
 
     this.resultTarget.value = wrapped.lines.join("\n");
 
     if (this.hasLineWarningTarget) {
-      if (wrapped.lines.length > maxLines) {
-        this.lineWarningTarget.classList.remove("d-none");
-        this.lineWarningTarget.innerHTML = `
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        El código excede las ${maxLines} líneas permitidas en el CRM.`;
+      const isOverflow = wrapped.lines.length > this.config.max_lines;
+      this.lineWarningTarget.classList.toggle("d-none", !isOverflow);
+      if (isOverflow) {
+        this.lineWarningTarget.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>Excede las ${this.config.max_lines} líneas.`;
         this.copyButtonTarget.disabled = true;
         return;
-      } else {
-        this.lineWarningTarget.classList.add("d-none");
       }
     }
 
@@ -407,45 +397,29 @@ export default class extends Controller {
       !allRequiredFilled || segments.length === 0;
   }
 
-  // ─── COPIAR ──────────────────────────────────────────────────────────────────
-
   copy() {
-    const content = this.resultTarget.value;
-    if (!content) return;
-
-    navigator.clipboard.writeText(content).then(() => {
-      const originalHTML = this.copyButtonTarget.innerHTML;
-      this.copyButtonTarget.innerHTML =
-        '<i class="bi bi-check2-all me-2"></i>¡Copiado!';
-      this.copyButtonTarget.classList.replace("btn-primary", "btn-success");
+    navigator.clipboard.writeText(this.resultTarget.value).then(() => {
+      const btn = this.copyButtonTarget;
+      const oldText = btn.innerHTML;
+      btn.innerHTML = '<i class="bi bi-check2-all me-2"></i>¡Copiado!';
+      btn.classList.replace("btn-primary", "btn-success");
       setTimeout(() => {
-        this.copyButtonTarget.innerHTML = originalHTML;
-        this.copyButtonTarget.classList.replace("btn-success", "btn-primary");
+        btn.innerHTML = oldText;
+        btn.classList.replace("btn-success", "btn-primary");
       }, 2000);
     });
   }
-
-  // ─── RESET ───────────────────────────────────────────────────────────────────
 
   reset() {
     this.baseCode = "";
     this.rules = [];
     this.selections = {};
     this.selections_ids = {};
-    this.config = this._defaultConfig();
-
-    this.variantsContainerTarget.innerHTML = `
-      <div class="text-muted small p-3 border rounded-3 bg-light text-center">
-        <i class="bi bi-arrow-up-circle me-1"></i>Seleccione un producto primero.
-      </div>`;
-
+    this.variantsContainerTarget.innerHTML = `<div class="text-muted small p-3 border rounded-3 bg-light text-center">Seleccione un producto primero.</div>`;
     this.resultTarget.value = "";
     this.copyButtonTarget.disabled = true;
-
     if (this.hasLineWarningTarget)
       this.lineWarningTarget.classList.add("d-none");
     if (this.hasStockSalaTarget) this.stockSalaTarget.checked = false;
-    if (this.hasStockSalaWrapperTarget)
-      this.stockSalaWrapperTarget.classList.remove("d-none");
   }
 }
