@@ -23,12 +23,22 @@
   </div>
   <div class="col-md-6">
     <%= f.label :default_separator, "Separador por defecto", class: "form-label fw-bold" %>
-    <%= f.text_field :default_separator, class: "form-control" %>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-slash-lg"></i></span>
+      <%= f.text_field :default_separator, class: "form-control" %>
+    </div>
+    <div class="form-text">Ej: <code>-</code> o <code>/</code></div>
   </div>
   <div class="col-md-6">
-    <%= f.label :prefix_length, "Longitud del prefijo", class: "form-label fw-bold" %>
-    <%= f.number_field :prefix_length, class: "form-control" %>
-    <div class="form-text">Ej: 3 para "SOB" (Sobre).</div>
+    <%= f.label :prefix_length, "Longitud del prefijo de etiqueta", class: "form-label fw-bold" %>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-type"></i></span>
+      <%= f.number_field :prefix_length, class: "form-control", min: 1, max: 9 %>
+    </div>
+    <div class="form-text">
+      Cuántas letras de la etiqueta se usan como prefijo.<br>
+      Ej: Con <strong>2</strong> y etiqueta "Frente" → <code>FR-AZUL MARINO</code>
+    </div>
   </div>
   <div class="col-12">
     <div class="form-check form-switch">
@@ -41,7 +51,10 @@
   </div>
   <div class="col-md-8">
     <%= f.label :stock_sala_label, "Texto para Stock de Sala", class: "form-label fw-bold" %>
-    <%= f.text_field :stock_sala_label, class: "form-control" %>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
+      <%= f.text_field :stock_sala_label, class: "form-control" %>
+    </div>
   </div>
   <div class="col-12">
     <div class="form-check form-switch">

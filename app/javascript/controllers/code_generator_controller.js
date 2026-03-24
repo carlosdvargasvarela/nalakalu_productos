@@ -324,23 +324,31 @@ export default class extends Controller {
 
   buildSegments() {
     const segments = [];
+    const prefixLen = parseInt(this.config.prefix_length) || 3;
+
     this.rules.forEach((rule) => {
       const val = this.selections[rule.rule_id];
       if (!val) return;
 
-      let prefix = "";
-      if (this.config.use_prefixes && rule.label) {
-        prefix = `${rule.label.substring(0, this.config.prefix_length).toUpperCase()} `;
+      const glue = rule.separator || this.config.default_separator;
+      let segmentText = val.toUpperCase(); // Todo a mayúsculas por defecto
+
+      // Si se usan prefijos y la regla tiene una etiqueta (Label)
+      if (this.config.use_prefixes && rule.label && rule.label.trim() !== "") {
+        const prefix = rule.label.substring(0, prefixLen).toUpperCase();
+        // Unimos Prefijo + Separador de la regla + Valor
+        segmentText = `${prefix}${glue}${val.toUpperCase()}`;
       }
+
       segments.push({
-        text: `${prefix}${val}`.trim(),
-        separator: rule.separator || this.config.default_separator,
+        text: segmentText,
+        separator: glue,
       });
     });
 
     if (this.hasStockSalaTarget && this.stockSalaTarget.checked) {
       segments.push({
-        text: this.config.stock_label,
+        text: this.config.stock_label.toUpperCase(),
         separator: this.config.default_separator,
       });
     }
@@ -349,13 +357,15 @@ export default class extends Controller {
 
   wrapSegments(segments) {
     const lines = [];
-    let currentLine = ""; // Empezamos con el código base
+    // IMPORTANTE: Empezamos con el código base del producto en mayúsculas
+    let currentLine = "";
 
     const maxChars = parseInt(this.config.max_chars);
     const maxLines = parseInt(this.config.max_lines);
 
     segments.forEach((seg) => {
       const glue = seg.separator;
+      // Si la línea actual ya tiene contenido, añadimos el separador antes del segmento
       const candidate =
         currentLine.length > 0 ? `${currentLine}${glue}${seg.text}` : seg.text;
 
@@ -366,6 +376,7 @@ export default class extends Controller {
         currentLine = seg.text;
       }
     });
+
     if (currentLine) lines.push(currentLine);
 
     return { lines, overflowed: lines.length > maxLines };
