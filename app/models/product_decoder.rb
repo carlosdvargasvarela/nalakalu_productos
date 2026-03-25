@@ -1,3 +1,4 @@
+# app/models/product_decoder.rb
 class ProductDecoder
   Result = Struct.new(
     :has_variants,
@@ -10,11 +11,9 @@ class ProductDecoder
   def self.decode(full_code, base_product: nil)
     return empty_result unless full_code.present?
 
-    # 1) Detectar producto base
     base_product ||= detect_base_product(full_code)
     return empty_result unless base_product
 
-    # 2) Si no hay reglas, no hay variantes
     if base_product.product_variant_rules.empty?
       return Result.new(
         has_variants: false,
@@ -27,14 +26,10 @@ class ProductDecoder
     input_strict = normalize_strict(full_code)
     product_strict = normalize_strict(base_product.name)
 
-    # 3) Extraer el "tail" (lo que sobra tras el nombre del producto)
     tail_strict = strip_product_from_string(input_strict, product_strict)
     tail_loose = normalize_loose(tail_strict)
 
-    # 4) Detectar variantes por catálogo (solo las permitidas por las reglas)
     variants = detect_variants_catalog_based(base_product, tail_strict, tail_loose)
-
-    # 5) Identificar segmentos no reconocidos
     unrec = build_unrecognized_segments(tail_loose, variants)
 
     Result.new(
@@ -53,7 +48,7 @@ class ProductDecoder
 
   def self.normalize_loose(text)
     t = text.to_s.downcase.tr("áéíóúüñ", "aeiouun")
-    t = t.gsub(/([a-z]+)[-\s]*([0-9]+)/, '\1\2') # ms-01 -> ms01
+    t = t.gsub(/([a-z]+)[-\s]*([0-9]+)/, '\1\2')
     t = t.gsub(/[^a-z0-9\s]+/, " ")
     t.squeeze(" ").strip
   end
@@ -63,10 +58,10 @@ class ProductDecoder
     if (idx = input_strict.index(product_strict))
       return input_strict[(idx + product_strict.length)..].to_s.strip
     end
-    input_strict # fallback
+    input_strict
   end
 
-  # --- Detección de Producto Base (Lógica de Especificidad) ---
+  # --- Detección de Producto Base ---
 
   def self.detect_base_product(full_code)
     strict = normalize_strict(full_code)
@@ -81,13 +76,9 @@ class ProductDecoder
       p_strict = normalize_strict(p.name)
       p_loose = normalize_loose(p.name)
 
-      # CASO A: El nombre del producto está contenido EXACTAMENTE en el input
       if strict.include?(p_strict)
-        # Prioridad absoluta a la longitud del nombre (más largo = más específico)
-        # Sumamos 100 para que cualquier match exacto gane a un match por tokens
         score = 100 + p.name.length
       else
-        # CASO B: Match por tokens (recall)
         p_tokens = p_loose.split
         next if p_tokens.empty?
         inter = input_tokens & p_tokens
@@ -118,14 +109,12 @@ class ProductDecoder
     candidates = []
 
     Variant.where(variant_type_id: allowed_type_ids, active: true).find_each do |v|
-      v_name_loose = normalize_loose((v.respond_to?(:seller_name) && v.seller_name.present?) ? v.seller_name : v.name)
+      v_name_loose = normalize_loose(v.seller_name)
       v_name_tokens = v_name_loose.split.uniq
       v_code_loose = v.code.present? ? normalize_loose(v.code) : nil
 
-      # Match por código (ej: ms01)
       code_match = v_code_loose.present? && tail_set.include?(v_code_loose)
 
-      # Match por nombre (ej: calacatta grey)
       name_match = false
       if v_name_tokens.any?
         inter = v_name_tokens & tail_tokens
@@ -139,7 +128,6 @@ class ProductDecoder
       candidates << {variant: v, score: score, type_id: v.variant_type_id}
     end
 
-    # Una variante por tipo (la de mejor score)
     best_by_type = {}
     candidates.sort_by { |c| -c[:score] }.each do |c|
       next if best_by_type.key?(c[:type_id])
@@ -154,7 +142,7 @@ class ProductDecoder
     explained = Array.new(tokens.size, false)
 
     variants.each do |v|
-      v_text = "#{v.name} #{v.seller_name if v.respond_to?(:seller_name)} #{v.code}"
+      v_text = "#{v.name} #{v.seller_name} #{v.code}"
       v_tokens = normalize_loose(v_text).split
       tokens.each_with_index { |t, i| explained[i] = true if v_tokens.include?(t) }
     end

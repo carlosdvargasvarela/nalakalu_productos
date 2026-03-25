@@ -40,19 +40,6 @@
       </div>
     <% end %>
   </td>
-  <td class="py-3">
-    <% if variant.provider %>
-      <%= link_to variant.provider.name, variant.provider,
-          class: "text-decoration-none text-muted small" %>
-    <% else %>
-      <span class="text-muted small fst-italic">Interno</span>
-    <% end %>
-  </td>
-  <td class="py-3">
-    <span class="text-muted small font-monospace">
-      <%= variant.provider_sku.presence || "—" %>
-    </span>
-  </td>
   <td class="py-3 text-center">
     <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
       <%= variant.active ? 'Activa' : 'Inactiva' %>

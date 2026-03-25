@@ -5,17 +5,18 @@ class ProcurementResolver
 
     delivery["items"].each do |item|
       decoding = ProductDecoder.decode(item["product_name"])
-      next unless decoding[:has_variants]
+      next unless decoding.has_variants  # ← Struct, no Hash
 
-      variants_by_strategy = group_variants_by_strategy(decoding[:variants])
+      base_product = decoding.base_product
+      variants_by_strategy = group_variants_by_strategy(decoding.variants, base_product)
 
       variants_by_strategy[:individual].each do |variant|
-        req = create_requirement(delivery, item, variant)
+        req = create_requirement(delivery, item, variant, base_product)
         requirements << req if req.present?
       end
 
       variants_by_strategy[:consolidated].each do |_supplier_item_id, variants|
-        req = create_consolidated_requirement(delivery, item, variants)
+        req = create_consolidated_requirement(delivery, item, variants, base_product)
         requirements << req if req.present?
       end
     end
@@ -25,17 +26,15 @@ class ProcurementResolver
 
   private
 
-  def self.group_variants_by_strategy(variants)
+  def self.group_variants_by_strategy(variants, base_product)
     groups = {individual: [], consolidated: {}}
 
     variants.each do |v|
       variant_type = v.variant_type
       next unless variant_type
 
-      strategy = variant_type.procurement_strategy.to_s
-
-      if strategy == "consolidated"
-        rule = SupplyRule.find_by(variant_id: v.id)
+      if variant_type.consolidated?
+        rule = find_rule(v, base_product)
         if rule
           groups[:consolidated][rule.supplier_item_id] ||= []
           groups[:consolidated][rule.supplier_item_id] << v
@@ -48,8 +47,14 @@ class ProcurementResolver
     groups
   end
 
-  def self.create_requirement(delivery, item, variant)
-    rule = SupplyRule.find_by(variant_id: variant.id)
+  # Busca la regla más específica: primero por producto, luego genérica
+  def self.find_rule(variant, base_product)
+    SupplyRule.find_by(variant: variant, product: base_product) ||
+      SupplyRule.find_by(variant: variant, product: nil)
+  end
+
+  def self.create_requirement(delivery, item, variant, base_product)
+    rule = find_rule(variant, base_product)
     return nil unless rule&.supplier_item.present?
 
     ProcurementRequirement.find_or_create_by!(
@@ -66,18 +71,16 @@ class ProcurementResolver
     nil
   end
 
-  def self.create_consolidated_requirement(delivery, item, variants)
+  def self.create_consolidated_requirement(delivery, item, variants, base_product)
     return nil if variants.blank?
 
-    rule = SupplyRule.find_by(variant_id: variants.first.id)
+    rule = find_rule(variants.first, base_product)
     return nil unless rule&.supplier_item.present?
 
     specs = variants.each_with_object({}) do |v, hash|
       hash[v.variant_type.name] = v.name
     end
 
-    # find_or_create_by solo por los campos indexados en BD
-    # Las specs se actualizan si el registro ya existe (re-importación)
     req = ProcurementRequirement.find_or_initialize_by(
       origin_order_number: delivery["order_number"],
       supplier_item_id: rule.supplier_item_id
@@ -91,9 +94,12 @@ class ProcurementResolver
         specifications: specs,
         status: "pending"
       )
-      req.save!
+    else
+      # Re-importación: actualizar specs si cambiaron
+      req.specifications = specs
     end
 
+    req.save!
     req
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.warn "[ProcurementResolver] Consolidated: #{e.message}"

@@ -6,7 +6,7 @@ class VariantsController < ApplicationController
 
   def index
     @variants = Variant.all
-      .includes(:variant_type, :provider, :property_values, :compatibilities)
+      .includes(:variant_type, :property_values, :compatibilities)
       .order("variant_types.name, variants.name")
       .joins(:variant_type)
   end
@@ -177,8 +177,8 @@ class VariantsController < ApplicationController
 
   def variant_params
     params.require(:variant).permit(
-      :name, :display_name, :code, :provider_sku,
-      :variant_type_id, :provider_id, :active,
+      :name, :display_name, :seller_name, :code,
+      :variant_type_id, :active,
       :technical_description,
       compatible_variant_ids: [],
       variant_properties_attributes: [:id, :property_id, :property_value_id, :_destroy]

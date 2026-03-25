@@ -1,18 +1,13 @@
 class Provider < ApplicationRecord
-  has_many :variants, dependent: :restrict_with_error
-
-  accepts_nested_attributes_for :variants,
-    allow_destroy: true,
-    reject_if: :all_blank
+  has_many :supplier_items, dependent: :destroy
+  has_many :purchase_orders, dependent: :restrict_with_error
 
   validates :name, presence: true, uniqueness: true
 
-  # Definimos las categorías
   CATEGORIES = %w[interno externo].freeze
-
   validates :category, inclusion: {in: CATEGORIES}
 
-  # Scopes para facilitar consultas
+  scope :active, -> { where(active: true) }
   scope :internos, -> { where(category: "interno") }
   scope :externos, -> { where(category: "externo") }
 end

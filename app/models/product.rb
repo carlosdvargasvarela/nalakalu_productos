@@ -5,9 +5,6 @@ class Product < ApplicationRecord
   has_many :variant_types, through: :product_variant_rules
   accepts_nested_attributes_for :product_variant_rules, allow_destroy: true
 
-  has_many :product_variant_prices, dependent: :destroy
-  has_many :priced_variants, through: :product_variant_prices, source: :variant
-
   # Relaciones de proveeduría
   has_many :supply_rules, dependent: :destroy
   has_many :supplier_items, through: :supply_rules
@@ -48,20 +45,18 @@ class Product < ApplicationRecord
 
   # --------- Helpers de proveedor ----------
 
+  # Determina el tipo de proveedor del producto según sus SupplierItems configurados.
   def supplier_type
-    type_ids = variant_types.pluck(:id)
-    return "sin_definir" if type_ids.empty?
-
-    provider_categories = Variant.where(variant_type_id: type_ids)
-      .joins("LEFT JOIN providers ON providers.id = variants.provider_id")
+    categories = supplier_items
+      .joins(:provider)
       .pluck("providers.category")
       .compact.uniq
 
-    if provider_categories.include?("interno") && provider_categories.include?("externo")
+    if categories.include?("interno") && categories.include?("externo")
       "mixto"
-    elsif provider_categories.include?("externo")
+    elsif categories.include?("externo")
       "externo"
-    elsif provider_categories.include?("interno") || provider_categories.empty?
+    elsif categories.include?("interno")
       "interno"
     else
       "sin_definir"
@@ -77,22 +72,9 @@ class Product < ApplicationRecord
     end
   end
 
-  # --------- Helpers de precios ----------
-
-  def price_for(variant)
-    product_variant_prices.find_by(variant: variant)&.price || 0
-  end
-
-  def set_price_for!(variant, price)
-    record = product_variant_prices.find_or_initialize_by(variant_id: variant.id)
-    record.price = price
-    record.save!
-    record
-  end
-
   # --------- Helpers de proveeduría ----------
 
-  # Resuelve todos los supplier_items necesarios para una combinación de variantes
+  # Resuelve todos los supplier_items necesarios para una combinación de variantes.
   # Recibe un array de Variant y devuelve un hash { supplier_item => specs }
   def resolve_supplier_items(variants)
     result = {}

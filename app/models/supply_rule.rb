@@ -1,3 +1,4 @@
+# app/models/supply_rule.rb
 class SupplyRule < ApplicationRecord
   belongs_to :product, optional: true
   belongs_to :variant_type
@@ -8,14 +9,9 @@ class SupplyRule < ApplicationRecord
 
   validates :rule_type, inclusion: {in: RULE_TYPES}
   validates :quantity_needed, numericality: {greater_than: 0}
-
-  # Una regla individual necesita una variante específica
   validates :variant_id, presence: true, if: -> { rule_type == "individual" }
 
-  scope :for_product, ->(product) {
-    where(product_id: [product.id, nil])
-  }
-
+  scope :for_product, ->(product) { where(product_id: [product.id, nil]) }
   scope :consolidated, -> { where(rule_type: "consolidated") }
   scope :individual, -> { where(rule_type: "individual") }
 

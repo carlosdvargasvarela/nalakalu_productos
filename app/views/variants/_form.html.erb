@@ -25,15 +25,6 @@
                 { prompt: "Seleccione un tipo..." },
                 { class: "form-select border-2 shadow-none fw-bold" } %>
           </div>
-          <div class="mb-3">
-            <%= f.label :provider_id, "Proveedor",
-                class: "form-label small fw-bold text-muted" %>
-            <%= f.collection_select :provider_id,
-                Provider.where(active: true).order(:name), :id, :name,
-                { include_blank: "Sin proveedor (Uso interno / Genérico)" },
-                { class: "form-select border-2 shadow-none" } %>
-            <div class="form-text x-small">Opcional para materiales genéricos o internos.</div>
-          </div>
           <div class="mb-0">
             <%= f.label :active, "Estado", class: "form-label small fw-bold text-muted" %>
             <div class="d-flex gap-3 mt-1">
@@ -131,23 +122,6 @@
               <div class="form-text x-small">
                 Nombre exacto para Órdenes de Compra o Inventario.
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <%= f.label :provider_sku, "Código Color / SKU Prov.",
-                    class: "form-label small fw-bold text-muted mb-0" %>
-                <span class="badge bg-warning text-dark d-none x-small"
-                      data-variant-form-target="skuWarning">
-                  <i class="bi bi-exclamation-triangle me-1"></i>Usando código QB
-                </span>
-              </div>
-              <%= f.text_field :provider_sku,
-                  class: "form-control border-2 font-monospace shadow-none",
-                  placeholder: "Ej: COL-742",
-                  data: {
-                    "variant-form-target": "providerSku",
-                    action: "input->variant-form#onSkuInput"
-                  } %>
             </div>
             <div class="col-12">
               <%= f.label :technical_description, "Notas Técnicas Internas",

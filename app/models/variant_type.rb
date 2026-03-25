@@ -9,6 +9,7 @@ class VariantType < ApplicationRecord
 
   before_create :assign_position
 
+  scope :active, -> { where(active: true) }
   scope :consolidated, -> { where(procurement_strategy: "consolidated") }
   scope :individual, -> { where(procurement_strategy: "individual") }
 

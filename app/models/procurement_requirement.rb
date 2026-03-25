@@ -17,9 +17,9 @@ class ProcurementRequirement < ApplicationRecord
   scope :pending, -> { where(status: "pending") }
   scope :in_draft, -> { where(status: "in_draft") }
   scope :ordered, -> { where(status: "ordered") }
+  scope :cancelled, -> { where(status: "cancelled") }
   scope :active, -> { where(status: %w[pending in_draft]) }
 
-  # 1. Scope que faltaba: para liberar requirements al cancelar una OC
   scope :for_purchase_order, ->(po) {
     where(purchase_order_item_id: po.purchase_order_items.pluck(:id))
   }
@@ -27,17 +27,19 @@ class ProcurementRequirement < ApplicationRecord
   def pending? = status == "pending"
   def in_draft? = status == "in_draft"
   def ordered? = status == "ordered"
+  def cancelled? = status == "cancelled"
 
   def specs_summary
     return "" if specifications.blank?
     specifications.map { |k, v| "#{k}: #{v}" }.join(" | ")
   end
 
-  def mark_as_ordered!(purchase_order_item)
-    update!(status: "ordered", purchase_order_item: purchase_order_item)
+  # El purchase_order_item ya está vinculado al requirement antes de llamar esto.
+  # Solo actualizamos el status.
+  def mark_as_ordered!
+    update!(status: "ordered")
   end
 
-  # 2. El inverso de mark_as_ordered! — necesario al cancelar o eliminar una OC
   def release!
     update!(status: "pending", purchase_order_item: nil)
   end

@@ -1,3 +1,4 @@
+# app/controllers/purchase_orders_controller.rb
 class PurchaseOrdersController < ApplicationController
   before_action :authenticate_user!
   before_action :set_purchase_order, only: [:show, :update, :destroy, :transition]
@@ -24,7 +25,7 @@ class PurchaseOrdersController < ApplicationController
 
   def show
     @items = @purchase_order.purchase_order_items
-      .includes(:supplier_item, :variant, :procurement_requirements)
+      .includes(:supplier_item, :procurement_requirements)
       .order(:id)
   end
 
@@ -97,7 +98,7 @@ class PurchaseOrdersController < ApplicationController
       redirect_to @purchase_order, notice: "Orden de Compra actualizada."
     else
       @items = @purchase_order.purchase_order_items
-        .includes(:supplier_item, :variant, :procurement_requirements)
+        .includes(:supplier_item, :procurement_requirements)
         .order(:id)
       render :show, status: :unprocessable_entity
     end
@@ -105,7 +106,7 @@ class PurchaseOrdersController < ApplicationController
 
   def set_purchase_order
     @purchase_order = PurchaseOrder
-      .includes(purchase_order_items: [:supplier_item, :variant, :procurement_requirements])
+      .includes(purchase_order_items: [:supplier_item, :procurement_requirements])
       .find(params[:id])
   end
 

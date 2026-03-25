@@ -23,7 +23,6 @@ class SupplyManagementsController < ApplicationController
     @grouped_requirements = @pending_requirements.group_by { |r| r.supplier_item.provider }
   end
 
-  # POST /supply_managements/sync_delivery
   def sync_delivery
     delivery_id = params[:delivery_id]
     delivery = LogisticsApiClient.new.fetch_delivery(delivery_id)
@@ -34,7 +33,6 @@ class SupplyManagementsController < ApplicationController
     end
 
     results = ProcurementResolver.resolve_delivery(delivery)
-
     new_count = results.count(&:previously_new_record?)
     existing_count = results.size - new_count
 
@@ -46,7 +44,6 @@ class SupplyManagementsController < ApplicationController
     redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
   end
 
-  # POST /supply_managements/create_purchase_order
   def create_purchase_order
     provider = Provider.find(params[:provider_id])
     requirement_ids = params[:requirement_ids]
@@ -59,11 +56,9 @@ class SupplyManagementsController < ApplicationController
     ActiveRecord::Base.transaction do
       @purchase_order = PurchaseOrder.create!(
         provider: provider,
-        issued_date: Date.today
-        # status y number los asigna el modelo en set_defaults
+        issued_date: Date.current
       )
 
-      # Seguridad: solo requirements que pertenezcan a este proveedor
       requirements = ProcurementRequirement
         .where(id: requirement_ids)
         .joins(:supplier_item)
@@ -71,10 +66,10 @@ class SupplyManagementsController < ApplicationController
         .includes(:supplier_item)
 
       if requirements.empty?
-        raise ActiveRecord::Rollback, "No se encontraron requerimientos válidos para este proveedor."
+        raise ActiveRecord::Rollback,
+          "No se encontraron requerimientos válidos para este proveedor."
       end
 
-      # Consolidar: mismo supplier_item + mismas specs = una línea
       requirements.group_by { |r| [r.supplier_item_id, r.specifications] }.each do |(item_id, specs), reqs|
         total_qty = reqs.sum(&:quantity)
         first_req = reqs.first
@@ -87,7 +82,6 @@ class SupplyManagementsController < ApplicationController
           specifications: specs
         )
 
-        # in_draft: la OC existe pero aún no se ha enviado al proveedor
         reqs.each { |r| r.update!(status: "in_draft", purchase_order_item: po_item) }
       end
     end
@@ -95,7 +89,8 @@ class SupplyManagementsController < ApplicationController
     redirect_to purchase_order_path(@purchase_order),
       notice: "Orden #{@purchase_order.number} creada. Revísala antes de enviarla al proveedor."
   rescue ActiveRecord::Rollback => e
-    redirect_to supply_managements_path, alert: e.message.presence || "Error al crear la OC."
+    redirect_to supply_managements_path,
+      alert: e.message.presence || "Error al crear la OC."
   rescue => e
     redirect_to supply_managements_path, alert: "Error inesperado: #{e.message}"
   end

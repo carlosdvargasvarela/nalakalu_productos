@@ -138,6 +138,6 @@ class VariantTypesController < ApplicationController
   end
 
   def variant_type_params
-    params.require(:variant_type).permit(:name)
+    params.require(:variant_type).permit(:name, :procurement_strategy)
   end
 end

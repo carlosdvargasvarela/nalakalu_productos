@@ -1,18 +1,19 @@
+# app/controllers/providers_controller.rb
 class ProvidersController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
   before_action :set_provider, only: %i[show edit update destroy]
 
   def index
-    @providers = Provider.all
+    @providers = Provider.includes(:supplier_items).order(:name)
   end
 
   def show
+    @supplier_items = @provider.supplier_items.active.order(:name)
   end
 
   def new
     @provider = Provider.new
-    3.times { @provider.variants.build }
   end
 
   def edit
@@ -46,7 +47,6 @@ class ProvidersController < ApplicationController
 
   def destroy
     @provider.destroy!
-
     respond_to do |format|
       format.html { redirect_to providers_path, status: :see_other, notice: "Proveedor eliminado." }
       format.json { head :no_content }
@@ -67,32 +67,6 @@ class ProvidersController < ApplicationController
     redirect_to providers_path, notice: "Importación de proveedores iniciada."
   end
 
-  def assign_variant
-    @provider = Provider.find(params[:id])
-    variant = Variant.find(params[:variant_id])
-
-    if variant.provider_id.present? && variant.provider_id != @provider.id
-      redirect_to @provider, alert: "Esta variante ya está asignada a otro proveedor."
-      return
-    end
-
-    variant.update(provider: @provider)
-    redirect_to @provider, notice: "Variante asignada correctamente."
-  end
-
-  def unassign_variant
-    @provider = Provider.find(params[:id])
-    variant = Variant.find(params[:variant_id])
-
-    if variant.provider_id != @provider.id
-      redirect_to @provider, alert: "La variante no pertenece a este proveedor."
-      return
-    end
-
-    variant.update(provider: nil)
-    redirect_to @provider, notice: "Variante desvinculada correctamente."
-  end
-
   private
 
   def set_provider
@@ -100,9 +74,8 @@ class ProvidersController < ApplicationController
   end
 
   def provider_params
-    params.require(:provider).permit(:name, :contact_name, :email, :phone, :notes, :active, :category,
-      variants_attributes: [
-        :id, :variant_type_id, :name, :code, :provider_sku, :cost, :active, :_destroy
-      ])
+    params.require(:provider).permit(
+      :name, :contact_name, :email, :phone, :notes, :active, :category
+    )
   end
 end

@@ -8,7 +8,6 @@ class LogisticsQueriesController < ApplicationController
     @order_number = params[:order_number]
     @seller_code = params[:seller_code]
 
-    # Solo consultamos si hay parámetros de búsqueda o es la carga inicial
     @deliveries = LogisticsApiClient.fetch_deliveries({
       from: @from,
       to: @to,
@@ -21,37 +20,30 @@ class LogisticsQueriesController < ApplicationController
     @delivery = LogisticsApiClient.new.fetch_delivery(params[:id])
 
     if @delivery
-      # Pre-procesamos todos los items para agrupar por proveedor
-      # Esto facilita la vida al bodeguero
-      @items_by_provider = group_items_by_provider(@delivery["items"])
+      @decoded_items = decode_delivery_items(@delivery["items"])
     else
-      redirect_to logistics_queries_path, alert: "No se pudo encontrar el detalle de la entrega."
+      redirect_to logistics_queries_path,
+        alert: "No se pudo encontrar el detalle de la entrega."
     end
   end
 
   private
 
-  def group_items_by_provider(items)
-    grouped = Hash.new { |h, k| h[k] = [] }
-
-    items.each do |item|
+  # Decodifica cada ítem de la entrega para mostrar producto y variantes detectadas.
+  # Ya no agrupa por proveedor (esa lógica vive en supply_managements).
+  def decode_delivery_items(items)
+    items.map do |item|
       decoding = ProductDecoder.decode(item["product_name"])
 
-      if decoding[:has_variants]
-        decoding[:variants].each do |variant|
-          # Solo agrupamos si la variante tiene un proveedor asignado
-          if variant.provider
-            grouped[variant.provider] << {
-              product_name: item["product_name"],
-              variant_id: variant.id, # Crucial para el formulario de la OC
-              variant_name: variant.seller_name,
-              variant_type: variant.variant_type.name,
-              quantity: item["quantity_delivered"]
-            }
-          end
-        end
-      end
+      {
+        raw: item,
+        product_name: item["product_name"],
+        quantity: item["quantity_delivered"],
+        has_variants: decoding.has_variants,
+        base_product: decoding.base_product,
+        variants: decoding.variants,
+        unrecognized: decoding.unrecognized_codes
+      }
     end
-    grouped
   end
 end

@@ -1,6 +1,5 @@
 class Variant < ApplicationRecord
   belongs_to :variant_type
-  belongs_to :provider, optional: true
 
   has_many :variant_properties, dependent: :destroy
   has_many :property_values, through: :variant_properties
@@ -9,10 +8,6 @@ class Variant < ApplicationRecord
   has_many :compatibilities, dependent: :destroy
   has_many :reverse_compatibilities, as: :compatible, class_name: "Compatibility"
 
-  has_many :product_variant_prices, dependent: :destroy
-  has_many :priced_products, through: :product_variant_prices, source: :product
-
-  # Relaciones de proveeduría
   has_many :supply_rules, dependent: :destroy
   has_many :supplier_items, through: :supply_rules
 
@@ -25,11 +20,13 @@ class Variant < ApplicationRecord
   after_create :auto_link_to_rules, if: :active?
 
   # --------- Helpers EAV ----------
+
   def get_prop(prop_name)
     property_values.joins(:property).find_by(properties: {name: prop_name})&.value
   end
 
   # --------- Helpers compatibilidad ----------
+
   def compatible_product_ids
     rule_ids = compatibilities.where(compatible_type: "ProductVariantRule").pluck(:compatible_id)
     ProductVariantRule.where(id: rule_ids).pluck(:product_id).uniq
@@ -52,24 +49,12 @@ class Variant < ApplicationRecord
     Variant.where(id: compatibilities.where(compatible_type: "Variant").pluck(:compatible_id))
   end
 
+  # Nombre para mostrar al vendedor/usuario
   def seller_name
     display_name.presence || name
   end
 
-  def purchase_name
-    parts = [name]
-    parts << "Ref: #{provider_sku}" if provider_sku.present?
-    parts.join(" - ")
-  end
-
-  def prices_by_product
-    product_variant_prices.includes(:product)
-  end
-
-  def price_for_product(product)
-    product_variant_prices.find_by(product_id: product.id)&.price
-  end
-
+  # Descripción técnica completa con propiedades EAV
   def technical_specs_string
     property_values.includes(:property)
       .order("properties.name")
@@ -77,24 +62,24 @@ class Variant < ApplicationRecord
       .join(", ")
   end
 
-  def full_purchase_description
+  def full_description
     [name, technical_specs_string].reject(&:blank?).join(" | ")
   end
 
   # --------- Helpers proveeduría ----------
 
-  # Devuelve el supplier_item que aplica para un producto específico
+  # Devuelve el supplier_item que aplica para un producto específico.
+  # Primero busca una regla específica para ese producto,
+  # luego una regla genérica (product_id nil).
   def supplier_item_for(product)
     rule = supply_rules.find_by(product: product) || supply_rules.find_by(product: nil)
     rule&.supplier_item
   end
 
-  # Indica si esta variante tiene reglas de compra configuradas
   def has_supply_rules?
     supply_rules.exists?
   end
 
-  # Indica si el tipo de variante es consolidado (ej: Fibras N1, N2, N3)
   def consolidated_procurement?
     variant_type.consolidated?
   end

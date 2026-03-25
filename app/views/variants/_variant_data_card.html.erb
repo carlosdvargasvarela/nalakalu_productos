@@ -19,20 +19,5 @@
       <div class="small text-muted fw-bold mb-1">Nombre Técnico (Compra)</div>
       <span class="fw-bold"><%= variant.name %></span>
     </div>
-    <div class="list-group-item px-4 py-3">
-      <div class="small text-muted fw-bold mb-1">SKU / Código Color Prov.</div>
-      <code class="bg-light px-2 py-1 rounded">
-        <%= variant.provider_sku.presence || "—" %>
-      </code>
-    </div>
-    <div class="list-group-item px-4 py-3">
-      <div class="small text-muted fw-bold mb-1">Proveedor</div>
-      <% if variant.provider %>
-        <%= link_to variant.provider.name, variant.provider,
-            class: "text-decoration-none fw-bold text-primary" %>
-      <% else %>
-        <span class="badge bg-light text-dark border">Uso Interno / Genérico</span>
-      <% end %>
-    </div>
   </div>
 </div>
