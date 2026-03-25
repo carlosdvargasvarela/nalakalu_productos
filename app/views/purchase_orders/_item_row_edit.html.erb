@@ -1,0 +1,52 @@
+<%# app/views/purchase_orders/_item_row_edit.html.erb %>
+<% item = f.object %>
+<div class="border-bottom px-4 py-3">
+  <%= f.hidden_field :id %>
+  <div class="row g-2 align-items-center">
+    <%# Descripción (solo lectura en edición) %>
+    <div class="col-md-5">
+      <div class="fw-bold text-dark"><%= item.supplier_item&.name || item.variant&.name || "—" %></div>
+      <div class="text-muted small">SKU: <%= item.supplier_item&.sku || "—" %></div>
+      <% if item.specifications.present? %>
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          <% item.specifications.each do |k, v| %>
+            <span class="badge bg-light text-dark border fw-normal" style="font-size: 0.7rem;">
+              <strong class="text-secondary"><%= k %>:</strong> <%= v %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <%# Cantidad %>
+    <div class="col-md-2">
+      <%= f.label :quantity, "Cantidad", class: "form-label small text-muted mb-1" %>
+      <%= f.number_field :quantity,
+            class: "form-control form-control-sm text-center fw-bold",
+            step: 0.01, min: 0 %>
+    </div>
+    <%# Unidad (solo lectura) %>
+    <div class="col-md-2">
+      <label class="form-label small text-muted mb-1">Unidad</label>
+      <div>
+        <span class="badge bg-secondary-subtle text-secondary p-2">
+          <%= item.unit || item.supplier_item&.unit %>
+        </span>
+      </div>
+    </div>
+    <%# Costo unitario %>
+    <div class="col-md-2">
+      <%= f.label :unit_cost, "Costo Unit.", class: "form-label small text-muted mb-1" %>
+      <%= f.number_field :unit_cost,
+            class: "form-control form-control-sm",
+            step: 0.01, min: 0, placeholder: "0.00" %>
+    </div>
+    <%# Eliminar línea %>
+    <div class="col-md-1 text-center">
+      <label class="form-label small text-muted mb-1 d-block">Quitar</label>
+      <%= f.check_box :_destroy,
+            class: "form-check-input",
+            style: "width: 1.2rem; height: 1.2rem; cursor: pointer;",
+            title: "Eliminar esta línea de la orden" %>
+    </div>
+  </div>
+</div>

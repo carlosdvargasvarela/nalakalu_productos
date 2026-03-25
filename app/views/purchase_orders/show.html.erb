@@ -1,167 +1,202 @@
-<div class="container mt-4 pb-5">
-  <!-- Acciones (no se imprimen) -->
-  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-    <%= link_to purchase_orders_path, class: "btn btn-outline-secondary rounded-pill px-4 shadow-sm" do %>
-      <i class="bi bi-arrow-left me-1"></i> Volver al listado
-    <% end %>
-    <div class="d-flex gap-2">
-      <% if @purchase_order.status == "borrador" %>
-        <%= link_to edit_purchase_order_path(@purchase_order), class: "btn btn-outline-primary rounded-pill px-4 shadow-sm" do %>
-          <i class="bi bi-pencil me-1"></i> Editar
+<%# app/views/purchase_orders/show.html.erb %>
+<% editable = @purchase_order.status == "borrador" %>
+<div class="container-fluid mt-4 pb-5" style="max-width: 960px;">
+  <%# ENCABEZADO %>
+  <div class="mb-1">
+    <%= link_to "← Volver a Órdenes", purchase_orders_path,
+          class: "text-muted small text-decoration-none" %>
+  </div>
+  <div class="d-flex justify-content-between align-items-start mb-4 mt-2 flex-wrap gap-3">
+    <div>
+      <h1 class="h2 fw-bold mb-1"><%= @purchase_order.number %></h1>
+      <div class="d-flex align-items-center gap-2">
+        <%= render "purchase_orders/status_badge", status: @purchase_order.status %>
+        <span class="text-muted small">
+          Creada el <%= @purchase_order.created_at.strftime("%d/%m/%Y") %>
+        </span>
+      </div>
+    </div>
+    <%# ACCIONES DE ESTADO %>
+    <div class="d-flex gap-2 flex-wrap">
+      <% transitions = {
+           "borrador"   => [
+             { label: "Marcar como Enviado",     next: "enviado",    style: "btn-primary",           icon: "bi-send-fill" }
+           ],
+           "enviado"    => [
+             { label: "Confirmar con Proveedor", next: "confirmado", style: "btn-success",            icon: "bi-check-circle-fill" },
+             { label: "Cancelar",                next: "cancelado",  style: "btn-outline-danger",     icon: "bi-x-circle" }
+           ],
+           "confirmado" => [
+             { label: "Marcar como Recibido",    next: "recibido",   style: "btn-success",            icon: "bi-box-seam-fill" },
+             { label: "Cancelar",                next: "cancelado",  style: "btn-outline-danger",     icon: "bi-x-circle" }
+           ],
+           "recibido"   => [],
+           "cancelado"  => [
+             { label: "Reabrir como Borrador",   next: "borrador",   style: "btn-outline-secondary",  icon: "bi-arrow-counterclockwise" }
+           ]
+         }.fetch(@purchase_order.status, []) %>
+      <% transitions.each do |t| %>
+        <%= button_to transition_purchase_order_path(@purchase_order),
+              params: { transition: t[:next] },
+              method: :patch,
+              class: "btn #{t[:style]} btn-sm fw-bold",
+              data: { turbo_confirm: "¿Cambiar estado a \"#{t[:next]}\"?" } do %>
+          <i class="bi <%= t[:icon] %> me-1"></i><%= t[:label] %>
         <% end %>
       <% end %>
-      <% if @purchase_order.provider.email.present? %>
-        <a href="<%= @purchase_order.mailto_url %>"
-          class="btn btn-outline-success rounded-pill px-4 shadow-sm">
-          <i class="bi bi-envelope-at me-2"></i> Enviar al Proveedor
-        </a>
+      <% if @purchase_order.provider.email.present? && %w[enviado confirmado].include?(@purchase_order.status) %>
+        <%= link_to @purchase_order.mailto_url, class: "btn btn-outline-secondary btn-sm" do %>
+          <i class="bi bi-envelope me-1"></i>Email al Proveedor
+        <% end %>
       <% end %>
-      <button onclick="window.print();" class="btn btn-dark rounded-pill px-4 shadow-sm">
-        <i class="bi bi-printer me-2"></i> Imprimir OC
-      </button>
+      <% if current_user.role == "admin" || @purchase_order.status == "borrador" %>
+        <%= button_to purchase_order_path(@purchase_order),
+              method: :delete,
+              class: "btn btn-outline-danger btn-sm",
+              data: { turbo_confirm: "¿Eliminar esta orden? Los requerimientos volverán a estado pendiente." } do %>
+          <i class="bi bi-trash me-1"></i>
+        <% end %>
+      <% end %>
     </div>
   </div>
-  <!-- Cabecera de la OC -->
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body p-4">
-      <div class="row align-items-start">
-        <div class="col-md-6">
-          <h2 class="fw-bold mb-1">Orden de Compra</h2>
-          <table class="table table-sm table-borderless mb-0" style="width: auto;">
-            <tr>
-              <td class="text-muted pe-3">Número:</td>
-              <td class="fw-bold font-monospace"><%= @purchase_order.number %></td>
-            </tr>
-            <tr>
-              <td class="text-muted pe-3">Fecha:</td>
-              <td><%= @purchase_order.issued_date&.strftime("%d/%m/%Y") %></td>
-            </tr>
-            <tr>
-              <td class="text-muted pe-3">Estado:</td>
-              <td>
-                <%
-                  badge = case @purchase_order.status
-                          when "borrador"   then "bg-warning text-dark"
-                          when "enviado"    then "bg-info text-dark"
-                          when "confirmado" then "bg-primary"
-                          when "recibido"   then "bg-success"
-                          when "cancelado"  then "bg-danger"
-                          else "bg-secondary"
-                          end
-                %>
-                <span class="badge <%= badge %>"><%= @purchase_order.status.capitalize %></span>
-              </td>
-            </tr>
-          </table>
-        </div>
-        <div class="col-md-6 text-md-end">
-          <div class="fw-bold fs-5">Nalakalú Solutions S.A.</div>
-          <div class="text-muted small">3-101-477431</div>
-          <div class="text-muted small">800m este de Concrepal</div>
-          <div class="text-muted small">Buenos Aires, Palmares, Alajuela</div>
-          <div class="text-muted small">Tel. +(506) 2453-8003</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Proveedor y Envío -->
-  <div class="row mb-4">
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-light fw-bold small text-uppercase text-muted">Proveedor</div>
-        <div class="card-body">
-          <div class="fw-bold fs-5"><%= @purchase_order.provider.name %></div>
-          <% if @purchase_order.provider.contact_name.present? %>
-            <div class="text-muted"><%= @purchase_order.provider.contact_name %></div>
-          <% end %>
-          <% if @purchase_order.provider.email.present? %>
-            <div class="small"><i class="bi bi-envelope me-1"></i><%= @purchase_order.provider.email %></div>
-          <% end %>
-          <% if @purchase_order.provider.phone.present? %>
-            <div class="small"><i class="bi bi-telephone me-1"></i><%= @purchase_order.provider.phone %></div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-light fw-bold small text-uppercase text-muted">Enviar a</div>
-        <div class="card-body">
-          <div class="fw-bold">NALAKALU SOLUTIONS S.A.</div>
-          <div class="text-muted small">800mts Este de Concrepal</div>
-          <div class="text-muted small">Céd. Jurídica: 3-101-477431</div>
-          <% if @purchase_order.delivery_deadline.present? %>
-            <div class="mt-2 small">
-              <span class="text-muted">Fecha Máx. Entrega:</span>
-              <strong><%= @purchase_order.delivery_deadline.strftime("%d/%m/%Y") %></strong>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Tabla de Items -->
+  <%# DATOS GENERALES %>
   <div class="card border-0 shadow-sm mb-4">
-    <div class="table-responsive">
-      <table class="table align-middle mb-0">
-        <thead class="bg-dark text-white">
+    <div class="card-body p-4">
+      <%= form_with model: @purchase_order, method: :patch, data: { turbo: false }, class: "row g-3" do |f| %>
+        <div class="col-md-4">
+          <p class="small text-muted fw-bold mb-1">PROVEEDOR</p>
+          <p class="mb-0 fw-bold"><%= @purchase_order.provider.name %></p>
+          <p class="mb-0 small text-muted"><%= @purchase_order.provider.email.presence || "Sin email registrado" %></p>
+          <p class="mb-0 small text-muted"><%= @purchase_order.provider.phone.presence %></p>
+        </div>
+        <div class="col-md-2">
+          <p class="small text-muted fw-bold mb-1">EMISIÓN</p>
+          <p class="mb-0"><%= @purchase_order.issued_date&.strftime("%d/%m/%Y") || "—" %></p>
+        </div>
+        <div class="col-md-3">
+          <% if editable %>
+            <%= f.label :delivery_deadline, "ENTREGA ESPERADA", class: "form-label small text-muted fw-bold mb-1" %>
+            <%= f.date_field :delivery_deadline, class: "form-control form-control-sm" %>
+          <% else %>
+            <p class="small text-muted fw-bold mb-1">ENTREGA ESPERADA</p>
+            <p class="mb-0"><%= @purchase_order.delivery_deadline&.strftime("%d/%m/%Y") || "—" %></p>
+          <% end %>
+        </div>
+        <div class="col-md-3">
+          <p class="small text-muted fw-bold mb-1">TOTAL ESTIMADO</p>
+          <p class="mb-0 h4 fw-bold text-dark">
+            <%= number_to_currency(@purchase_order.total_amount, unit: "₡", delimiter: ".", separator: ",") %>
+          </p>
+        </div>
+        <div class="col-12">
+          <% if editable %>
+            <%= f.label :notes, "NOTAS / INSTRUCCIONES AL PROVEEDOR", class: "form-label small text-muted fw-bold mb-1" %>
+            <%= f.text_area :notes, class: "form-control form-control-sm", rows: 2,
+                  placeholder: "Instrucciones especiales, condiciones de entrega, etc." %>
+          <% elsif @purchase_order.notes.present? %>
+            <p class="small text-muted fw-bold mb-1">NOTAS</p>
+            <p class="mb-0 small"><%= @purchase_order.notes %></p>
+          <% end %>
+        </div>
+        <% if editable %>
+          <div class="col-12 text-end border-top pt-3">
+            <%= f.submit "Guardar Cambios", class: "btn btn-dark btn-sm px-4" %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+  <%# LÍNEAS DE LA ORDEN %>
+  <div class="card border-0 shadow-sm overflow-hidden mb-4">
+    <div class="card-header bg-white py-3">
+      <h5 class="mb-0 fw-bold">
+        <i class="bi bi-list-ul me-2 text-secondary"></i>Materiales a Pedir
+      </h5>
+    </div>
+    <% if editable %>
+      <%= form_with model: @purchase_order, method: :patch, data: { turbo: false } do |f| %>
+        <%= f.fields_for :purchase_order_items, @items do |item_f| %>
+          <%= render "purchase_orders/item_row_edit", f: item_f %>
+        <% end %>
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+          <span class="text-muted small">
+            <i class="bi bi-info-circle me-1"></i>
+            Puedes ajustar cantidades y costos antes de enviar la orden.
+          </span>
+          <%= f.submit "Guardar Cantidades", class: "btn btn-primary fw-bold px-5" %>
+        </div>
+      <% end %>
+    <% else %>
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light small text-muted text-uppercase">
           <tr>
-            <th class="ps-4 py-3">Código</th>
-            <th class="py-3">Descripción</th>
-            <th class="py-3 text-center">Cantidad</th>
-            <th class="py-3 text-center">U/M</th>
-            <th class="py-3 text-end">Valor Unit.</th>
-            <th class="py-3 text-end pe-4">Total</th>
+            <th class="ps-4" style="width: 40%;">Material / Pieza</th>
+            <th>Especificaciones</th>
+            <th class="text-center">Cantidad</th>
+            <th>Unidad</th>
+            <th class="text-end pe-4">Costo Unit.</th>
+            <th class="text-end pe-4">Subtotal</th>
           </tr>
         </thead>
         <tbody>
-          <% @purchase_order.purchase_order_items.each do |item| %>
-            <tr class="border-bottom">
+          <% @items.each do |item| %>
+            <tr>
               <td class="ps-4">
-                <code class="small"><%= item.variant.code %></code>
+                <div class="fw-bold text-dark"><%= item.line_description %></div>
+                <div class="text-muted small">SKU: <%= item.supplier_item&.sku || "—" %></div>
               </td>
               <td>
-                <div class="fw-semibold"><%= item.description_override.presence || item.variant.purchase_name %></div>
-                <small class="text-muted"><%= item.variant.variant_type.name %></small>
+                <% if item.specifications.present? %>
+                  <div class="d-flex flex-wrap gap-1">
+                    <% item.specifications.each do |k, v| %>
+                      <span class="badge bg-light text-dark border fw-normal" style="font-size: 0.72rem;">
+                        <strong class="text-secondary"><%= k %>:</strong> <%= v %>
+                      </span>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="text-muted small fst-italic">Estándar</span>
+                <% end %>
               </td>
-              <td class="text-center fw-bold"><%= item.quantity.to_f %></td>
               <td class="text-center">
-                <span class="badge bg-secondary-subtle text-secondary border">
-                  <%= item.unit.upcase %>
+                <span class="h5 fw-bold text-primary mb-0"><%= item.quantity&.to_f&.round(2) %></span>
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">
+                  <%= item.unit || item.supplier_item&.unit %>
                 </span>
               </td>
-              <td class="text-end">₡<%= number_with_delimiter(item.unit_cost.to_f, delimiter: ".") %></td>
-              <td class="text-end pe-4 fw-bold">₡<%= number_with_delimiter(item.total.to_f, delimiter: ".") %></td>
+              <td class="text-end pe-4 text-muted small">
+                <%= item.unit_cost.present? ? number_to_currency(item.unit_cost, unit: "₡", delimiter: ".", separator: ",") : "—" %>
+              </td>
+              <td class="text-end pe-4 fw-bold small">
+                <%= number_to_currency(item.total, unit: "₡", delimiter: ".", separator: ",") %>
+              </td>
             </tr>
           <% end %>
         </tbody>
         <tfoot class="table-light">
           <tr>
-            <td colspan="5" class="text-end fw-bold py-3 pe-3">TOTAL ORDEN:</td>
-            <td class="text-end pe-4 fw-bold fs-5 text-primary py-3">
-              ₡<%= number_with_delimiter(@purchase_order.total_amount.to_f, delimiter: ".") %>
+            <td colspan="5" class="text-end pe-4 fw-bold text-muted small text-uppercase">
+              Total Estimado
+            </td>
+            <td class="text-end pe-4 fw-bold text-dark">
+              <%= number_to_currency(@purchase_order.total_amount, unit: "₡", delimiter: ".", separator: ",") %>
             </td>
           </tr>
         </tfoot>
       </table>
-    </div>
+    <% end %>
   </div>
-  <!-- Notas -->
-  <% if @purchase_order.notes.present? %>
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-light fw-bold small text-uppercase text-muted">Notas</div>
-      <div class="card-body text-muted"><%= @purchase_order.notes %></div>
+  <%# TRAZABILIDAD: PEDIDOS ORIGEN %>
+  <% origin_orders = @items
+       .flat_map { |i| i.procurement_requirements.map(&:origin_order_number) }
+       .uniq.compact.sort %>
+  <% if origin_orders.any? %>
+    <div class="p-3 bg-light rounded border small text-muted">
+      <i class="bi bi-link-45deg me-1 text-primary"></i>
+      <strong class="text-dark">Pedidos de origen que generaron esta OC:</strong>
+      <span class="ms-1"><%= origin_orders.join(" · ") %></span>
     </div>
   <% end %>
 </div>
-<style>
-  @media print {
-    .no-print { display: none !important; }
-    .btn, .navbar, footer { display: none !important; }
-    body { background: white !important; font-size: 13px; -webkit-print-color-adjust: exact; }
-    .container { width: 100% !important; max-width: 100% !important; }
-    .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
-    .table thead th { background-color: #212529 !important; color: white !important; }
-    tr { page-break-inside: avoid; }
-  }
-</style>

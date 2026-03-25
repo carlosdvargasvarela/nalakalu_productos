@@ -13,7 +13,9 @@
     <%= render "layouts/navbar" %>
     <!-- flex-grow-1 hace que este contenedor se estire para empujar el footer hacia abajo -->
     <main class="flex-grow-1 container-fluid px-4 mt-4">
-      <%= render "layouts/flash_messages" %>
+      <div id="flash_container">
+        <%= render "layouts/flash_messages" %>
+      </div>
       <%= yield %>
     </main>
     <%# Contenedor para modales dinámicos %>

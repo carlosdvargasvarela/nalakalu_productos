@@ -71,8 +71,8 @@ Rails.application.routes.draw do
   end
 
   resources :purchase_orders do
-    collection do
-      post :create_from_delivery
+    member do
+      patch :transition
     end
   end
 
@@ -90,6 +90,7 @@ Rails.application.routes.draw do
 
   resources :supply_managements, only: [:index] do
     collection do
+      post :sync_delivery
       post :create_purchase_order
     end
   end

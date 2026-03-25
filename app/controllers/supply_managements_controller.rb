@@ -1,48 +1,84 @@
+# app/controllers/supply_managements_controller.rb
 class SupplyManagementsController < ApplicationController
-  def index
-    # Filtros básicos por fecha de creación del requerimiento
-    @start_date = params[:start_date].presence || Date.today.beginning_of_month
-    @end_date = params[:end_date].presence || Date.today
+  before_action :authenticate_user!
 
-    # Obtenemos requerimientos pendientes agrupados por Proveedor
-    # Incluimos supplier_item y provider para evitar N+1
-    @pending_requirements = ProcurementRequirement.pending
+  def index
+    @from = params[:from] || Date.current.beginning_of_week.to_s
+    @to = params[:to] || Date.current.end_of_week.to_s
+    @order_number = params[:order_number]
+    @seller_code = params[:seller_code]
+
+    @deliveries = LogisticsApiClient.fetch_deliveries(
+      from: @from,
+      to: @to,
+      order_number: @order_number,
+      seller_code: @seller_code
+    )
+
+    @pending_requirements = ProcurementRequirement.active
       .joins(supplier_item: :provider)
-      .where(created_at: @start_date.to_date.beginning_of_day..@end_date.to_date.end_of_day)
       .includes(supplier_item: :provider)
       .order("providers.name ASC, supplier_items.name ASC")
 
-    # Agrupamos en memoria para la vista
-    @grouped_requirements = @pending_requirements.group_by { |req| req.supplier_item.provider }
+    @grouped_requirements = @pending_requirements.group_by { |r| r.supplier_item.provider }
   end
 
+  # POST /supply_managements/sync_delivery
+  def sync_delivery
+    delivery_id = params[:delivery_id]
+    delivery = LogisticsApiClient.new.fetch_delivery(delivery_id)
+
+    unless delivery
+      return redirect_to supply_managements_path,
+        alert: "No se pudo obtener la entrega #{delivery_id}."
+    end
+
+    results = ProcurementResolver.resolve_delivery(delivery)
+
+    new_count = results.count(&:previously_new_record?)
+    existing_count = results.size - new_count
+
+    msg = "Entrega sincronizada: #{new_count} requerimientos nuevos"
+    msg += ", #{existing_count} ya existían." if existing_count > 0
+
+    redirect_to supply_managements_path, notice: msg
+  rescue => e
+    redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
+  end
+
+  # POST /supply_managements/create_purchase_order
   def create_purchase_order
     provider = Provider.find(params[:provider_id])
     requirement_ids = params[:requirement_ids]
 
     if requirement_ids.blank?
-      return redirect_to supply_managements_path, alert: "Debe seleccionar al menos un ítem."
+      return redirect_to supply_managements_path,
+        alert: "No hay requerimientos para generar la orden."
     end
 
     ActiveRecord::Base.transaction do
-      # 1. Crear la Orden de Compra (OC)
       @purchase_order = PurchaseOrder.create!(
         provider: provider,
-        status: "borrador",
-        issued_date: Date.today,
-        number: "OC-#{Time.now.to_i}" # O tu lógica de numeración
+        issued_date: Date.today
+        # status y number los asigna el modelo en set_defaults
       )
 
-      # 2. Agrupar requerimientos por SupplierItem + Specifications para consolidar líneas de OC
-      requirements = ProcurementRequirement.where(id: requirement_ids)
+      # Seguridad: solo requirements que pertenezcan a este proveedor
+      requirements = ProcurementRequirement
+        .where(id: requirement_ids)
+        .joins(:supplier_item)
+        .where(supplier_items: {provider_id: provider.id})
+        .includes(:supplier_item)
 
-      # Agrupamos por [item_id, specs] para que si dos pedidos piden lo mismo, sea una sola línea en la OC
-      requirements.group_by { |r| [r.supplier_item_id, r.specifications] }.each do |key, reqs|
-        item_id, specs = key
+      if requirements.empty?
+        raise ActiveRecord::Rollback, "No se encontraron requerimientos válidos para este proveedor."
+      end
+
+      # Consolidar: mismo supplier_item + mismas specs = una línea
+      requirements.group_by { |r| [r.supplier_item_id, r.specifications] }.each do |(item_id, specs), reqs|
         total_qty = reqs.sum(&:quantity)
         first_req = reqs.first
 
-        # Crear la línea de la OC
         po_item = @purchase_order.purchase_order_items.create!(
           supplier_item_id: item_id,
           quantity: total_qty,
@@ -51,13 +87,16 @@ class SupplyManagementsController < ApplicationController
           specifications: specs
         )
 
-        # Marcar requerimientos como procesados
-        reqs.each { |r| r.mark_as_ordered!(po_item) }
+        # in_draft: la OC existe pero aún no se ha enviado al proveedor
+        reqs.each { |r| r.update!(status: "in_draft", purchase_order_item: po_item) }
       end
     end
 
-    redirect_to purchase_order_path(@purchase_order), notice: "Orden de Compra creada exitosamente."
+    redirect_to purchase_order_path(@purchase_order),
+      notice: "Orden #{@purchase_order.number} creada. Revísala antes de enviarla al proveedor."
+  rescue ActiveRecord::Rollback => e
+    redirect_to supply_managements_path, alert: e.message.presence || "Error al crear la OC."
   rescue => e
-    redirect_to supply_managements_path, alert: "Error al crear OC: #{e.message}"
+    redirect_to supply_managements_path, alert: "Error inesperado: #{e.message}"
   end
 end

@@ -1,0 +1,7 @@
+<%# app/views/shared/_flash.html.erb %>
+<% color  = type.to_s == "success" ? "success" : "warning" %>
+<% icon   = type.to_s == "success" ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill" %>
+<div class="alert alert-<%= color %> alert-dismissible fade show border-0 shadow-sm rounded-3 mb-3" role="alert">
+  <i class="bi <%= icon %> me-2"></i><%= message %>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>

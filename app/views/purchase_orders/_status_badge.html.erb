@@ -1,0 +1,11 @@
+<%# app/views/purchase_orders/_status_badge.html.erb %>
+<% config = {
+  "borrador"   => { color: "secondary", icon: "bi-pencil-fill" },
+  "enviado"    => { color: "info",      icon: "bi-send-fill" },
+  "confirmado" => { color: "primary",   icon: "bi-check-circle-fill" },
+  "recibido"   => { color: "success",   icon: "bi-box-seam-fill" },
+  "cancelado"  => { color: "danger",    icon: "bi-x-circle-fill" }
+}.fetch(status.to_s, { color: "light", icon: "bi-question" }) %>
+<span class="badge rounded-pill border bg-<%= config[:color] %>-subtle text-<%= config[:color] %> border-<%= config[:color] %>-subtle">
+  <i class="bi <%= config[:icon] %> me-1"></i><%= status&.capitalize %>
+</span>

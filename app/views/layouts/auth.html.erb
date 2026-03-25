@@ -32,7 +32,9 @@
             <h2 class="fw-bold text-dark">Nalakalú</h2>
             <p class="text-muted small">Gestión de Productos e Inventario</p>
           </div>
-          <%= render "layouts/flash_messages" %>
+          <div id="flash_container">
+            <%= render "layouts/flash_messages" %>
+          </div>
           <%= yield %>
           <div class="text-center mt-4">
             <p class="text-muted small">© <%= Time.current.year %> Nalakalú — Sistema Interno</p>

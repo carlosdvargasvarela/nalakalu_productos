@@ -1,0 +1,233 @@
+<%# app/views/supply_managements/index.html.erb %>
+<div class="container-fluid mt-4 pb-5" style="max-width: 1200px;">
+  <%# ENCABEZADO %>
+  <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+    <div>
+      <h1 class="h2 fw-bold mb-0 text-dark">
+        <i class="bi bi-cart-check-fill text-primary me-2"></i>Panel de Proveeduría
+      </h1>
+      <p class="text-muted mb-0">Gestiona requerimientos de materiales y genera órdenes de compra.</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <%= link_to purchase_orders_path, class: "btn btn-outline-secondary btn-sm" do %>
+        <i class="bi bi-file-earmark-text me-1"></i>Ver Órdenes de Compra
+      <% end %>
+      <span class="badge bg-light text-dark border p-2">
+        <i class="bi bi-calendar3 me-1"></i> <%= l Date.today, format: :long %>
+      </span>
+    </div>
+  </div>
+  <%# SECCIÓN 1: SINCRONIZACIÓN %>
+  <div class="card border-0 shadow-sm mb-5 bg-light">
+    <div class="card-body p-4">
+      <div class="row align-items-center mb-3">
+        <div class="col-md-7">
+          <h5 class="fw-bold mb-1">
+            <i class="bi bi-1-circle-fill text-primary me-2"></i>Sincronizar con Logística
+          </h5>
+          <p class="small text-muted mb-0">
+            Busca pedidos en el sistema de entregas y detecta qué materiales hay que comprar.
+          </p>
+        </div>
+        <div class="col-md-5 text-md-end mt-3 mt-md-0">
+          <%= form_tag supply_managements_path, method: :get, class: "d-flex gap-2 justify-content-md-end flex-wrap" do %>
+            <div class="d-flex gap-1 align-items-center">
+              <label class="small text-muted mb-0 me-1">Desde</label>
+              <%= date_field_tag :from, @from, class: "form-control form-control-sm", style: "width: 145px;" %>
+            </div>
+            <div class="d-flex gap-1 align-items-center">
+              <label class="small text-muted mb-0 me-1">Hasta</label>
+              <%= date_field_tag :to, @to, class: "form-control form-control-sm", style: "width: 145px;" %>
+            </div>
+            <%= submit_tag "Buscar", class: "btn btn-outline-dark btn-sm" %>
+          <% end %>
+        </div>
+      </div>
+      <%# Pre-cargamos los números ya sincronizados para evitar N+1 %>
+      <% synced_order_numbers = ProcurementRequirement
+           .where(origin_order_number: @deliveries.map { |d| d["order_number"] })
+           .distinct
+           .pluck(:origin_order_number)
+           .to_set %>
+      <% if @deliveries.empty? %>
+        <div class="text-center py-4 text-muted small bg-white rounded border">
+          <i class="bi bi-search me-1"></i>No se encontraron entregas para el rango seleccionado.
+        </div>
+      <% else %>
+        <div class="table-responsive bg-white rounded border" style="max-height: 280px;">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light sticky-top small text-muted text-uppercase">
+              <tr>
+                <th class="ps-3">Pedido</th>
+                <th>Cliente</th>
+                <th>Fecha Entrega</th>
+                <th class="text-center">Estado</th>
+                <th class="text-end pe-3">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @deliveries.each do |d| %>
+                <% synced = synced_order_numbers.include?(d["order_number"]) %>
+                <tr class="<​%= 'opacity-60' if synced %>">
+                  <td class="ps-3 fw-bold"><%= d["order_number"] %></td>
+                  <td class="small"><%= d.dig("client", "name") %></td>
+                  <td class="small text-muted"><%= d["delivery_date"] %></td>
+                  <td class="text-center">
+                    <% if synced %>
+                      <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle">
+                        <i class="bi bi-check2 me-1"></i>Importado
+                      </span>
+                    <% else %>
+                      <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle">
+                        <i class="bi bi-exclamation me-1"></i>Nuevo
+                      </span>
+                    <% end %>
+                  </td>
+                  <td class="text-end pe-3">
+                    <%= button_to sync_delivery_supply_managements_path,
+                          params: { delivery_id: d["id"] },
+                          method: :post,
+                          class: "btn btn-sm fw-bold py-0 px-3 #{synced ? 'btn-outline-secondary' : 'btn-primary'}" do %>
+                      <i class="bi bi-<%= synced ? 'arrow-repeat' : 'download' %> me-1"></i>
+                      <%= synced ? "Re-importar" : "Importar" %>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <%# SECCIÓN 2: MATERIALES PENDIENTES %>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="bi bi-2-circle-fill text-primary me-2"></i>Materiales Pendientes de Pedir
+      </h4>
+      <p class="text-muted small mb-0">Solo requerimientos sin orden de compra asignada.</p>
+    </div>
+    <% total_pending = @grouped_requirements.values.flatten.size %>
+    <% if total_pending > 0 %>
+      <span class="badge bg-danger rounded-pill fs-6"><%= total_pending %> pendientes</span>
+    <% end %>
+  </div>
+  <% if @grouped_requirements.empty? %>
+    <div class="text-center py-5 border rounded bg-white shadow-sm" style="border-style: dashed !important;">
+      <i class="bi bi-check2-circle display-1 text-success opacity-25"></i>
+      <h5 class="mt-3 text-muted">¡Todo al día!</h5>
+      <p class="text-muted mb-0">No hay materiales pendientes de compra.</p>
+    </div>
+  <% else %>
+    <% @grouped_requirements.each do |provider, reqs| %>
+      <%# Agrupamos aquí para la vista, el form envía todos los IDs %>
+      <% grouped_lines = reqs.group_by { |r| [r.supplier_item_id, r.specifications] } %>
+      <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="border-left: 4px solid #0d6efd !important;">
+        <%# HEADER DE PROVEEDOR %>
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5 class="mb-0 fw-bold">
+              <i class="bi bi-building me-2 text-secondary"></i><%= provider.name %>
+            </h5>
+            <div class="mt-1 d-flex gap-2 flex-wrap">
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                <%= grouped_lines.size %> <%= grouped_lines.size == 1 ? "línea" : "líneas" %>
+              </span>
+              <% if provider.email.present? %>
+                <span class="badge bg-light text-muted border">
+                  <i class="bi bi-envelope me-1"></i><%= provider.email %>
+                </span>
+              <% end %>
+            </div>
+          </div>
+          <%= form_tag create_purchase_order_supply_managements_path, method: :post do %>
+            <%= hidden_field_tag :provider_id, provider.id %>
+            <% reqs.each do |r| %>
+              <%= hidden_field_tag "requirement_ids[]", r.id %>
+            <% end %>
+            <%= submit_tag "Generar Orden de Compra →",
+                  class: "btn btn-success fw-bold px-4 shadow-sm",
+                  data: { turbo_confirm: "¿Generar una Orden de Compra para #{provider.name} con #{grouped_lines.size} líneas?" } %>
+          <% end %>
+        </div>
+        <%# TABLA DE MATERIALES %>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light small text-muted text-uppercase">
+              <tr>
+                <th class="ps-4" style="width: 30%;">Pieza / Material</th>
+                <th>Especificaciones</th>
+                <th class="text-center">Cantidad</th>
+                <th>Unidad</th>
+                <th class="pe-4">Pedidos Origen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% grouped_lines.each do |(item_id, specs), group| %>
+                <% first = group.first %>
+                <tr>
+                  <td class="ps-4">
+                    <div class="fw-bold text-dark"><%= first.supplier_item.name %></div>
+                    <% if first.supplier_item.sku.present? %>
+                      <div class="text-muted" style="font-size: 0.75rem;">
+                        SKU: <%= first.supplier_item.sku %>
+                      </div>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if specs.present? %>
+                      <div class="d-flex flex-wrap gap-1">
+                        <% specs.each do |k, v| %>
+                          <span class="badge bg-light text-dark border fw-normal">
+                            <strong class="text-secondary"><%= k %>:</strong> <%= v %>
+                          </span>
+                        <% end %>
+                      </div>
+                    <% else %>
+                      <span class="text-muted small fst-italic">Estándar</span>
+                    <% end %>
+                  </td>
+                  <td class="text-center">
+                    <span class="h4 mb-0 fw-bold text-primary d-block">
+                      <%= group.sum { |r| r.quantity.to_f }.round(2) %>
+                    </span>
+                    <% if group.size > 1 %>
+                      <span class="text-muted" style="font-size: 0.7rem;">
+                        de <%= group.size %> pedidos
+                      </span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary-subtle text-secondary">
+                      <%= first.supplier_item.unit %>
+                    </span>
+                  </td>
+                  <td class="pe-4">
+                    <div class="text-muted small">
+                      <% group.map(&:origin_order_number).uniq.each do |num| %>
+                        <span class="badge bg-light text-dark border me-1 mb-1 fw-normal">
+                          <i class="bi bi-hash" style="font-size: 0.65rem;"></i><%= num %>
+                        </span>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer bg-white border-top py-2 text-center">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Al generar la orden, estos requerimientos quedarán en borrador hasta que se envíe al proveedor.
+          </small>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+<style>
+  .opacity-60 { opacity: 0.6; }
+  .table-hover tbody tr:hover { background-color: #f8f9fa; }
+</style>
