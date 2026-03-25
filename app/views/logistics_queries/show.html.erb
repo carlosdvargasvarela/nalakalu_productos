@@ -18,8 +18,12 @@
           <h2 class="mb-0 fw-bold"><%= @delivery["order_number"] %></h2>
         </div>
         <div class="col-md-6 text-md-end">
-          <span class="badge bg-primary fs-6 px-3 py-2 shadow-sm"><%= @delivery["status_label"] %></span>
-          <div class="mt-2 small opacity-75">Fecha Programada: <%= Date.parse(@delivery["delivery_date"]).strftime("%d/%m/%Y") %></div>
+          <span class="badge bg-primary fs-6 px-3 py-2 shadow-sm">
+            <%= @delivery["status_label"] %>
+          </span>
+          <div class="mt-2 small opacity-75">
+            Fecha Programada: <%= Date.parse(@delivery["delivery_date"]).strftime("%d/%m/%Y") %>
+          </div>
         </div>
       </div>
     </div>
@@ -48,7 +52,9 @@
     </div>
   </div>
   <!-- Materiales por Proveedor -->
-  <h4 class="mb-3 mt-5"><i class="bi bi-box-seam me-2"></i>Materiales Requeridos por Proveedor</h4>
+  <h4 class="mb-3 mt-5">
+    <i class="bi bi-box-seam me-2"></i>Materiales Requeridos por Proveedor
+  </h4>
   <p class="text-muted small">Variantes agrupadas por el proveedor externo que las suministra.</p>
   <% if @items_by_provider.any? %>
     <div class="row">
@@ -67,7 +73,9 @@
     </div>
   <% end %>
   <!-- Detalle Completo de Items -->
-  <h4 class="mb-3 mt-5"><i class="bi bi-list-check me-2"></i>Detalle Completo de la Carga</h4>
+  <h4 class="mb-3 mt-5">
+    <i class="bi bi-list-check me-2"></i>Detalle Completo de la Carga
+  </h4>
   <div class="card shadow-sm border-0">
     <div class="table-responsive">
       <table class="table align-middle mb-0">
@@ -95,12 +103,22 @@
                 <% if decoding[:has_variants] %>
                   <div class="d-flex flex-wrap gap-2">
                     <% decoding[:variants].each do |variant| %>
+                      <%#
+                        FIX: variant ya no tiene .provider directo.
+                        Se resuelve via supply_rules → supplier_item → provider.
+                        TODO (rework): usar ProcurementRequirement cuando esté disponible.
+                      %>
+                      <% resolved_provider = variant.supply_rules
+                           .joins(supplier_item: :provider)
+                           .first&.supplier_item&.provider %>
                       <div class="border rounded p-2 bg-white shadow-sm" style="min-width: 150px;">
                         <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.6rem;">
                           <%= variant.variant_type.name %>
                         </small>
                         <div class="fw-semibold"><%= variant.name %></div>
-                        <div class="text-primary small fw-bold"><%= variant.provider&.name || '—' %></div>
+                        <div class="text-primary small fw-bold">
+                          <%= resolved_provider&.name || '—' %>
+                        </div>
                       </div>
                     <% end %>
                   </div>

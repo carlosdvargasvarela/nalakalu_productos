@@ -1,4 +1,3 @@
-# app/controllers/variants_controller.rb
 class VariantsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
@@ -6,7 +5,7 @@ class VariantsController < ApplicationController
 
   def index
     @variants = Variant.all
-      .includes(:variant_type, :property_values, :compatibilities)
+      .includes(:variant_type, :compatibilities)
       .order("variant_types.name, variants.name")
       .joins(:variant_type)
   end
@@ -40,7 +39,6 @@ class VariantsController < ApplicationController
 
   def create
     @variant = Variant.new(variant_params)
-    sync_property_values
 
     if @variant.save
       sync_compatible_variants
@@ -58,7 +56,6 @@ class VariantsController < ApplicationController
 
   def update
     @variant.assign_attributes(variant_params)
-    sync_property_values
 
     if @variant.save
       sync_compatible_variants
@@ -132,29 +129,6 @@ class VariantsController < ApplicationController
     @variant = Variant.find(params[:id])
   end
 
-  def sync_property_values
-    return unless params.dig(:variant, :property_value_ids).present?
-
-    selected_ids = params[:variant][:property_value_ids]
-      .values
-      .reject(&:blank?)
-      .map(&:to_i)
-      .uniq
-
-    @variant.variant_properties
-      .reject(&:new_record?)
-      .select { |vp| selected_ids.exclude?(vp.property_value_id) }
-      .each(&:mark_for_destruction)
-
-    existing = @variant.variant_properties
-      .reject(&:marked_for_destruction?)
-      .map(&:property_value_id)
-
-    (selected_ids - existing).each do |pv_id|
-      @variant.variant_properties.build(property_value_id: pv_id)
-    end
-  end
-
   def sync_compatible_variants
     ids = Array(params.dig(:variant, :compatible_variant_ids))
       .reject(&:blank?)
@@ -177,11 +151,10 @@ class VariantsController < ApplicationController
 
   def variant_params
     params.require(:variant).permit(
-      :name, :display_name, :seller_name, :code,
+      :name, :display_name, :code,
       :variant_type_id, :active,
       :technical_description,
-      compatible_variant_ids: [],
-      variant_properties_attributes: [:id, :property_id, :property_value_id, :_destroy]
+      compatible_variant_ids: []
     )
   end
 end

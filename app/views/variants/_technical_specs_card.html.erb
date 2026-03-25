@@ -1,56 +1,54 @@
-<%
-  pvs = variant.property_values.includes(:property).order("properties.name")
-%>
 <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
   <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
     <div>
       <h5 class="fw-bold mb-0">
-        <i class="bi bi-sliders me-2 text-primary"></i>Ficha Técnica
+        <i class="bi bi-box-seam me-2 text-primary"></i>Piezas de Proveedor
       </h5>
-      <% if pvs.any? %>
-        <span class="x-small text-muted"><%= pvs.count %> atributo<%= 's' if pvs.count != 1 %> definido<%= 's' if pvs.count != 1 %></span>
-      <% end %>
+      <span class="x-small text-muted">Reglas de abastecimiento configuradas para esta variante</span>
     </div>
-    <%= link_to edit_variant_path(variant),
-        class: "btn btn-sm btn-light rounded-pill border px-3",
-        title: "Editar propiedades" do %>
-      <i class="bi bi-pencil me-1"></i><span class="small">Editar</span>
+    <%= link_to supply_rules_path, class: "btn btn-sm btn-light rounded-pill border px-3" do %>
+      <i class="bi bi-gear me-1"></i><span class="small">Gestionar</span>
     <% end %>
   </div>
-  <% if pvs.any? %>
+  <% rules = variant.supply_rules.includes(:supplier_item, :product, supplier_item: :provider) %>
+  <% if rules.any? %>
     <div class="card-body p-0">
       <table class="table table-sm table-hover mb-0">
+        <thead class="bg-light border-bottom">
+          <tr>
+            <th class="ps-4 py-2 small text-muted fw-bold">Producto</th>
+            <th class="py-2 small text-muted fw-bold">Pieza</th>
+            <th class="py-2 small text-muted fw-bold">Proveedor</th>
+          </tr>
+        </thead>
         <tbody>
-          <% pvs.each do |pv| %>
+          <% rules.each do |rule| %>
             <tr>
-              <td class="ps-4 py-3 small fw-bold text-uppercase text-muted"
-                  style="width: 42%; background-color: #f8f9fa; border-right: 1px solid #dee2e6;">
-                <%= pv.property.name %>
+              <td class="ps-4 py-2 small text-muted">
+                <%= rule.product&.name || "Todos" %>
               </td>
-              <td class="ps-3 py-3 fw-bold text-dark">
-                <%= pv.value %>
+              <td class="py-2 small fw-bold">
+                <%= rule.supplier_item.name %>
+              </td>
+              <td class="py-2 small">
+                <span class="badge bg-light text-dark border rounded-pill px-2">
+                  <%= rule.supplier_item.provider.name %>
+                </span>
               </td>
             </tr>
           <% end %>
         </tbody>
       </table>
     </div>
-    <div class="card-footer bg-white border-top py-2 px-4">
-      <span class="x-small text-muted fst-italic">
-        <i class="bi bi-info-circle me-1"></i>
-        Estos datos se incluyen automáticamente en las órdenes de compra.
-      </span>
-    </div>
   <% else %>
-    <div class="card-body text-center py-5 bg-light bg-opacity-50">
-      <i class="bi bi-clipboard-x d-block fs-2 mb-2 opacity-25"></i>
-      <p class="mb-1 small fw-bold text-muted">Sin atributos técnicos definidos.</p>
+    <div class="card-body text-center py-4 bg-light bg-opacity-50">
+      <i class="bi bi-exclamation-circle d-block fs-3 mb-2 opacity-25 text-warning"></i>
+      <p class="mb-1 small fw-bold text-muted">Sin reglas de abastecimiento.</p>
       <p class="x-small text-muted mb-3">
-        Agrega propiedades como Material, Grosor o Acabado.
+        Esta variante no tiene piezas de proveedor configuradas.
       </p>
-      <%= link_to edit_variant_path(variant),
-          class: "btn btn-sm btn-outline-primary rounded-pill px-4" do %>
-        <i class="bi bi-plus-lg me-1"></i>Agregar Propiedades
+      <%= link_to supply_rules_path, class: "btn btn-sm btn-outline-primary rounded-pill px-4" do %>
+        <i class="bi bi-plus-lg me-1"></i>Configurar regla
       <% end %>
     </div>
   <% end %>

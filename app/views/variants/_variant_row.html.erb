@@ -22,22 +22,17 @@
     </code>
   </td>
   <td class="py-3">
-    <% pvs = variant.property_values.includes(:property) %>
-    <% if pvs.any? %>
-      <div class="d-flex flex-wrap gap-1" style="max-width: 260px;">
-        <% pvs.each do |pv| %>
-          <span class="badge bg-white text-dark border rounded-pill px-2 py-1 shadow-sm"
-                style="font-size: 0.65rem;" title="<%= pv.property.name %>">
-            <span class="text-muted fw-normal"><%= pv.property.name %>:</span>
-            <span class="fw-bold"><%= pv.value %></span>
-          </span>
-        <% end %>
-      </div>
+    <%# Reemplaza property_values — ahora mostramos estado de abastecimiento %>
+    <% if variant.has_supply_rules? %>
+      <span class="badge bg-success-soft text-success rounded-pill px-2 py-1"
+            style="font-size: 0.65rem;">
+        <i class="bi bi-check-circle me-1"></i>Configurada
+      </span>
     <% else %>
-      <div class="d-flex align-items-center gap-1 text-muted opacity-50" style="font-size: 0.7rem;">
-        <i class="bi bi-exclamation-circle"></i>
-        <span>Sin atributos</span>
-      </div>
+      <span class="badge bg-warning-soft text-warning rounded-pill px-2 py-1"
+            style="font-size: 0.65rem;">
+        <i class="bi bi-exclamation-circle me-1"></i>Sin regla
+      </span>
     <% end %>
   </td>
   <td class="py-3 text-center">
@@ -48,19 +43,16 @@
   <td class="py-3 pe-4 text-end">
     <div class="d-flex gap-1 justify-content-end">
       <%= link_to variant,
-          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
-          title: "Ver detalle" do %>
+          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm" do %>
         <i class="bi bi-eye"></i>
       <% end %>
       <%= link_to edit_variant_path(variant),
-          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
-          title: "Editar" do %>
+          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm" do %>
         <i class="bi bi-pencil"></i>
       <% end %>
       <%= button_to variant_path(variant), method: :delete,
-          form: { data: { turbo_confirm: "¿Eliminar '#{variant.display_name.presence || variant.name}'? Se borrarán sus precios y compatibilidades. Esta acción no se puede deshacer." } },
-          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm text-danger",
-          title: "Eliminar" do %>
+          form: { data: { turbo_confirm: "¿Eliminar '#{variant.display_name.presence || variant.name}'? Se borrarán sus compatibilidades y reglas. Esta acción no se puede deshacer." } },
+          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm text-danger" do %>
         <i class="bi bi-trash"></i>
       <% end %>
     </div>

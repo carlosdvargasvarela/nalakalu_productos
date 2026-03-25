@@ -1,7 +1,6 @@
-# app/controllers/purchase_orders_controller.rb
 class PurchaseOrdersController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_purchase_order, only: [:show, :update, :destroy, :transition]
+  before_action :set_purchase_order, only: %i[show edit update destroy transition]
 
   ALLOWED_TRANSITIONS = {
     "borrador" => %w[enviado cancelado],
@@ -29,42 +28,25 @@ class PurchaseOrdersController < ApplicationController
       .order(:id)
   end
 
+  # Permite editar notas y deadline desde la vista show
+  def edit
+    @items = @purchase_order.purchase_order_items
+      .includes(:supplier_item, :procurement_requirements)
+      .order(:id)
+  end
+
   def update
-    handle_update
+    if @purchase_order.update(purchase_order_params)
+      redirect_to @purchase_order, notice: "Orden de Compra actualizada."
+    else
+      @items = @purchase_order.purchase_order_items
+        .includes(:supplier_item, :procurement_requirements)
+        .order(:id)
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   def transition
-    handle_transition
-  end
-
-  def destroy
-    unless current_user.role == "admin" || @purchase_order.status == "borrador"
-      return redirect_to purchase_orders_path,
-        alert: "Solo se pueden eliminar órdenes en borrador."
-    end
-
-    ProcurementRequirement
-      .for_purchase_order(@purchase_order)
-      .each(&:release!)
-
-    @purchase_order.destroy
-
-    respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: [
-          turbo_stream.remove("purchase_order_#{@purchase_order.id}"),
-          turbo_stream.prepend("flash_container",
-            partial: "shared/flash",
-            locals: {type: "success", message: "Orden eliminada correctamente."})
-        ]
-      end
-      format.html { redirect_to purchase_orders_path, notice: "Orden eliminada." }
-    end
-  end
-
-  private
-
-  def handle_transition
     next_status = params[:transition]
     allowed = ALLOWED_TRANSITIONS[@purchase_order.status] || []
 
@@ -93,16 +75,32 @@ class PurchaseOrdersController < ApplicationController
     redirect_to @purchase_order, alert: "Error: #{e.message}"
   end
 
-  def handle_update
-    if @purchase_order.update(purchase_order_params)
-      redirect_to @purchase_order, notice: "Orden de Compra actualizada."
-    else
-      @items = @purchase_order.purchase_order_items
-        .includes(:supplier_item, :procurement_requirements)
-        .order(:id)
-      render :show, status: :unprocessable_entity
+  def destroy
+    unless current_user.role == "admin" || @purchase_order.status == "borrador"
+      return redirect_to purchase_orders_path,
+        alert: "Solo se pueden eliminar órdenes en borrador."
+    end
+
+    ProcurementRequirement
+      .for_purchase_order(@purchase_order)
+      .each(&:release!)
+
+    @purchase_order.destroy
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.remove("purchase_order_#{@purchase_order.id}"),
+          turbo_stream.prepend("flash_container",
+            partial: "shared/flash",
+            locals: {type: "success", message: "Orden eliminada correctamente."})
+        ]
+      end
+      format.html { redirect_to purchase_orders_path, notice: "Orden eliminada." }
     end
   end
+
+  private
 
   def set_purchase_order
     @purchase_order = PurchaseOrder

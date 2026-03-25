@@ -20,19 +20,19 @@
     <div class="d-flex gap-2 flex-wrap">
       <% transitions = {
            "borrador"   => [
-             { label: "Marcar como Enviado",     next: "enviado",    style: "btn-primary",           icon: "bi-send-fill" }
+             { label: "Marcar como Enviado",     next: "enviado",    style: "btn-primary",          icon: "bi-send-fill" }
            ],
            "enviado"    => [
-             { label: "Confirmar con Proveedor", next: "confirmado", style: "btn-success",            icon: "bi-check-circle-fill" },
-             { label: "Cancelar",                next: "cancelado",  style: "btn-outline-danger",     icon: "bi-x-circle" }
+             { label: "Confirmar con Proveedor", next: "confirmado", style: "btn-success",           icon: "bi-check-circle-fill" },
+             { label: "Cancelar",                next: "cancelado",  style: "btn-outline-danger",    icon: "bi-x-circle" }
            ],
            "confirmado" => [
-             { label: "Marcar como Recibido",    next: "recibido",   style: "btn-success",            icon: "bi-box-seam-fill" },
-             { label: "Cancelar",                next: "cancelado",  style: "btn-outline-danger",     icon: "bi-x-circle" }
+             { label: "Marcar como Recibido",    next: "recibido",   style: "btn-success",           icon: "bi-box-seam-fill" },
+             { label: "Cancelar",                next: "cancelado",  style: "btn-outline-danger",    icon: "bi-x-circle" }
            ],
            "recibido"   => [],
            "cancelado"  => [
-             { label: "Reabrir como Borrador",   next: "borrador",   style: "btn-outline-secondary",  icon: "bi-arrow-counterclockwise" }
+             { label: "Reabrir como Borrador",   next: "borrador",   style: "btn-outline-secondary", icon: "bi-arrow-counterclockwise" }
            ]
          }.fetch(@purchase_order.status, []) %>
       <% transitions.each do |t| %>
@@ -44,8 +44,22 @@
           <i class="bi <%= t[:icon] %> me-1"></i><%= t[:label] %>
         <% end %>
       <% end %>
-      <% if @purchase_order.provider.email.present? && %w[enviado confirmado].include?(@purchase_order.status) %>
-        <%= link_to @purchase_order.mailto_url, class: "btn btn-outline-secondary btn-sm" do %>
+      <%# Email al proveedor — construido inline, sin depender de mailto_url en el modelo %>
+      <% if @purchase_order.provider.email.present? && %w[borrador enviado confirmado].include?(@purchase_order.status) %>
+        <%
+          subject = CGI.escape("Orden de Compra #{@purchase_order.number} — Nalakalú")
+          body_lines = ["Estimado/a #{@purchase_order.provider.contact_name.presence || @purchase_order.provider.name},",
+                        "",
+                        "Adjuntamos la Orden de Compra #{@purchase_order.number} con fecha #{@purchase_order.issued_date&.strftime('%d/%m/%Y')}.",
+                        "",
+                        "Materiales solicitados:"]
+          @items.each do |item|
+            body_lines << "  • #{item.line_description} — #{item.quantity&.to_f&.round(2)} #{item.unit || item.supplier_item&.unit}"
+          end
+          body_lines += ["", "Saludos,", "Equipo Nalakalú"]
+          mailto_href = "mailto:#{@purchase_order.provider.email}?subject=#{subject}&body=#{CGI.escape(body_lines.join("\n"))}"
+        %>
+        <%= link_to mailto_href, class: "btn btn-outline-secondary btn-sm" do %>
           <i class="bi bi-envelope me-1"></i>Email al Proveedor
         <% end %>
       <% end %>
@@ -75,7 +89,8 @@
         </div>
         <div class="col-md-3">
           <% if editable %>
-            <%= f.label :delivery_deadline, "ENTREGA ESPERADA", class: "form-label small text-muted fw-bold mb-1" %>
+            <%= f.label :delivery_deadline, "ENTREGA ESPERADA",
+                  class: "form-label small text-muted fw-bold mb-1" %>
             <%= f.date_field :delivery_deadline, class: "form-control form-control-sm" %>
           <% else %>
             <p class="small text-muted fw-bold mb-1">ENTREGA ESPERADA</p>
@@ -90,7 +105,8 @@
         </div>
         <div class="col-12">
           <% if editable %>
-            <%= f.label :notes, "NOTAS / INSTRUCCIONES AL PROVEEDOR", class: "form-label small text-muted fw-bold mb-1" %>
+            <%= f.label :notes, "NOTAS / INSTRUCCIONES AL PROVEEDOR",
+                  class: "form-label small text-muted fw-bold mb-1" %>
             <%= f.text_area :notes, class: "form-control form-control-sm", rows: 2,
                   placeholder: "Instrucciones especiales, condiciones de entrega, etc." %>
           <% elsif @purchase_order.notes.present? %>
@@ -121,7 +137,7 @@
         <div class="card-footer bg-light d-flex justify-content-between align-items-center">
           <span class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>
-            Puedes ajustar cantidades y costos antes de enviar la orden.
+            Ajusta cantidades y costos antes de enviar la orden.
           </span>
           <%= f.submit "Guardar Cantidades", class: "btn btn-primary fw-bold px-5" %>
         </div>

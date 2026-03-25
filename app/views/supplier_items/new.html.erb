@@ -1,4 +1,15 @@
-<div class="container py-4" style="max-width: 700px;">
-  <h3 class="fw-bold mb-4">Nueva Pieza</h3>
+<%# app/views/supplier_items/new.html.erb %>
+<div class="container-fluid py-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
+      <li class="breadcrumb-item active fw-bold">Nueva Pieza</li>
+    </ol>
+  </nav>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0 text-dark">
+      <i class="bi bi-plus-circle-fill me-2 text-primary"></i>Nueva Pieza de Proveedor
+    </h2>
+  </div>
   <%= render "form", supplier_item: @supplier_item %>
 </div>

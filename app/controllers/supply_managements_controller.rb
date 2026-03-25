@@ -1,4 +1,3 @@
-# app/controllers/supply_managements_controller.rb
 class SupplyManagementsController < ApplicationController
   before_action :authenticate_user!
 
@@ -8,6 +7,7 @@ class SupplyManagementsController < ApplicationController
     @order_number = params[:order_number]
     @seller_code = params[:seller_code]
 
+    # Entregas del API para sincronizar
     @deliveries = LogisticsApiClient.fetch_deliveries(
       from: @from,
       to: @to,
@@ -15,12 +15,13 @@ class SupplyManagementsController < ApplicationController
       seller_code: @seller_code
     )
 
-    @pending_requirements = ProcurementRequirement.active
+    # Requerimientos activos (pending + in_draft) agrupados por proveedor
+    @grouped_requirements = ProcurementRequirement
+      .active
       .joins(supplier_item: :provider)
       .includes(supplier_item: :provider)
       .order("providers.name ASC, supplier_items.name ASC")
-
-    @grouped_requirements = @pending_requirements.group_by { |r| r.supplier_item.provider }
+      .group_by { |r| r.supplier_item.provider }
   end
 
   def sync_delivery
@@ -46,11 +47,11 @@ class SupplyManagementsController < ApplicationController
 
   def create_purchase_order
     provider = Provider.find(params[:provider_id])
-    requirement_ids = params[:requirement_ids]
+    requirement_ids = Array(params[:requirement_ids]).reject(&:blank?)
 
     if requirement_ids.blank?
       return redirect_to supply_managements_path,
-        alert: "No hay requerimientos para generar la orden."
+        alert: "No hay requerimientos seleccionados para generar la orden."
     end
 
     ActiveRecord::Base.transaction do
@@ -60,19 +61,21 @@ class SupplyManagementsController < ApplicationController
       )
 
       requirements = ProcurementRequirement
-        .where(id: requirement_ids)
+        .where(id: requirement_ids, status: "pending")
         .joins(:supplier_item)
         .where(supplier_items: {provider_id: provider.id})
         .includes(:supplier_item)
 
       if requirements.empty?
         raise ActiveRecord::Rollback,
-          "No se encontraron requerimientos válidos para este proveedor."
+          "No se encontraron requerimientos pendientes válidos para este proveedor."
       end
 
-      requirements.group_by { |r| [r.supplier_item_id, r.specifications] }.each do |(item_id, specs), reqs|
+      # Agrupar por pieza + specs para consolidar líneas de OC
+      requirements.group_by { |r| [r.supplier_item_id, r.specifications.to_s] }.each do |(item_id, _specs_key), reqs|
         total_qty = reqs.sum(&:quantity)
         first_req = reqs.first
+        specs = first_req.specifications
 
         po_item = @purchase_order.purchase_order_items.create!(
           supplier_item_id: item_id,

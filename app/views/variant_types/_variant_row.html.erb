@@ -1,5 +1,4 @@
 <tr id="<%= dom_id(variant) %>" class="<%= 'opacity-50' unless variant.active %>">
-  <%# Checkbox bulk-select %>
   <td class="px-4 py-3">
     <input type="checkbox"
            class="form-check-input"
@@ -9,18 +8,26 @@
   </td>
   <td class="px-4 py-3">
     <div class="fw-bold text-dark"><%= variant.display_name.presence || variant.name %></div>
+    <% if variant.display_name.present? && variant.display_name != variant.name %>
+      <div class="text-muted" style="font-size: 0.72rem;">
+        <i class="bi bi-truck me-1"></i><%= variant.name %>
+      </div>
+    <% end %>
   </td>
   <td class="py-3">
     <code class="bg-light px-2 py-1 rounded text-primary fw-bold"><%= variant.code %></code>
   </td>
   <td class="py-3">
-    <div class="d-flex flex-wrap gap-1">
-      <% variant.property_values.limit(3).each do |pv| %>
-        <span class="badge bg-light text-dark border rounded-pill px-2" style="font-size: 0.65rem;">
-          <%= pv.value %>
-        </span>
-      <% end %>
-    </div>
+    <%# Ahora mostramos reglas de abastecimiento en lugar de propiedades EAV %>
+    <% if variant.has_supply_rules? %>
+      <span class="badge bg-success-soft text-success rounded-pill px-2" style="font-size: 0.65rem;">
+        <i class="bi bi-check-circle me-1"></i>Con regla
+      </span>
+    <% else %>
+      <span class="badge bg-warning-soft text-warning rounded-pill px-2" style="font-size: 0.65rem;">
+        <i class="bi bi-exclamation-circle me-1"></i>Sin regla
+      </span>
+    <% end %>
   </td>
   <td class="py-3 text-center">
     <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill">
