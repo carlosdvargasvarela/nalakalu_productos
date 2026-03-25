@@ -87,4 +87,10 @@ Rails.application.routes.draw do
       patch :update_variant_type_order
     end
   end
+
+  resources :supply_managements, only: [:index] do
+    collection do
+      post :create_purchase_order
+    end
+  end
 end

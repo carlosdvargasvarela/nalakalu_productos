@@ -12,6 +12,10 @@ class Variant < ApplicationRecord
   has_many :product_variant_prices, dependent: :destroy
   has_many :priced_products, through: :product_variant_prices, source: :product
 
+  # Relaciones de proveeduría
+  has_many :supply_rules, dependent: :destroy
+  has_many :supplier_items, through: :supply_rules
+
   accepts_nested_attributes_for :variant_properties,
     allow_destroy: true,
     reject_if: ->(attrs) { attrs["property_value_id"].blank? }
@@ -27,7 +31,6 @@ class Variant < ApplicationRecord
 
   # --------- Helpers compatibilidad ----------
   def compatible_product_ids
-    # Ahora la compatibilidad es con ProductVariantRule, no con Product directamente
     rule_ids = compatibilities.where(compatible_type: "ProductVariantRule").pluck(:compatible_id)
     ProductVariantRule.where(id: rule_ids).pluck(:product_id).uniq
   end
@@ -78,10 +81,27 @@ class Variant < ApplicationRecord
     [name, technical_specs_string].reject(&:blank?).join(" | ")
   end
 
+  # --------- Helpers proveeduría ----------
+
+  # Devuelve el supplier_item que aplica para un producto específico
+  def supplier_item_for(product)
+    rule = supply_rules.find_by(product: product) || supply_rules.find_by(product: nil)
+    rule&.supplier_item
+  end
+
+  # Indica si esta variante tiene reglas de compra configuradas
+  def has_supply_rules?
+    supply_rules.exists?
+  end
+
+  # Indica si el tipo de variante es consolidado (ej: Fibras N1, N2, N3)
+  def consolidated_procurement?
+    variant_type.consolidated?
+  end
+
   private
 
   def auto_link_to_rules
-    # Vinculamos la variante a todas las reglas que usan su tipo
     ProductVariantRule.where(variant_type_id: variant_type_id).each do |rule|
       Compatibility.find_or_create_by!(
         variant_id: id,

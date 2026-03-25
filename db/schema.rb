@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_23_140614) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_25_171318) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -55,6 +55,24 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_23_140614) do
     t.datetime "updated_at", null: false
     t.index ["family_id"], name: "index_family_variant_rules_on_family_id"
     t.index ["variant_type_id"], name: "index_family_variant_rules_on_variant_type_id"
+  end
+
+  create_table "procurement_requirements", force: :cascade do |t|
+    t.integer "supplier_item_id", null: false
+    t.integer "purchase_order_item_id"
+    t.string "origin_order_number", null: false
+    t.string "origin_delivery_id"
+    t.string "origin_product_name"
+    t.decimal "quantity", precision: 10, scale: 4, null: false
+    t.json "specifications", default: {}, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["origin_order_number"], name: "index_procurement_requirements_on_origin_order_number"
+    t.index ["purchase_order_item_id"], name: "index_procurement_requirements_on_purchase_order_item_id"
+    t.index ["status"], name: "index_procurement_requirements_on_status"
+    t.index ["supplier_item_id", "origin_order_number"], name: "index_procurement_req_unique", unique: true
+    t.index ["supplier_item_id"], name: "index_procurement_requirements_on_supplier_item_id"
   end
 
   create_table "product_variant_prices", force: :cascade do |t|
@@ -123,14 +141,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_23_140614) do
 
   create_table "purchase_order_items", force: :cascade do |t|
     t.integer "purchase_order_id", null: false
-    t.integer "variant_id", null: false
+    t.integer "variant_id"
     t.decimal "quantity"
     t.string "unit"
     t.decimal "unit_cost"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "description_override"
+    t.integer "supplier_item_id"
+    t.json "specifications", default: {}, null: false
     t.index ["purchase_order_id"], name: "index_purchase_order_items_on_purchase_order_id"
+    t.index ["supplier_item_id"], name: "index_purchase_order_items_on_supplier_item_id"
     t.index ["variant_id"], name: "index_purchase_order_items_on_variant_id"
   end
 
@@ -144,6 +165,35 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_23_140614) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["provider_id"], name: "index_purchase_orders_on_provider_id"
+  end
+
+  create_table "supplier_items", force: :cascade do |t|
+    t.integer "provider_id", null: false
+    t.string "name", null: false
+    t.string "sku"
+    t.string "unit", default: "unidad"
+    t.decimal "default_cost", precision: 15, scale: 2
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider_id", "sku"], name: "index_supplier_items_on_provider_id_and_sku", unique: true, where: "sku IS NOT NULL"
+    t.index ["provider_id"], name: "index_supplier_items_on_provider_id"
+  end
+
+  create_table "supply_rules", force: :cascade do |t|
+    t.integer "product_id"
+    t.integer "variant_type_id", null: false
+    t.integer "variant_id"
+    t.integer "supplier_item_id", null: false
+    t.decimal "quantity_needed", precision: 10, scale: 4, default: "1.0", null: false
+    t.string "rule_type", default: "individual", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "variant_id", "supplier_item_id"], name: "index_supply_rules_unique_composite", unique: true
+    t.index ["product_id"], name: "index_supply_rules_on_product_id"
+    t.index ["supplier_item_id"], name: "index_supply_rules_on_supplier_item_id"
+    t.index ["variant_id"], name: "index_supply_rules_on_variant_id"
+    t.index ["variant_type_id"], name: "index_supply_rules_on_variant_type_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -176,6 +226,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_23_140614) do
     t.text "description"
     t.boolean "active", default: true, null: false
     t.integer "position", default: 0
+    t.string "procurement_strategy", default: "individual", null: false
   end
 
   create_table "variants", force: :cascade do |t|
@@ -196,6 +247,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_23_140614) do
   add_foreign_key "compatibilities", "variants"
   add_foreign_key "family_variant_rules", "families"
   add_foreign_key "family_variant_rules", "variant_types"
+  add_foreign_key "procurement_requirements", "purchase_order_items"
+  add_foreign_key "procurement_requirements", "supplier_items"
   add_foreign_key "product_variant_prices", "products"
   add_foreign_key "product_variant_prices", "variants"
   add_foreign_key "product_variant_rules", "products"
@@ -203,8 +256,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_23_140614) do
   add_foreign_key "products", "families"
   add_foreign_key "property_values", "properties"
   add_foreign_key "purchase_order_items", "purchase_orders"
+  add_foreign_key "purchase_order_items", "supplier_items"
   add_foreign_key "purchase_order_items", "variants"
   add_foreign_key "purchase_orders", "providers"
+  add_foreign_key "supplier_items", "providers"
+  add_foreign_key "supply_rules", "products"
+  add_foreign_key "supply_rules", "supplier_items"
+  add_foreign_key "supply_rules", "variant_types"
+  add_foreign_key "supply_rules", "variants"
   add_foreign_key "variant_properties", "property_values"
   add_foreign_key "variant_properties", "variants"
   add_foreign_key "variants", "providers"

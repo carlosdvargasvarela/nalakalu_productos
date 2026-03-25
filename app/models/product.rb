@@ -8,18 +8,22 @@ class Product < ApplicationRecord
   has_many :product_variant_prices, dependent: :destroy
   has_many :priced_variants, through: :product_variant_prices, source: :variant
 
+  # Relaciones de proveeduría
+  has_many :supply_rules, dependent: :destroy
+  has_many :supplier_items, through: :supply_rules
+
   before_save :flag_family_change, if: :will_save_change_to_family_id?
   after_save :sync_variant_rules_from_family, if: -> { @should_sync_rules }
 
   validates :name, presence: true, uniqueness: true
   validates :base_code, presence: true
 
-  # Variantes permitidas para una regla específica
+  # --------- Helpers de variantes ----------
+
   def compatible_variants_for_rule(rule)
     rule.allowed_variants
   end
 
-  # Todas las variantes permitidas para un tipo (unión de todas las reglas de ese tipo)
   def compatible_variants_for(variant_type)
     rule_ids = product_variant_rules.where(variant_type: variant_type).pluck(:id)
     Variant.joins(:compatibilities)
@@ -41,6 +45,8 @@ class Product < ApplicationRecord
     end
     parts.join("")
   end
+
+  # --------- Helpers de proveedor ----------
 
   def supplier_type
     type_ids = variant_types.pluck(:id)
@@ -71,6 +77,8 @@ class Product < ApplicationRecord
     end
   end
 
+  # --------- Helpers de precios ----------
+
   def price_for(variant)
     product_variant_prices.find_by(variant: variant)&.price || 0
   end
@@ -80,6 +88,50 @@ class Product < ApplicationRecord
     record.price = price
     record.save!
     record
+  end
+
+  # --------- Helpers de proveeduría ----------
+
+  # Resuelve todos los supplier_items necesarios para una combinación de variantes
+  # Recibe un array de Variant y devuelve un hash { supplier_item => specs }
+  def resolve_supplier_items(variants)
+    result = {}
+
+    individual_variants = variants.select { |v| v.variant_type.individual? }
+    consolidated_variants = variants.select { |v| v.variant_type.consolidated? }
+
+    # Individuales: cada variante resuelve su propia pieza
+    individual_variants.each do |variant|
+      rule = supply_rules.find_by(variant: variant) ||
+        SupplyRule.find_by(product: nil, variant: variant)
+      next unless rule
+      result[rule.supplier_item] = {}
+    end
+
+    # Consolidados: agrupar por tipo y resolver una sola pieza con specs
+    consolidated_variants.group_by(&:variant_type).each do |variant_type, type_variants|
+      rule = supply_rules.find_by(variant_type: variant_type, rule_type: "consolidated") ||
+        SupplyRule.find_by(product: nil, variant_type: variant_type, rule_type: "consolidated")
+      next unless rule
+
+      specs = {}
+      type_variants.each do |v|
+        label = product_variant_rules.find_by(variant_type: variant_type)&.label
+        key = label.presence || variant_type.name
+        specs[key] = v.name
+      end
+
+      result[rule.supplier_item] = specs
+    end
+
+    result
+  end
+
+  # Indica si el producto tiene todas sus reglas de abastecimiento configuradas
+  def procurement_ready?
+    variant_types.all? do |vt|
+      supply_rules.exists?(variant_type: vt)
+    end
   end
 
   private
@@ -94,8 +146,6 @@ class Product < ApplicationRecord
       product_variant_rules.destroy_all
 
       family.family_variant_rules.each do |fr|
-        # Usamos create! que dispara el after_create de ProductVariantRule
-        # y genera las compatibilidades automáticamente
         product_variant_rules.create!(
           variant_type_id: fr.variant_type_id,
           position: fr.position,
