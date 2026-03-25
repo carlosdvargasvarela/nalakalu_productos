@@ -1,0 +1,42 @@
+<div class="container-fluid py-4" style="max-width: 1100px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-bold mb-0">
+        <i class="bi bi-diagram-3 text-primary me-2"></i>Reglas de Abastecimiento
+      </h1>
+      <p class="text-muted small mb-0">
+        Define cómo se traduce cada producto + variante en piezas reales a comprar.
+      </p>
+    </div>
+    <%= link_to new_supply_rule_path, class: "btn btn-primary rounded-pill px-4 fw-bold" do %>
+      <i class="bi bi-plus-lg me-2"></i>Nueva Regla
+    <% end %>
+  </div>
+  <div class="card border-0 shadow-sm">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light small text-muted text-uppercase">
+        <tr>
+          <th class="ps-4">Producto</th>
+          <th>Variante</th>
+          <th>Pieza</th>
+          <th class="text-center">Cantidad</th>
+          <th class="pe-4 text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @supply_rules.includes(:product, :variant, :supplier_item).each do |r| %>
+          <tr>
+            <td class="ps-4 fw-bold"><%= r.product.name %></td>
+            <td><%= r.variant.name %></td>
+            <td><%= r.supplier_item.name %></td>
+            <td class="text-center"><%= r.quantity %></td>
+            <td class="pe-4 text-end">
+              <%= link_to "Editar", edit_supply_rule_path(r),
+                    class: "btn btn-sm btn-outline-primary rounded-pill px-3" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

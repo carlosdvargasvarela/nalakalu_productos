@@ -94,4 +94,13 @@ Rails.application.routes.draw do
       post :create_purchase_order
     end
   end
+
+  resources :supplier_items
+
+  resources :supply_rules do
+    collection do
+      get :bulk_new
+      post :bulk_create
+    end
+  end
 end

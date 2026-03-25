@@ -1,8 +1,9 @@
+<%# app/views/providers/index.html.erb %>
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h1 class="fw-bold mb-0 text-dark">Proveedores</h1>
-      <p class="text-muted mb-0">Gestión de suministros, materiales y costos de compra.</p>
+      <p class="text-muted mb-0">Gestión de suministros, materiales y órdenes de compra.</p>
     </div>
     <%= link_to new_provider_path, class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
       <i class="bi bi-plus-lg me-2"></i>Nuevo Proveedor
@@ -17,31 +18,35 @@
               <div class="bg-primary bg-opacity-10 p-3 rounded-3">
                 <i class="bi bi-truck fs-3 text-primary"></i>
               </div>
-              <span class="badge <%= provider.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill px-3">
+              <span class="badge <%= provider.active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' %> rounded-pill px-3">
                 <%= provider.active ? 'Activo' : 'Inactivo' %>
               </span>
             </div>
             <h5 class="fw-bold mb-1"><%= provider.name %></h5>
             <div class="d-flex align-items-center gap-2 mb-3">
-              <span class="badge bg-light text-muted border rounded-pill px-2 small"><%= provider.category %></span>
+              <span class="badge bg-light text-muted border rounded-pill px-2 small">
+                <%= provider.category %>
+              </span>
               <% if provider.contact_name.present? %>
-                <span class="text-muted small"><i class="bi bi-person me-1"></i><%= provider.contact_name %></span>
+                <span class="text-muted small">
+                  <i class="bi bi-person me-1"></i><%= provider.contact_name %>
+                </span>
               <% end %>
             </div>
             <div class="bg-light rounded-3 p-3 mb-4">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small text-muted fw-bold">Variantes Suministradas:</span>
-                <span class="badge bg-primary rounded-pill"><%= provider.variants.count %></span>
+                <span class="small text-muted fw-bold">Piezas en Catálogo:</span>
+                <span class="badge bg-primary rounded-pill"><%= provider.supplier_items.count %></span>
               </div>
-              <%# Preview de materiales %>
               <div class="d-flex flex-wrap gap-1">
-                <% provider.variants.limit(5).each do |v| %>
+                <% provider.supplier_items.limit(5).each do |item| %>
                   <span class="badge bg-white border text-dark rounded-pill px-2" style="font-size: 0.65rem;">
-                    <%= v.display_name.presence || v.name %>
+                    <%= item.name.truncate(20) %>
                   </span>
                 <% end %>
-                <% if provider.variants.count > 5 %>
-                  <span class="text-muted x-small">+<%= provider.variants.count - 5 %> más</span>
+                <% extra = provider.supplier_items.count - 5 %>
+                <% if extra > 0 %>
+                  <span class="text-muted" style="font-size: 0.7rem;">+<%= extra %> más</span>
                 <% end %>
               </div>
             </div>

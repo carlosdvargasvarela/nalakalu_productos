@@ -1,0 +1,7 @@
+<div class="container py-4" style="max-width: 800px;">
+  <h3 class="fw-bold mb-4">
+    <%= @supply_rule.new_record? ? "Nueva Regla" : "Editar Regla" %>
+  </h3>
+
+  <%= render "form", supply_rule: @supply_rule %>
+</div>

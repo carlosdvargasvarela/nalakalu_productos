@@ -1,0 +1,86 @@
+<div class="container-fluid py-4" style="max-width: 1000px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap text-primary me-2"></i>Asignación Masiva</h2>
+    <%= link_to supply_rules_path, class: "btn btn-outline-secondary btn-sm rounded-pill" do %>
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    <% end %>
+  </div>
+  <%# BUSCADOR DE PRODUCTO %>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <%= form_tag bulk_new_supply_rules_path, method: :get, class: "row g-2 align-items-end" do %>
+        <div class="col-md-9">
+          <label class="form-label small fw-bold text-muted">Selecciona un Producto para configurar sus variantes:</label>
+          <%= select_tag :product_id, 
+                options_from_collection_for_select(@products, :id, :name, params[:product_id]),
+                include_blank: "Buscar producto...",
+                class: "form-select form-select-lg border-2 shadow-none",
+                onchange: "this.form.submit()" %>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-dark btn-lg w-100 fw-bold">Cargar Variantes</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <% if @product %>
+    <%= form_tag bulk_create_supply_rules_path(product_id: @product.id), method: :post do %>
+      <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-primary text-white py-3">
+          <h5 class="mb-0 fw-bold">Configurando: <%= @product.name %></h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-muted text-uppercase">
+              <tr>
+                <th class="ps-4" style="width: 30%;">Variante</th>
+                <th style="width: 45%;">Pieza de Proveedor (Material Real)</th>
+                <th class="text-center" style="width: 15%;">Cant.</th>
+                <th class="pe-4 text-center" style="width: 10%;">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @variants.each do |variant| %>
+                <% rule = @existing_rules[variant.id] %>
+                <tr>
+                  <td class="ps-4">
+                    <div class="fw-bold"><%= variant.name %></div>
+                    <span class="badge bg-light text-dark border small fw-normal">
+                      <%= variant.variant_type.name %>
+                    </span>
+                  </td>
+                  <td>
+                    <%= select_tag "rules[#{variant.id}][supplier_item_id]",
+                          options_for_select(
+                            @supplier_items.map { |i| ["#{i.name} (#{i.provider.name})", i.id] },
+                            rule&.supplier_item_id
+                          ),
+                          include_blank: "— No comprar nada —",
+                          class: "form-select form-select-sm border-0 bg-light shadow-none fw-bold" %>
+                  </td>
+                  <td>
+                    <%= number_field_tag "rules[#{variant.id}][quantity]", 
+                          rule&.quantity || 1, 
+                          step: 0.01, 
+                          class: "form-control form-control-sm text-center border-0 bg-light shadow-none" %>
+                  </td>
+                  <td class="pe-4 text-center">
+                    <% if rule %>
+                      <i class="bi bi-check-circle-fill text-success" title="Ya tiene regla"></i>
+                    <% else %>
+                      <i class="bi bi-dash-circle text-muted opacity-50" title="Pendiente"></i>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer bg-white p-4 text-end border-top">
+          <%= submit_tag "Guardar Todas las Reglas", 
+                class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

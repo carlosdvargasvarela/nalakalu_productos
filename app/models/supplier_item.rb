@@ -1,10 +1,9 @@
-# app/models/supplier_item.rb
 class SupplierItem < ApplicationRecord
   belongs_to :provider
 
   has_many :supply_rules, dependent: :destroy
   has_many :procurement_requirements, dependent: :destroy
-  has_many :purchase_order_items, dependent: :restrict_with_error
+  has_many :purchase_order_items, dependent: :nullify
 
   validates :name, presence: true
   validates :unit, presence: true

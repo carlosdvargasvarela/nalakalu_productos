@@ -1,0 +1,33 @@
+<%= form_with(model: supplier_item) do |f| %>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <%= f.label :provider_id, "Proveedor", class: "form-label small fw-bold text-muted" %>
+          <%= f.collection_select :provider_id, Provider.order(:name), :id, :name,
+                { prompt: "Seleccionar proveedor" },
+                { class: "form-select" } %>
+        </div>
+        <div class="col-md-6">
+          <%= f.label :name, "Nombre de la Pieza", class: "form-label small fw-bold text-muted" %>
+          <%= f.text_field :name, class: "form-control", placeholder: "Ej: Base Fibra de Vidrio Mesa X" %>
+        </div>
+        <div class="col-md-4">
+          <%= f.label :sku, "SKU Proveedor", class: "form-label small fw-bold text-muted" %>
+          <%= f.text_field :sku, class: "form-control" %>
+        </div>
+        <div class="col-md-4">
+          <%= f.label :unit, "Unidad", class: "form-label small fw-bold text-muted" %>
+          <%= f.select :unit, ["unidad", "metro", "rollo"], {}, class: "form-select" %>
+        </div>
+        <div class="col-md-4">
+          <%= f.label :cost, "Costo", class: "form-label small fw-bold text-muted" %>
+          <%= f.number_field :cost, step: 0.01, class: "form-control" %>
+        </div>
+      </div>
+      <div class="text-end mt-4">
+        <%= f.submit "Guardar", class: "btn btn-primary px-5 rounded-pill" %>
+      </div>
+    </div>
+  </div>
+<% end %>

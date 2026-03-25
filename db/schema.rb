@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_25_192100) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_25_205244) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -155,6 +155,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_25_192100) do
     t.index ["provider_id"], name: "index_purchase_orders_on_provider_id"
   end
 
+  create_table "supplier_item_properties", force: :cascade do |t|
+    t.integer "supplier_item_id", null: false
+    t.integer "property_value_id", null: false
+    t.integer "position", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["property_value_id"], name: "index_supplier_item_properties_on_property_value_id"
+    t.index ["supplier_item_id", "property_value_id"], name: "index_supplier_item_props_unique", unique: true
+    t.index ["supplier_item_id"], name: "index_supplier_item_properties_on_supplier_item_id"
+  end
+
   create_table "supplier_items", force: :cascade do |t|
     t.integer "provider_id", null: false
     t.string "name", null: false
@@ -197,16 +208,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_25_192100) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  create_table "variant_properties", force: :cascade do |t|
-    t.integer "variant_id", null: false
-    t.integer "property_value_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["property_value_id"], name: "index_variant_properties_on_property_value_id"
-    t.index ["variant_id", "property_value_id"], name: "index_variant_properties_on_variant_id_and_property_value_id", unique: true
-    t.index ["variant_id"], name: "index_variant_properties_on_variant_id"
-  end
-
   create_table "variant_types", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -241,12 +242,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_25_192100) do
   add_foreign_key "purchase_order_items", "purchase_orders"
   add_foreign_key "purchase_order_items", "supplier_items"
   add_foreign_key "purchase_orders", "providers"
+  add_foreign_key "supplier_item_properties", "property_values"
+  add_foreign_key "supplier_item_properties", "supplier_items"
   add_foreign_key "supplier_items", "providers"
   add_foreign_key "supply_rules", "products"
   add_foreign_key "supply_rules", "supplier_items"
   add_foreign_key "supply_rules", "variant_types"
   add_foreign_key "supply_rules", "variants"
-  add_foreign_key "variant_properties", "property_values"
-  add_foreign_key "variant_properties", "variants"
   add_foreign_key "variants", "variant_types"
 end

@@ -68,7 +68,7 @@
             <tbody>
               <% @deliveries.each do |d| %>
                 <% synced = synced_order_numbers.include?(d["order_number"]) %>
-                <tr class="<​%= 'opacity-60' if synced %>">
+                <tr class="<%= 'opacity-60' if synced %>">
                   <td class="ps-3 fw-bold"><%= d["order_number"] %></td>
                   <td class="small"><%= d.dig("client", "name") %></td>
                   <td class="small text-muted"><%= d["delivery_date"] %></td>
