@@ -1,0 +1,9 @@
+/* Navbar siempre por encima de tablas, cards, etc */
+.app-navbar {
+  z-index: 1030; /* Bootstrap usa 1030 para navbar */
+}
+
+/* Asegura que dropdown también flote encima de todo */
+.navbar .dropdown-menu {
+  z-index: 1050;
+}

@@ -61,7 +61,7 @@ class ProductDecoder
     input_strict
   end
 
-  # --- Detección de Producto Base ---
+  # --- Detección de Producto Base (OPTIMIZADO CON CACHE) ---
 
   def self.detect_base_product(full_code)
     strict = normalize_strict(full_code)
@@ -69,10 +69,13 @@ class ProductDecoder
     input_tokens = loose.split
     return nil if input_tokens.empty?
 
+    # 🔥 Carga masiva en RAM una sola vez por petición
+    @all_products_cache ||= Product.where(active: true).includes(:product_variant_rules).to_a
+
     best_product = nil
     best_score = -1.0
 
-    Product.where(active: true).find_each do |p|
+    @all_products_cache.each do |p|
       p_strict = normalize_strict(p.name)
       p_loose = normalize_loose(p.name)
 
@@ -96,19 +99,25 @@ class ProductDecoder
     best_product
   end
 
-  # --- Detección de Variantes ---
+  # --- Detección de Variantes (OPTIMIZADO CON CACHE) ---
 
   def self.detect_variants_catalog_based(base_product, _tail_strict, tail_loose)
     tail_tokens = tail_loose.split
     return [] if tail_tokens.empty?
     tail_set = tail_tokens.to_set
 
-    allowed_type_ids = base_product.product_variant_rules.pluck(:variant_type_id)
+    # 🔥 Carga masiva en RAM una sola vez por petición
+    @all_variants_cache ||= Variant.where(active: true).includes(:variant_type).to_a
+
+    allowed_type_ids = base_product.product_variant_rules.map(&:variant_type_id)
     return [] if allowed_type_ids.empty?
 
     candidates = []
 
-    Variant.where(variant_type_id: allowed_type_ids, active: true).find_each do |v|
+    # Buscamos en la lista en RAM en lugar de hacer queries
+    @all_variants_cache.each do |v|
+      next unless allowed_type_ids.include?(v.variant_type_id)
+
       v_name_loose = normalize_loose(v.seller_name)
       v_name_tokens = v_name_loose.split.uniq
       v_code_loose = v.code.present? ? normalize_loose(v.code) : nil
@@ -148,6 +157,11 @@ class ProductDecoder
     end
 
     tokens.each_with_index.reject { |_, i| explained[i] }.map(&:first).uniq
+  end
+
+  def self.clear_cache!
+    @all_products_cache = nil
+    @all_variants_cache = nil
   end
 
   def self.empty_result

@@ -1,27 +1,32 @@
 class SupplyManagementsController < ApplicationController
   before_action :authenticate_user!
-
   def index
     @from = params[:from] || Date.current.beginning_of_week.to_s
     @to = params[:to] || Date.current.end_of_week.to_s
-    @order_number = params[:order_number]
-    @seller_code = params[:seller_code]
 
-    # Entregas del API para sincronizar
-    @deliveries = LogisticsApiClient.fetch_deliveries(
-      from: @from,
-      to: @to,
-      order_number: @order_number,
-      seller_code: @seller_code
-    )
+    # 1. Limpiar todo rastro de memoria vieja
+    ProductDecoder.clear_cache!
+    ProcurementResolver.clear_cache!
 
-    # Requerimientos activos (pending + in_draft) agrupados por proveedor
-    @grouped_requirements = ProcurementRequirement
-      .active
+    # 2. Traer datos externos
+    @deliveries = LogisticsApiClient.fetch_deliveries(from: @from, to: @to)
+
+    # 3. Procesar (Esto llena la DB y usa el cache del Decoder automáticamente)
+    @deliveries.each { |d| ProcurementResolver.resolve_delivery(d) }
+
+    # 4. Preparar vista
+    order_numbers = @deliveries.map { |d| d["order_number"] }
+    @pending_requirements = ProcurementRequirement.pending
       .joins(supplier_item: :provider)
       .includes(supplier_item: :provider)
-      .order("providers.name ASC, supplier_items.name ASC")
+      .where(origin_order_number: order_numbers)
       .group_by { |r| r.supplier_item.provider }
+
+    # 5. El Presenter ahora recibirá las reglas ya cargadas
+    @presenter = ProcurementPresenter.new(
+      deliveries: @deliveries,
+      supply_rules: SupplyRule.includes(:supplier_item).to_a
+    )
   end
 
   def sync_delivery

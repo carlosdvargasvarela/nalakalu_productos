@@ -43,4 +43,11 @@ class ProcurementRequirement < ApplicationRecord
   def release!
     update!(status: "pending", purchase_order_item: nil)
   end
+
+  # Método para manejar la consolidación de cantidades en re-importación
+  def add_quantity!(extra_qty, new_specs = {})
+    self.quantity += extra_qty.to_f
+    self.specifications = specifications.merge(new_specs) if new_specs.present?
+    save!
+  end
 end

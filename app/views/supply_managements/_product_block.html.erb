@@ -1,0 +1,35 @@
+<div class="p-3 border-bottom bg-white">
+  <div class="d-flex align-items-center mb-2">
+    <span class="badge bg-primary text-white me-2"><%= item["quantity_delivered"] %></span>
+    <code class="fw-bold text-dark"><%= item["product_name"] %></code>
+  </div>
+  <div class="ms-4 ps-3 border-start border-2">
+    <table class="table table-sm table-borderless mb-0 align-middle">
+      <tbody>
+        <% item_reqs.each do |req| %>
+          <%# LLAMADA ULTRA RÁPIDA AL PRESENTER (Cero queries aquí) %>
+          <% details = @presenter.details_for(delivery["order_number"], item["product_name"], req.supplier_item_id) %>
+          <tr>
+            <td width="30">
+              <%= check_box_tag "requirement_ids[]", req.id, true, class: "form-check-input",
+                    data: { procurement_target: "checkbox", order: delivery["order_number"], action: "change->procurement#updateButton" } %>
+            </td>
+            <td class="small fw-bold text-primary"><%= req.supplier_item.name %></td>
+            <td class="x-small text-muted">
+              <% req.specifications.each do |k, v| %>
+                <span class="badge bg-light text-dark border"><%= k %>: <%= v %></span>
+              <% end %>
+            </td>
+            <td class="text-center fw-bold">
+              <%= number_with_precision(details[:quantity], precision: 2) %>
+              <small class="text-muted"><%= details[:unit] %></small>
+            </td>
+            <td class="text-end text-muted small pe-3">
+              <%= number_to_currency(details[:cost]) %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
