@@ -1,0 +1,25 @@
+<%# app/views/supply_managements/index.html.erb %>
+<div class="container-fluid mt-4 pb-5" data-controller="procurement">
+  <%= render 'header_filters' %>
+  <% if @pending_requirements.empty? %>
+    <%= render 'empty_state' %>
+  <% else %>
+    <% @pending_requirements.each do |provider, all_provider_reqs| %>
+      <div class="provider-section mb-5">
+        <%= form_with url: create_purchase_order_supply_managements_path, method: :post do |f| %>
+          <%= hidden_field_tag :provider_id, provider.id %>
+          <%= render 'provider_header', provider: provider, count: all_provider_reqs.size %>
+          <div class="bg-light p-3 rounded-bottom border border-top-0 shadow-sm">
+            <% 
+              order_numbers = all_provider_reqs.map(&:origin_order_number).uniq
+              provider_deliveries = @deliveries.select { |d| order_numbers.include?(d["order_number"]) }
+            %>
+            <% provider_deliveries.each do |delivery| %>
+              <%= render 'delivery_card', delivery: delivery, all_provider_reqs: all_provider_reqs %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

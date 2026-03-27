@@ -1,25 +1,70 @@
-<%# app/views/supply_managements/index.html.erb %>
-<div class="container-fluid mt-4 pb-5" data-controller="procurement">
-  <%= render 'header_filters' %>
-  <% if @pending_requirements.empty? %>
-    <%= render 'empty_state' %>
-  <% else %>
-    <% @pending_requirements.each do |provider, all_provider_reqs| %>
-      <div class="provider-section mb-5">
-        <%= form_with url: create_purchase_order_supply_managements_path, method: :post do |f| %>
-          <%= hidden_field_tag :provider_id, provider.id %>
-          <%= render 'provider_header', provider: provider, count: all_provider_reqs.size %>
-          <div class="bg-light p-3 rounded-bottom border border-top-0 shadow-sm">
-            <% 
-              order_numbers = all_provider_reqs.map(&:origin_order_number).uniq
-              provider_deliveries = @deliveries.select { |d| order_numbers.include?(d["order_number"]) }
-            %>
-            <% provider_deliveries.each do |delivery| %>
-              <%= render 'delivery_card', delivery: delivery, all_provider_reqs: all_provider_reqs %>
-            <% end %>
-          </div>
+<div class="container-fluid mt-4 pb-5">
+  <!-- Header (Estilo Logistics) -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-0">
+        <i class="bi bi-box-seam-fill text-primary me-2"></i>
+        Módulo de Proveeduría
+      </h1>
+      <p class="text-muted small mb-0">Gestión de requerimientos de materiales y órdenes de compra.</p>
+    </div>
+    <div class="text-end">
+      <%= form_tag sync_delivery_supply_managements_path, method: :post, class: "d-inline" do %>
+        <button type="submit" class="btn btn-outline-primary btn-sm fw-bold shadow-sm">
+          <i class="bi bi-arrow-repeat me-1"></i> Forzar Sincronización
+        </button>
+      <% end %>
+    </div>
+  </div>
+  <!-- Filtros (Reutilizando tu diseño) -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <%= form_with url: supply_managements_path, method: :get, class: "row g-3 align-items-end" do |f| %>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small text-uppercase text-muted">Rango Desde</label>
+          <%= f.date_field :from, value: @from, class: "form-control border-2" %>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small text-uppercase text-muted">Rango Hasta</label>
+          <%= f.date_field :to, value: @to, class: "form-control border-2" %>
+        </div>
+        <div class="col-md-2">
+          <%= f.submit "Filtrar", class: "btn btn-primary w-100 fw-bold py-2 shadow-sm" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <!-- Tabs de Navegación -->
+  <ul class="nav nav-tabs mb-4 border-bottom-0" id="procurementTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active fw-bold px-4 py-3 border-0" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase-content" type="button">
+        <i class="bi bi-cart-check me-2"></i>Mesa de Compras
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link fw-bold px-4 py-3 border-0 text-muted" id="logistics-tab" data-bs-toggle="tab" data-bs-target="#logistics-content" type="button">
+        <i class="bi bi-truck me-2"></i>Trazabilidad (Logística)
+      </button>
+    </li>
+  </ul>
+  <div class="tab-content" id="procurementTabsContent">
+    <!-- TAB 1: MESA DE COMPRAS (CONSOLIDADO) -->
+    <div class="tab-pane fade show active" id="purchase-content" role="tabpanel">
+      <% if @grouped_data.any? %>
+        <% @grouped_data.each do |data| %>
+          <%= render 'provider_purchase_card', provider: data[:provider], items: data[:consolidated_items] %>
         <% end %>
-      </div>
-    <% end %>
-  <% end %>
+      <% else %>
+        <div class="text-center py-5 bg-white rounded shadow-sm">
+          <i class="bi bi-check-circle display-1 text-light mb-3 d-block"></i>
+          <h4 class="text-muted">No hay requerimientos pendientes</h4>
+          <p class="text-muted small">Todos los materiales para este rango ya están en órdenes de compra o no hay entregas.</p>
+        </div>
+      <% end %>
+    </div>
+    <!-- TAB 2: TRAZABILIDAD (TU VISTA DE LOGISTICS) -->
+    <div class="tab-pane fade" id="logistics-content" role="tabpanel">
+      <%= render 'logistics_view', deliveries: @deliveries, presenter: @presenter %>
+    </div>
+  </div>
 </div>

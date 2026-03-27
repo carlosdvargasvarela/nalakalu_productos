@@ -4,25 +4,29 @@ class SupplyManagementsController < ApplicationController
     @from = params[:from] || Date.current.beginning_of_week.to_s
     @to = params[:to] || Date.current.end_of_week.to_s
 
-    # 1. Limpiar todo rastro de memoria vieja
+    # 1. Limpieza y Sincronización
     ProductDecoder.clear_cache!
     ProcurementResolver.clear_cache!
-
-    # 2. Traer datos externos
     @deliveries = LogisticsApiClient.fetch_deliveries(from: @from, to: @to)
 
-    # 3. Procesar (Esto llena la DB y usa el cache del Decoder automáticamente)
+    # 2. Procesar (Esto asegura que los ProcurementRequirement existan en DB)
     @deliveries.each { |d| ProcurementResolver.resolve_delivery(d) }
 
-    # 4. Preparar vista
+    # 3. Obtener requerimientos pendientes de estos pedidos
     order_numbers = @deliveries.map { |d| d["order_number"] }
-    @pending_requirements = ProcurementRequirement.pending
-      .joins(supplier_item: :provider)
+    pending_reqs = ProcurementRequirement.pending
       .includes(supplier_item: :provider)
       .where(origin_order_number: order_numbers)
-      .group_by { |r| r.supplier_item.provider }
 
-    # 5. El Presenter ahora recibirá las reglas ya cargadas
+    # 4. Consolidación para la "Mesa de Compras"
+    @grouped_data = pending_reqs.group_by { |r| r.supplier_item.provider }.map do |provider, reqs|
+      {
+        provider: provider,
+        consolidated_items: ProcurementConsolidator.consolidate(reqs)
+      }
+    end
+
+    # 5. Presenter para la pestaña de "Trazabilidad" (tu vista de Logistics)
     @presenter = ProcurementPresenter.new(
       deliveries: @deliveries,
       supply_rules: SupplyRule.includes(:supplier_item).to_a

@@ -1,0 +1,104 @@
+<div class="card border-0 shadow-sm overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="bg-dark text-white">
+        <tr>
+          <th class="ps-4 py-3 fw-medium">Entrega / Pedido</th>
+          <th class="py-3 fw-medium">Cliente / Vendedor</th>
+          <th class="py-3 fw-medium" style="width: 45%;">Desglose de Productos y Variantes</th>
+          <th class="py-3 fw-medium text-center">Estado Logística</th>
+        </tr>
+      </thead>
+      <tbody class="border-top-0">
+        <% if deliveries.any? %>
+          <% deliveries.each do |delivery| %>
+            <tr class="border-bottom">
+              <td class="ps-4">
+                <div class="fw-bold text-dark">
+                  <%= Date.parse(delivery["delivery_date"]).strftime("%d/%m/%Y") %>
+                </div>
+                <div class="mt-1">
+                  <span class="badge bg-secondary-subtle text-secondary border border-secondary-alpha-20">
+                    <i class="bi bi-receipt me-1"></i><%= delivery["order_number"] %>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">
+                  <%= delivery.dig("client", "name") %>
+                </div>
+                <div class="small text-muted">
+                  <i class="bi bi-person-badge me-1"></i>
+                  Vendedor: <%= delivery["seller_code"] %>
+                </div>
+              </td>
+              <td class="py-3">
+                <% delivery["items"].each do |item| %>
+                  <%# Usamos el presenter para obtener los datos ya calculados %>
+                  <% decoding = ProductDecoder.decode(item["product_name"]) %>
+                  <div class="mb-3 p-3 rounded-3 <%= decoding[:has_variants] ? 'bg-primary-subtle border-start border-4 border-primary' : 'bg-light border-start border-4 border-secondary' %>">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="h6 mb-0 fw-bold">
+                        <span class="badge bg-white text-primary border border-primary me-2">
+                          <%= item["quantity_delivered"] %>
+                        </span>
+                        <code class="text-dark"><%= item["product_name"] %></code>
+                      </span>
+                    </div>
+                    <div class="ms-2">
+                      <% if decoding[:base_product] %>
+                        <div class="mb-2">
+                          <span class="badge bg-dark-subtle text-dark px-2 py-1">
+                            <i class="bi bi-box-seam me-1"></i>
+                            <%= decoding[:base_product].name %>
+                          </span>
+                        </div>
+                      <% end %>
+                      <% if decoding[:has_variants] %>
+                        <div class="row g-2">
+                          <% decoding[:variants].each do |variant| %>
+                            <%# Buscamos la regla para mostrar el proveedor y la cantidad calculada %>
+                            <% rule = presenter.send(:find_rule_in_cache, variant, decoding[:base_product]) %>
+                            <div class="col-12">
+                              <div class="d-flex align-items-center bg-white p-2 rounded border border-primary-subtle shadow-sm">
+                                <i class="bi bi-check2-circle text-primary me-2"></i>
+                                <div class="flex-grow-1">
+                                  <span class="fw-bold small text-uppercase text-muted d-block" style="font-size: 0.65rem;">
+                                    <%= variant.variant_type.name %>
+                                  </span>
+                                  <span class="text-dark"><%= variant.name %></span>
+                                </div>
+                                <div class="text-end border-start ps-3 ms-2">
+                                  <span class="fw-bold text-primary d-block small">
+                                    <%= rule&.supplier_item&.provider&.name || "Sin asignar" %>
+                                  </span>
+                                  <span class="text-muted" style="font-size: 0.7rem;">
+                                    <%= presenter.details_for(delivery["order_number"], item["product_name"], rule&.supplier_item_id)[:quantity] %>
+                                    <%= rule&.supplier_item&.unit %>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </td>
+              <td class="text-center pe-4">
+                <span class="badge rounded-pill bg-info text-dark px-3 py-2 shadow-sm">
+                  <%= delivery["status_label"] %>
+                </span>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="4" class="text-center py-5 text-muted">No hay datos de logística.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

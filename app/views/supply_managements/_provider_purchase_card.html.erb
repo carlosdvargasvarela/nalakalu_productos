@@ -1,0 +1,52 @@
+<div class="card mb-4 shadow-sm border-primary">
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><%= provider.name %></h5>
+    <%= form_tag create_purchase_order_supply_managements_path, method: :post do %>
+      <%= hidden_field_tag :provider_id, provider.id %>
+      <div id="selected_reqs_<%= provider.id %>"></div>
+      <button type="submit" class="btn btn-light btn-sm fw-bold">
+        Generar Orden de Compra
+      </button>
+    <% end %>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th width="40"></th>
+          <th>Pieza / Material</th>
+          <th>Especificaciones</th>
+          <th class="text-center">Cantidad Total</th>
+          <th>Pedidos Origen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% items.each do |item| %>
+          <tr>
+            <td>
+              <%= check_box_tag "requirement_ids[]", item[:requirement_ids].join(","), false, 
+                  class: "req-check", data: { provider_id: provider.id } %>
+            </td>
+            <td>
+              <span class="fw-bold"><%= item[:supplier_item].name %></span><br>
+              <small class="text-muted">SKU: <%= item[:supplier_item].sku %></small>
+            </td>
+            <td>
+              <% item[:specifications].each do |k, v| %>
+                <span class="badge bg-info text-dark"><%= k %>: <%= v %></span>
+              <% end %>
+            </td>
+            <td class="text-center fw-bold text-primary">
+              <%= item[:total_quantity] %> <%= item[:supplier_item].unit %>
+            </td>
+            <td>
+              <small class="text-muted" title="<​%= item[:products] %>">
+                <%= item[:origin_orders].join(", ") %>
+              </small>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
