@@ -1,14 +1,13 @@
-# app/models/procurement_requirement.rb
 class ProcurementRequirement < ApplicationRecord
   belongs_to :supplier_item
   belongs_to :purchase_order_item, optional: true
+  belongs_to :supply_rule, optional: true
 
-  STATUSES = %w[pending in_draft ordered cancelled].freeze
+  STATUSES = %w[pending in_draft ordered received cancelled].freeze
 
   validates :origin_order_number, presence: true
   validates :quantity, numericality: {greater_than: 0}
   validates :status, inclusion: {in: STATUSES}
-
   validates :supplier_item_id, uniqueness: {
     scope: :origin_order_number,
     message: "ya tiene un requerimiento para este pedido"
@@ -24,30 +23,38 @@ class ProcurementRequirement < ApplicationRecord
     where(purchase_order_item_id: po.purchase_order_items.pluck(:id))
   }
 
-  def pending? = status == "pending"
-  def in_draft? = status == "in_draft"
-  def ordered? = status == "ordered"
-  def cancelled? = status == "cancelled"
+  def pending?
+    status == "pending"
+  end
+
+  def in_draft?
+    status == "in_draft"
+  end
+
+  def ordered?
+    status == "ordered"
+  end
+
+  def cancelled?
+    status == "cancelled"
+  end
 
   def specs_summary
     return "" if specifications.blank?
     specifications.map { |k, v| "#{k}: #{v}" }.join(" | ")
   end
 
-  # El purchase_order_item ya está vinculado al requirement antes de llamar esto.
-  # Solo actualizamos el status.
   def mark_as_ordered!
     update!(status: "ordered")
   end
 
   def release!
-    update!(status: "pending", purchase_order_item: nil)
+    update!(status: "pending", purchase_order_item_id: nil)
   end
 
-  # Método para manejar la consolidación de cantidades en re-importación
   def add_quantity!(extra_qty, new_specs = {})
     self.quantity += extra_qty.to_f
-    self.specifications = specifications.merge(new_specs) if new_specs.present?
+    self.specifications = (specifications || {}).merge(new_specs) if new_specs.present?
     save!
   end
 end

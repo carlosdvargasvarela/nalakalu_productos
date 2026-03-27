@@ -1,24 +1,37 @@
-// app/javascript/controllers/procurement_controller.js
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["checkbox", "submitBtn"];
+  static targets = ["selectAll", "check", "hiddenContainer", "submitBtn"];
+  static values = { providerId: String };
 
-  // Selecciona/Deselecciona todas las piezas de un pedido específico
-  toggleOrder(event) {
-    const orderNumber = event.target.dataset.order;
+  toggleAll(event) {
     const checked = event.target.checked;
-    this.checkboxTargets.forEach((cb) => {
-      if (cb.dataset.order === orderNumber) {
-        cb.checked = checked;
-      }
-    });
-    this.updateButton();
+    this.checkTargets.forEach((c) => (c.checked = checked));
+    this.updateHiddenInputs();
   }
 
-  // Actualiza el estado del botón de generar OC
-  updateButton() {
-    const anyChecked = this.checkboxTargets.some((cb) => cb.checked);
-    this.submitBtnTarget.disabled = !anyChecked;
+  toggleOne() {
+    const allChecked = this.checkTargets.every((c) => c.checked);
+    this.selectAllTarget.checked = allChecked;
+    this.updateHiddenInputs();
+  }
+
+  updateHiddenInputs() {
+    this.hiddenContainerTarget.innerHTML = "";
+
+    this.checkTargets
+      .filter((c) => c.checked)
+      .flatMap((c) => c.value.split(","))
+      .forEach((id) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "requirement_ids[]";
+        input.value = id;
+        this.hiddenContainerTarget.appendChild(input);
+      });
+
+    // Deshabilitar botón si no hay selección
+    const hasSelection = this.checkTargets.some((c) => c.checked);
+    this.submitBtnTarget.disabled = !hasSelection;
   }
 }

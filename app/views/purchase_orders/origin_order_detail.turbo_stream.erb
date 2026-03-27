@@ -1,0 +1,7 @@
+<%# app/views/purchase_orders/origin_order_detail.turbo_stream.erb %>
+<%= turbo_stream.update "origin_order_modal_body" do %>
+  <%= render "purchase_orders/origin_order_modal",
+        order_number: @order_number,
+        requirements: @requirements %>
+<% end %>
+<%= turbo_stream.action :dispatch_event, "openOriginModal" %>

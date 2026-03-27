@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_25_205244) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_27_213116) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -68,11 +68,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_25_205244) do
     t.string "status", default: "pending", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "origin_products", default: []
+    t.integer "supply_rule_id"
     t.index ["origin_order_number"], name: "index_procurement_requirements_on_origin_order_number"
     t.index ["purchase_order_item_id"], name: "index_procurement_requirements_on_purchase_order_item_id"
     t.index ["status"], name: "index_procurement_requirements_on_status"
     t.index ["supplier_item_id", "origin_order_number"], name: "index_procurement_req_unique", unique: true
     t.index ["supplier_item_id"], name: "index_procurement_requirements_on_supplier_item_id"
+    t.index ["supply_rule_id"], name: "index_procurement_requirements_on_supply_rule_id"
   end
 
   create_table "product_variant_rules", force: :cascade do |t|

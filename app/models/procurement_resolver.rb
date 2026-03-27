@@ -1,7 +1,6 @@
-# app/models/procurement_resolver.rb
 class ProcurementResolver
   def self.resolve_delivery(delivery)
-    accumulation = Hash.new { |h, k| h[k] = {qty: 0.0, specs: {}, products: []} }
+    accumulation = Hash.new { |h, k| h[k] = {qty: 0.0, specs: {}, products: [], rule_id: nil} }
 
     delivery["items"].each do |item|
       decoding = ProductDecoder.decode(item["product_name"])
@@ -18,6 +17,7 @@ class ProcurementResolver
           sid = rule.supplier_item_id
           accumulation[sid][:qty] += (qty_delivered * rule.quantity_needed.to_f)
           accumulation[sid][:products] << item["product_name"]
+          accumulation[sid][:rule_id] ||= rule.id
         end
       end
 
@@ -25,6 +25,7 @@ class ProcurementResolver
         rule = group[:rule]
         accumulation[sid][:qty] += (qty_delivered * rule.quantity_needed.to_f)
         accumulation[sid][:products] << item["product_name"]
+        accumulation[sid][:rule_id] ||= rule.id
 
         group[:variants].each do |v|
           key = v.display_name.presence || v.name
@@ -49,9 +50,11 @@ class ProcurementResolver
 
       req.assign_attributes(
         origin_delivery_id: delivery["id"].to_s,
-        origin_product_name: data[:products].uniq.join(", "),
+        origin_product_name: data[:products].uniq.first,
+        origin_products: data[:products].uniq,
         quantity: data[:qty],
         specifications: data[:specs],
+        supply_rule_id: data[:rule_id],
         status: "pending"
       )
 
@@ -86,15 +89,19 @@ class ProcurementResolver
   end
 
   def self.find_rule(variant, base_product)
-    @all_supply_rules ||= SupplyRule.all.to_a
+    rules = all_supply_rules
 
-    @all_supply_rules.find { |r| r.variant_id == variant.id && r.product_id == base_product&.id } ||
-      @all_supply_rules.find { |r| r.variant_id == variant.id && r.product_id.nil? } ||
-      @all_supply_rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id == base_product&.id } ||
-      @all_supply_rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id.nil? }
+    rules.find { |r| r.variant_id == variant.id && r.product_id == base_product&.id } ||
+      rules.find { |r| r.variant_id == variant.id && r.product_id.nil? } ||
+      rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id == base_product&.id } ||
+      rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id.nil? }
+  end
+
+  def self.all_supply_rules
+    Thread.current[:supply_rules_cache] ||= SupplyRule.all.to_a
   end
 
   def self.clear_cache!
-    @all_supply_rules = nil
+    Thread.current[:supply_rules_cache] = nil
   end
 end

@@ -72,6 +72,8 @@ Rails.application.routes.draw do
 
   resources :purchase_orders do
     member do
+      get "origin_order/:order_number", to: "purchase_orders#origin_order_detail",
+        as: :origin_order_detail, constraints: {order_number: /[^\/]+/}
       patch :transition
     end
   end
