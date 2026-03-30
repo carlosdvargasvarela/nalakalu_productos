@@ -10,4 +10,8 @@ class SupplierItemProperty < ApplicationRecord
                                              message: "ya está asignada a esta pieza"}
 
   default_scope { order(:position) }
+
+  def label
+    "#{property.name}: #{value}"
+  end
 end

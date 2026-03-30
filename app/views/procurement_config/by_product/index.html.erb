@@ -1,3 +1,4 @@
+<%# app/views/procurement_config/by_product/index.html.erb %>
 <div class="container-fluid py-4" style="max-width: 1100px;">
   <%= render "procurement_config/shared/nav" %>
   <div class="d-flex justify-content-between align-items-center mb-4">
@@ -44,80 +45,113 @@
           </span>
         </div>
         <% @variant_types.each do |variant_type| %>
-          <% next if variant_type.consolidated? %>
-          <div class="px-4 py-2 bg-light border-bottom d-flex align-items-center gap-2">
-            <span class="fw-bold text-dark small text-uppercase">
-              <i class="bi bi-tag me-1 text-primary"></i><%= variant_type.name %>
-            </span>
-          </div>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="bg-white border-bottom small text-muted text-uppercase"
-                     style="font-size: 0.7rem;">
-                <tr>
-                  <th class="ps-4" style="width: 25%;">Variante</th>
-                  <th style="width: 42%;">Pieza de Proveedor</th>
-                  <th class="text-center" style="width: 13%;">Cantidad</th>
-                  <th class="pe-4 text-center" style="width: 20%;">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% variant_type.variants.where(active: true).order(:name).each do |variant| %>
-                  <% form_key = "#{variant_type.id}_#{variant.id}" %>
-                  <% rule = @existing_rules[form_key] %>
-                  <% global_rule = SupplyRule.find_by(
-                       variant_type: variant_type,
-                       variant:      variant,
-                       product_id:   nil
-                     ) %>
-                  <tr>
-                    <td class="ps-4 py-2">
-                      <div class="fw-bold small">
-                        <%= variant.display_name.presence || variant.name %>
-                      </div>
-                      <% if global_rule %>
-                        <span class="badge bg-info-subtle text-info border border-info-subtle"
-                              style="font-size: 0.65rem;">
-                          <i class="bi bi-globe me-1"></i>
-                          Global: <%= global_rule.supplier_item.name %>
-                        </span>
-                      <% end %>
-                    </td>
-                    <td class="py-2">
-                      <%= select_tag "rules[#{form_key}][supplier_item_id]",
-                            options_for_select(
-                              @supplier_items.map { |i| ["#{i.name} (#{i.provider.name})", i.id] },
-                              rule&.supplier_item_id
-                            ),
-                            include_blank: global_rule ? "— Usar regla global —" : "— No comprar —",
-                            class: "form-select form-select-sm border-0 bg-light shadow-none fw-bold" %>
-                    </td>
-                    <td class="py-2">
-                      <%= number_field_tag "rules[#{form_key}][quantity_needed]",
-                            rule&.quantity_needed || global_rule&.quantity_for(@product) || 1.0,
-                            step: 0.01, min: 0.01,
-                            class: "form-control form-control-sm text-center border-0 bg-light shadow-none" %>
-                    </td>
-                    <td class="pe-4 py-2 text-center">
-                      <% if rule %>
-                        <span class="badge bg-success-subtle text-success rounded-pill small">
-                          <i class="bi bi-check-circle me-1"></i>Específica
-                        </span>
-                      <% elsif global_rule %>
-                        <span class="badge bg-info-subtle text-info rounded-pill small">
-                          <i class="bi bi-globe me-1"></i>Global
-                        </span>
-                      <% else %>
-                        <span class="badge bg-secondary-subtle text-secondary rounded-pill small">
-                          Sin regla
-                        </span>
-                      <% end %>
-                    </td>
-                  </tr>
+          <% if variant_type.consolidated? %>
+            <%# ── Tipo Consolidado: mostrar fila informativa con link directo ── %>
+            <% consolidated_rule = SupplyRule.find_by(
+                 product: @product,
+                 variant_type: variant_type,
+                 rule_type: "consolidated"
+               ) %>
+            <div class="px-4 py-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold text-muted small text-uppercase">
+                  <i class="bi bi-layers me-1 text-info"></i><%= variant_type.name %>
+                </span>
+                <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 0.65rem;">
+                  Consolidado
+                </span>
+                <% if consolidated_rule %>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.65rem;">
+                    <i class="bi bi-check-circle me-1"></i><%= consolidated_rule.supplier_item.name %>
+                  </span>
+                <% else %>
+                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 0.65rem;">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Sin configurar
+                  </span>
                 <% end %>
-              </tbody>
-            </table>
-          </div>
+              </div>
+              <%= link_to procurement_config_consolidated_path(
+                    product_id: @product.id, variant_type_id: variant_type.id
+                  ), class: "btn btn-sm btn-outline-info rounded-pill px-3" do %>
+                <i class="bi bi-pencil me-1"></i>Configurar
+              <% end %>
+            </div>
+          <% else %>
+            <%# ── Tipo Individual: tabla normal ── %>
+            <div class="px-4 py-2 bg-light border-bottom d-flex align-items-center gap-2">
+              <span class="fw-bold text-dark small text-uppercase">
+                <i class="bi bi-tag me-1 text-primary"></i><%= variant_type.name %>
+              </span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="bg-white border-bottom small text-muted text-uppercase"
+                       style="font-size: 0.7rem;">
+                  <tr>
+                    <th class="ps-4" style="width: 25%;">Variante</th>
+                    <th style="width: 42%;">Pieza de Proveedor</th>
+                    <th class="text-center" style="width: 13%;">Cantidad</th>
+                    <th class="pe-4 text-center" style="width: 20%;">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% variant_type.variants.where(active: true).order(:name).each do |variant| %>
+                    <% form_key = "#{variant_type.id}_#{variant.id}" %>
+                    <% rule = @existing_rules[form_key] %>
+                    <% global_rule = SupplyRule.find_by(
+                         variant_type: variant_type,
+                         variant:      variant,
+                         product_id:   nil
+                       ) %>
+                    <tr>
+                      <td class="ps-4 py-2">
+                        <div class="fw-bold small">
+                          <%= variant.display_name.presence || variant.name %>
+                        </div>
+                        <% if global_rule %>
+                          <span class="badge bg-info-subtle text-info border border-info-subtle"
+                                style="font-size: 0.65rem;">
+                            <i class="bi bi-globe me-1"></i>
+                            Global: <%= global_rule.supplier_item.name %>
+                          </span>
+                        <% end %>
+                      </td>
+                      <td class="py-2">
+                        <%= select_tag "rules[#{form_key}][supplier_item_id]",
+                              options_for_select(
+                                @supplier_items.map { |i| ["#{i.name} (#{i.provider.name})", i.id] },
+                                rule&.supplier_item_id
+                              ),
+                              include_blank: global_rule ? "— Usar regla global —" : "— No comprar —",
+                              class: "form-select form-select-sm border-0 bg-light shadow-none fw-bold" %>
+                      </td>
+                      <td class="py-2">
+                        <%= number_field_tag "rules[#{form_key}][quantity_needed]",
+                              rule&.quantity_needed || global_rule&.quantity_for(@product) || 1.0,
+                              step: 0.01, min: 0.01,
+                              class: "form-control form-control-sm text-center border-0 bg-light shadow-none" %>
+                      </td>
+                      <td class="pe-4 py-2 text-center">
+                        <% if rule %>
+                          <span class="badge bg-success-subtle text-success rounded-pill small">
+                            <i class="bi bi-check-circle me-1"></i>Específica
+                          </span>
+                        <% elsif global_rule %>
+                          <span class="badge bg-info-subtle text-info rounded-pill small">
+                            <i class="bi bi-globe me-1"></i>Global
+                          </span>
+                        <% else %>
+                          <span class="badge bg-secondary-subtle text-secondary rounded-pill small">
+                            Sin regla
+                          </span>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% end %>
         <% end %>
         <div class="card-footer bg-white p-4 d-flex justify-content-between align-items-center border-top">
           <span class="text-muted small">

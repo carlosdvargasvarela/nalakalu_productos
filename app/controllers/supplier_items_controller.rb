@@ -65,23 +65,27 @@ class SupplierItemsController < ApplicationController
   # Sincroniza los property_values seleccionados con supplier_item_properties
   # Espera params[:property_value_ids] como array de IDs
   def sync_item_properties
-    selected_ids = Array(params[:property_value_ids])
+    # El form envía: params[:property_value_ids] = { "1" => "5", "2" => "8" }
+    # Queremos solo los IDs de los valores: [5, 8]
+    selected_ids = params[:property_value_ids].to_h.values
       .reject(&:blank?)
       .map(&:to_i)
       .uniq
 
-    # Eliminar los que ya no están seleccionados
-    @supplier_item.supplier_item_properties
-      .where.not(property_value_id: selected_ids)
-      .destroy_all
+    ActiveRecord::Base.transaction do
+      # 1. Eliminar los que ya no están en la selección
+      @supplier_item.supplier_item_properties
+        .where.not(property_value_id: selected_ids)
+        .destroy_all
 
-    # Crear los nuevos
-    existing_ids = @supplier_item.supplier_item_properties.pluck(:property_value_id)
-    (selected_ids - existing_ids).each_with_index do |pv_id, index|
-      @supplier_item.supplier_item_properties.create!(
-        property_value_id: pv_id,
-        position: index
-      )
+      # 2. Crear los nuevos sin duplicar
+      existing_ids = @supplier_item.supplier_item_properties.pluck(:property_value_id)
+      (selected_ids - existing_ids).each_with_index do |pv_id, index|
+        @supplier_item.supplier_item_properties.create!(
+          property_value_id: pv_id,
+          position: index
+        )
+      end
     end
   end
 

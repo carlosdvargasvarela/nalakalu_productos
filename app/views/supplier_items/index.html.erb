@@ -40,14 +40,12 @@
             <tr class="<%= 'opacity-50' unless item.active %>">
               <td class="ps-4 py-3">
                 <div class="fw-bold text-dark"><%= item.name %></div>
-                <%# Propiedades EAV (ej: N1: MS-01) %>
-                <% props = item.supplier_item_properties.to_a %>
+                <% props = item.supplier_item_properties.includes(property_value: :property) %>
                 <% if props.any? %>
                   <div class="d-flex flex-wrap gap-1 mt-1">
                     <% props.each do |prop| %>
-                      <span class="badge bg-light text-dark border fw-normal"
-                            style="font-size: 0.65rem;">
-                        <%= prop.label %>: <%= prop.value %>
+                      <span class="badge bg-light text-dark border fw-normal" style="font-size: 0.65rem;">
+                        <%= prop.label %>
                       </span>
                     <% end %>
                   </div>

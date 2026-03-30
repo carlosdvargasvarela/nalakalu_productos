@@ -69,7 +69,7 @@ class ProductDecoder
     input_tokens = loose.split
     return nil if input_tokens.empty?
 
-    # 🔥 Carga masiva en RAM una sola vez por petición
+    # Carga masiva en RAM una sola vez por petición
     @all_products_cache ||= Product.where(active: true).includes(:product_variant_rules).to_a
 
     best_product = nil
@@ -106,7 +106,7 @@ class ProductDecoder
     return [] if tail_tokens.empty?
     tail_set = tail_tokens.to_set
 
-    # 🔥 Carga masiva en RAM una sola vez por petición
+    # Carga masiva en RAM una sola vez por petición
     @all_variants_cache ||= Variant.where(active: true).includes(:variant_type).to_a
 
     allowed_type_ids = base_product.product_variant_rules.map(&:variant_type_id)

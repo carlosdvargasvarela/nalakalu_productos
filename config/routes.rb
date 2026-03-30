@@ -100,13 +100,6 @@ Rails.application.routes.draw do
 
   resources :supplier_items
 
-  resources :supply_rules do
-    collection do
-      get :bulk_new
-      post :bulk_create
-    end
-  end
-
   namespace :procurement_config do
     root to: "by_variant_type#index"
 

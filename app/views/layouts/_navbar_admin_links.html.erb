@@ -83,16 +83,10 @@
       <% end %>
     </li>
     <li>
-      <%= link_to supply_rules_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'supply_rules'}" do %>
+      <%= link_to procurement_config_root_path,
+      class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if params[:controller]&.start_with?('procurement_config')}" do %>
         <span><i class="bi bi-diagram-3 me-2"></i>Reglas de Abastecimiento</span>
         <span class="badge bg-light text-dark small"><%= SupplyRule.count %></span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to procurement_config_root_path,
-          class: "dropdown-item d-flex align-items-center #{'active' if params[:controller]&.start_with?('procurement_config')}" do %>
-        <span><i class="bi bi-sliders2 me-2"></i>Config. Proveeduría</span>
       <% end %>
     </li>
     <li><hr class="dropdown-divider opacity-25"></li>
