@@ -1,3 +1,4 @@
+# app/controllers/supplier_items_controller.rb
 class SupplierItemsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
@@ -5,7 +6,7 @@ class SupplierItemsController < ApplicationController
 
   def index
     @supplier_items = SupplierItem
-      .includes(provider: {})
+      .includes(:provider)
       .includes(supplier_item_properties: {property_value: :property})
       .order("providers.name ASC, supplier_items.name ASC")
   end
@@ -56,6 +57,32 @@ class SupplierItemsController < ApplicationController
     redirect_to provider_path(provider), notice: "Pieza eliminada."
   end
 
+  # NUEVO: Método para procesar la carga masiva
+  def import
+    if params[:file].present?
+      # 1. Validar extensión básica
+      unless params[:file].original_filename.downcase.end_with?(".csv")
+        return redirect_to supplier_items_path, alert: "Por favor sube un archivo en formato CSV."
+      end
+
+      # 2. Guardar archivo temporalmente
+      temp_dir = Rails.root.join("tmp", "imports")
+      FileUtils.mkdir_p(temp_dir) unless Dir.exist?(temp_dir)
+
+      file_path = temp_dir.join("supplier_items_#{Time.now.to_i}_#{params[:file].original_filename}")
+
+      File.binwrite(file_path, params[:file].read)
+
+      # 3. Encolar el Job
+      ImportSupplierItemsJob.perform_later(file_path.to_s, current_user.id)
+
+      redirect_to supplier_items_path,
+        notice: "La importación de piezas ha comenzado. Los cambios aparecerán en breve."
+    else
+      redirect_to supplier_items_path, alert: "Debes seleccionar un archivo CSV para importar."
+    end
+  end
+
   private
 
   def set_supplier_item
@@ -63,10 +90,10 @@ class SupplierItemsController < ApplicationController
   end
 
   # Sincroniza los property_values seleccionados con supplier_item_properties
-  # Espera params[:property_value_ids] como array de IDs
   def sync_item_properties
+    return unless params[:property_value_ids].present?
+
     # El form envía: params[:property_value_ids] = { "1" => "5", "2" => "8" }
-    # Queremos solo los IDs de los valores: [5, 8]
     selected_ids = params[:property_value_ids].to_h.values
       .reject(&:blank?)
       .map(&:to_i)
@@ -76,7 +103,7 @@ class SupplierItemsController < ApplicationController
       # 1. Eliminar los que ya no están en la selección
       @supplier_item.supplier_item_properties
         .where.not(property_value_id: selected_ids)
-        .destroy_all
+        .delete_all
 
       # 2. Crear los nuevos sin duplicar
       existing_ids = @supplier_item.supplier_item_properties.pluck(:property_value_id)

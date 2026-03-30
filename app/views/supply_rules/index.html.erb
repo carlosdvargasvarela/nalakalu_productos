@@ -1,0 +1,101 @@
+<%# app/views/supply_rules/index.html.erb %>
+<div class="container-fluid py-4" style="max-width: 1200px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-bold mb-0">
+        <i class="bi bi-diagram-3 text-primary me-2"></i>Reglas de Abastecimiento
+      </h1>
+      <p class="text-muted small mb-0">
+        Define cómo se traduce cada producto + variante en piezas reales a comprar.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to bulk_new_supply_rules_path,
+            class: "btn btn-outline-primary rounded-pill px-4 fw-bold" do %>
+        <i class="bi bi-grid-3x3-gap me-2"></i>Asignación Masiva
+      <% end %>
+      <%= link_to new_supply_rule_path,
+            class: "btn btn-primary rounded-pill px-4 fw-bold" do %>
+        <i class="bi bi-plus-lg me-2"></i>Nueva Regla
+      <% end %>
+    </div>
+  </div>
+  <% if @supply_rules.empty? %>
+    <div class="text-center py-5 text-muted border rounded bg-white shadow-sm">
+      <i class="bi bi-diagram-3 display-1 opacity-25"></i>
+      <p class="mt-3">No hay reglas de abastecimiento configuradas.</p>
+      <%= link_to bulk_new_supply_rules_path, class: "btn btn-outline-primary rounded-pill px-4" do %>
+        <i class="bi bi-grid-3x3-gap me-1"></i>Configurar por producto
+      <% end %>
+    </div>
+  <% else %>
+    <div class="card border-0 shadow-sm overflow-hidden">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light small text-muted text-uppercase">
+          <tr>
+            <th class="ps-4">Producto</th>
+            <th>Tipo Variante</th>
+            <th>Variante Específica</th>
+            <th>Pieza de Proveedor</th>
+            <th>Proveedor</th>
+            <th class="text-center">Cantidad</th>
+            <th class="text-center">Tipo Regla</th>
+            <th class="pe-4 text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @supply_rules.each do |r| %>
+            <tr>
+              <td class="ps-4 fw-bold text-dark">
+                <%= r.product&.name || "—" %>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border fw-normal">
+                  <%= r.variant_type&.name || "—" %>
+                </span>
+              </td>
+              <td class="text-muted small">
+                <%= r.variant&.name || "Todas" %>
+              </td>
+              <td class="fw-bold small">
+                <%= r.supplier_item.name %>
+              </td>
+              <td class="small text-muted">
+                <%= r.supplier_item.provider.name %>
+              </td>
+              <td class="text-center small">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2">
+                  <%= r.quantity_needed&.to_f&.round(2) %>
+                </span>
+              </td>
+              <td class="text-center">
+                <% if r.rule_type == "consolidated" %>
+                  <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 small">
+                    <i class="bi bi-layers me-1"></i>Consolidada
+                  </span>
+                <% else %>
+                  <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 small">
+                    <i class="bi bi-1-square me-1"></i>Individual
+                  </span>
+                <% end %>
+              </td>
+              <td class="pe-4 text-end">
+                <div class="d-flex gap-1 justify-content-end">
+                  <%= link_to edit_supply_rule_path(r),
+                        class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm" do %>
+                    <i class="bi bi-pencil"></i>
+                  <% end %>
+                  <%= button_to supply_rule_path(r), method: :delete,
+                        form: { data: { turbo_confirm: "¿Eliminar esta regla?" } },
+                        class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm text-danger" do %>
+                    <i class="bi bi-trash"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
