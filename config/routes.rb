@@ -92,6 +92,7 @@ Rails.application.routes.draw do
 
   resources :supply_managements, only: [:index] do
     collection do
+      post :sync_all
       post :sync_delivery
       post :create_purchase_order
     end
@@ -104,5 +105,26 @@ Rails.application.routes.draw do
       get :bulk_new
       post :bulk_create
     end
+  end
+
+  namespace :procurement_config do
+    root to: "by_variant_type#index"
+
+    # Quantities PRIMERO (ruta más específica)
+    get "by_variant_type/quantities/:supply_rule_id",
+      to: "by_variant_type#quantities",
+      as: :quantities_by_variant_type
+    post "by_variant_type/quantities/:supply_rule_id",
+      to: "by_variant_type#save_quantities",
+      as: :save_quantities_by_variant_type
+
+    get "by_variant_type", to: "by_variant_type#index", as: :by_variant_type
+    post "by_variant_type", to: "by_variant_type#save", as: :save_by_variant_type
+
+    get "by_product", to: "by_product#index", as: :by_product
+    post "by_product", to: "by_product#save", as: :save_by_product
+
+    get "consolidated", to: "consolidated#index", as: :consolidated
+    post "consolidated", to: "consolidated#save", as: :save_consolidated
   end
 end

@@ -9,7 +9,9 @@
       <p class="text-muted small mb-0">Gestión de requerimientos de materiales y órdenes de compra.</p>
     </div>
     <div class="text-end">
-      <%= form_tag sync_delivery_supply_managements_path, method: :post, class: "d-inline" do %>
+      <%= form_tag sync_all_supply_managements_path, method: :post, class: "d-inline" do %>
+        <%= hidden_field_tag :from, @from %>
+        <%= hidden_field_tag :to, @to %>
         <button type="submit" class="btn btn-outline-primary btn-sm fw-bold shadow-sm">
           <i class="bi bi-arrow-repeat me-1"></i> Forzar Sincronización
         </button>

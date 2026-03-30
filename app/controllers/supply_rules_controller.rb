@@ -4,10 +4,7 @@ class SupplyRulesController < ApplicationController
   before_action :set_supply_rule, only: %i[edit update destroy]
 
   def index
-    @supply_rules = SupplyRule
-      .includes(:product, :variant, :variant_type, supplier_item: :provider)
-      .order("products.name NULLS LAST, variants.name NULLS LAST")
-      .joins(:supplier_item)
+    @supply_rules = SupplyRule.ordered
   end
 
   def new

@@ -1,22 +1,29 @@
-# app/models/supply_rule.rb
 class SupplyRule < ApplicationRecord
   belongs_to :product, optional: true
   belongs_to :variant_type
   belongs_to :variant, optional: true
   belongs_to :supplier_item
 
+  has_many :supply_rule_quantities, dependent: :destroy
+
   RULE_TYPES = %w[individual consolidated].freeze
 
   validates :rule_type, inclusion: {in: RULE_TYPES}
   validates :quantity_needed, numericality: {greater_than: 0}
-  validates :variant_id, presence: true, if: -> { rule_type == "individual" }
+  validates :variant_id, presence: true, if: -> { rule_type == "individual" && product_id.nil? }
 
   scope :for_product, ->(product) { where(product_id: [product.id, nil]) }
   scope :consolidated, -> { where(rule_type: "consolidated") }
   scope :individual, -> { where(rule_type: "individual") }
+  scope :global, -> { where(product_id: nil) }
+  scope :ordered, -> {
+    includes(:product, :variant)
+      .references(:product, :variant)
+      .order(Arel.sql("products.name ASC NULLS LAST, variants.name ASC NULLS LAST"))
+  }
 
-  def applies_globally?
-    product_id.nil? && variant_id.nil?
+  def quantity_for(product)
+    supply_rule_quantities.find_by(product: product)&.quantity_needed || quantity_needed
   end
 
   def display_name

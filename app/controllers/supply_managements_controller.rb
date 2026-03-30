@@ -1,4 +1,4 @@
-# app/controllers/supply_managements_controller.rb
+# app/controllers/supply_managements_controller.rb — completo y limpio
 class SupplyManagementsController < ApplicationController
   before_action :authenticate_user!
 
@@ -20,6 +20,7 @@ class SupplyManagementsController < ApplicationController
 
     @grouped_data = pending_reqs
       .group_by { |r| r.supplier_item.provider }
+      .sort_by { |provider, _| provider.name }
       .map do |provider, reqs|
         {
           provider: provider,
@@ -33,6 +34,29 @@ class SupplyManagementsController < ApplicationController
     )
   end
 
+  # POST /supply_managements/sync_all
+  def sync_all
+    from = params[:from] || Date.current.beginning_of_week.to_s
+    to = params[:to] || Date.current.end_of_week.to_s
+
+    ProductDecoder.clear_cache!
+    ProcurementResolver.clear_cache!
+
+    deliveries = LogisticsApiClient.fetch_deliveries(from: from, to: to)
+    results = deliveries.flat_map { |d| ProcurementResolver.resolve_delivery(d) }
+
+    new_count = results.count(&:previously_new_record?)
+    existing_count = results.size - new_count
+
+    msg = "Sincronización completa: #{new_count} requerimientos nuevos"
+    msg += ", #{existing_count} ya existían." if existing_count > 0
+
+    redirect_to supply_managements_path(from: from, to: to), notice: msg
+  rescue => e
+    redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
+  end
+
+  # POST /supply_managements/sync_delivery
   def sync_delivery
     delivery_id = params[:delivery_id]
     delivery = LogisticsApiClient.new.fetch_delivery(delivery_id)
@@ -54,6 +78,7 @@ class SupplyManagementsController < ApplicationController
     redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
   end
 
+  # POST /supply_managements/create_purchase_order
   def create_purchase_order
     provider = Provider.find(params[:provider_id])
     requirement_ids = params[:requirement_ids]
@@ -72,10 +97,10 @@ class SupplyManagementsController < ApplicationController
         alert: "Los requerimientos seleccionados ya no están disponibles."
     end
 
-    @purchase_order = nil
+    purchase_order = nil
 
     ActiveRecord::Base.transaction do
-      @purchase_order = PurchaseOrder.create!(
+      purchase_order = PurchaseOrder.create!(
         provider: provider,
         status: "borrador",
         issued_date: Date.current
@@ -86,26 +111,20 @@ class SupplyManagementsController < ApplicationController
         .each do |(item_id, _specs), reqs|
           first_req = reqs.first
 
-          po_item = @purchase_order.purchase_order_items.create!(
+          po_item = purchase_order.purchase_order_items.create!(
             supplier_item_id: item_id,
             quantity: reqs.sum(&:quantity),
-            unit: first_req.supplier_item.unit,
             unit_cost: first_req.supplier_item.default_cost || 0,
             specifications: first_req.specifications,
             description_override: first_req.supplier_item.name
           )
 
-          reqs.each do |r|
-            r.update!(
-              purchase_order_item_id: po_item.id,
-              status: "in_draft"
-            )
-          end
+          reqs.each { |r| r.update!(purchase_order_item_id: po_item.id, status: "in_draft") }
         end
     end
 
-    redirect_to edit_purchase_order_path(@purchase_order),
-      notice: "OC #{@purchase_order.number} creada como borrador. Revise costos y cantidades antes de enviar."
+    redirect_to edit_purchase_order_path(purchase_order),
+      notice: "OC #{purchase_order.number} creada. Revise costos antes de enviar."
   rescue => e
     redirect_to supply_managements_path,
       alert: "Error al crear la orden: #{e.message}"

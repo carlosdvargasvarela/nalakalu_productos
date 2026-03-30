@@ -5,9 +5,9 @@ class SupplierItemsController < ApplicationController
 
   def index
     @supplier_items = SupplierItem
-      .includes(:provider, supplier_item_properties: {property_value: :property})
-      .order("providers.name, supplier_items.name")
-      .joins(:provider)
+      .includes(provider: {})
+      .includes(supplier_item_properties: {property_value: :property})
+      .order("providers.name ASC, supplier_items.name ASC")
   end
 
   def show

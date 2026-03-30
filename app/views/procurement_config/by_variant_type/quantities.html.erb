@@ -1,0 +1,88 @@
+<div class="container-fluid py-4" style="max-width: 900px;">
+  <%= render "procurement_config/shared/nav" %>
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <%= link_to "Por Tipo de Variante",
+              procurement_config_by_variant_type_path(variant_type_id: @rule.variant_type_id),
+              class: "text-decoration-none" %>
+      </li>
+      <li class="breadcrumb-item active fw-bold">
+        Cantidades: <%= @rule.variant.name %>
+      </li>
+    </ol>
+  </nav>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-list-ol text-primary me-2"></i>Cantidades por Producto
+      </h2>
+      <p class="text-muted small mb-0">
+        Variante: <strong><%= @rule.variant.name %></strong> →
+        Pieza: <strong><%= @rule.supplier_item.name %></strong>
+        <span class="badge bg-secondary-subtle text-secondary ms-1">
+          fallback: <%= @rule.quantity_needed %> <%= @rule.supplier_item.unit %>
+        </span>
+      </p>
+    </div>
+  </div>
+  <%= form_tag procurement_config_save_quantities_by_variant_type_path(@rule), method: :post do %>
+    <div class="card border-0 shadow-sm overflow-hidden">
+      <div class="card-header bg-white py-3 border-bottom">
+        <p class="small text-muted mb-0">
+          <i class="bi bi-info-circle me-1 text-info"></i>
+          Deja en blanco o en <strong>0</strong> para usar el fallback
+          (<%= @rule.quantity_needed %> <%= @rule.supplier_item.unit %>).
+        </p>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-white border-bottom small text-muted text-uppercase"
+                 style="font-size: 0.7rem;">
+            <tr>
+              <th class="ps-4" style="width: 55%;">Producto</th>
+              <th class="text-center" style="width: 25%;">
+                Cantidad (<%= @rule.supplier_item.unit %>)
+              </th>
+              <th class="pe-4 text-center" style="width: 20%;">Fuente</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @products.each do |product| %>
+              <% qty = @quantities[product.id] %>
+              <tr>
+                <td class="ps-4 py-2 fw-bold small"><%= product.name %></td>
+                <td class="py-2 text-center">
+                  <%= number_field_tag "quantities[#{product.id}][quantity_needed]",
+                        qty&.quantity_needed,
+                        step: 0.01, min: 0,
+                        placeholder: @rule.quantity_needed,
+                        class: "form-control form-control-sm text-center border-0 bg-light shadow-none" %>
+                </td>
+                <td class="pe-4 py-2 text-center">
+                  <% if qty %>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill small">
+                      <i class="bi bi-pin-fill me-1"></i>Específica
+                    </span>
+                  <% else %>
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill small">
+                      Fallback
+                    </span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-white p-4 d-flex justify-content-between align-items-center border-top">
+        <%= link_to procurement_config_by_variant_type_path(variant_type_id: @rule.variant_type_id),
+              class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
+          <i class="bi bi-arrow-left me-1"></i>Volver
+        <% end %>
+        <%= submit_tag "Guardar Cantidades",
+              class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
+      </div>
+    </div>
+  <% end %>
+</div>

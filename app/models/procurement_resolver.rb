@@ -1,5 +1,6 @@
 class ProcurementResolver
   def self.resolve_delivery(delivery)
+    clear_cache!
     accumulation = Hash.new { |h, k| h[k] = {qty: 0.0, specs: {}, products: [], rule_id: nil} }
 
     delivery["items"].each do |item|
@@ -13,23 +14,23 @@ class ProcurementResolver
 
       variants_by_strategy[:individual].each do |variant|
         rule = find_rule(variant, base_product)
-        if rule&.supplier_item_id
-          sid = rule.supplier_item_id
-          accumulation[sid][:qty] += (qty_delivered * rule.quantity_needed.to_f)
-          accumulation[sid][:products] << item["product_name"]
-          accumulation[sid][:rule_id] ||= rule.id
-        end
+        next unless rule&.supplier_item_id
+
+        sid = rule.supplier_item_id
+        accumulation[sid][:qty] += qty_delivered * rule.quantity_needed.to_f
+        accumulation[sid][:products] << item["product_name"]
+        accumulation[sid][:rule_id] ||= rule.id
       end
 
       variants_by_strategy[:consolidated].each do |sid, group|
         rule = group[:rule]
-        accumulation[sid][:qty] += (qty_delivered * rule.quantity_needed.to_f)
+        accumulation[sid][:qty] += qty_delivered * rule.quantity_needed.to_f
         accumulation[sid][:products] << item["product_name"]
         accumulation[sid][:rule_id] ||= rule.id
 
         group[:variants].each do |v|
-          key = v.display_name.presence || v.name
-          accumulation[sid][:specs][key] = v.name
+          key = v.variant_type.name
+          accumulation[sid][:specs][key] = v.display_name.presence || v.name
         end
       end
     end
@@ -40,13 +41,15 @@ class ProcurementResolver
   private
 
   def self.persist_accumulation(delivery, accumulation)
-    accumulation.map do |sid, data|
+    results = []
+
+    accumulation.each do |sid, data|
       req = ProcurementRequirement.find_or_initialize_by(
         origin_order_number: delivery["order_number"],
         supplier_item_id: sid
       )
 
-      next if req.ordered?
+      next if req.persisted? && req.ordered?
 
       req.assign_attributes(
         origin_delivery_id: delivery["id"].to_s,
@@ -58,12 +61,14 @@ class ProcurementResolver
         status: "pending"
       )
 
-      req.save!
-      req
-    end.compact
-  rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error "[ProcurementResolver] Error persistiendo: #{e.message}"
-    []
+      if req.save
+        results << req
+      else
+        Rails.logger.error "[ProcurementResolver] Error en sid=#{sid}: #{req.errors.full_messages.join(", ")}"
+      end
+    end
+
+    results
   end
 
   def self.group_variants_by_strategy(variants, base_product)
@@ -98,7 +103,9 @@ class ProcurementResolver
   end
 
   def self.all_supply_rules
-    Thread.current[:supply_rules_cache] ||= SupplyRule.all.to_a
+    Thread.current[:supply_rules_cache] ||= SupplyRule
+      .includes(:variant_type, :variant, :supplier_item, :supply_rule_quantities)
+      .to_a
   end
 
   def self.clear_cache!

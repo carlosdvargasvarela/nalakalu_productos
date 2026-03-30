@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_27_213116) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_30_140257) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -182,6 +182,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_27_213116) do
     t.index ["provider_id"], name: "index_supplier_items_on_provider_id"
   end
 
+  create_table "supply_rule_quantities", force: :cascade do |t|
+    t.integer "supply_rule_id", null: false
+    t.integer "product_id", null: false
+    t.decimal "quantity_needed", precision: 10, scale: 4, default: "1.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_supply_rule_quantities_on_product_id"
+    t.index ["supply_rule_id", "product_id"], name: "index_supply_rule_quantities_on_supply_rule_id_and_product_id", unique: true
+    t.index ["supply_rule_id"], name: "index_supply_rule_quantities_on_supply_rule_id"
+  end
+
   create_table "supply_rules", force: :cascade do |t|
     t.integer "product_id"
     t.integer "variant_type_id", null: false
@@ -248,6 +259,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_27_213116) do
   add_foreign_key "supplier_item_properties", "property_values"
   add_foreign_key "supplier_item_properties", "supplier_items"
   add_foreign_key "supplier_items", "providers"
+  add_foreign_key "supply_rule_quantities", "products"
+  add_foreign_key "supply_rule_quantities", "supply_rules"
   add_foreign_key "supply_rules", "products"
   add_foreign_key "supply_rules", "supplier_items"
   add_foreign_key "supply_rules", "variant_types"

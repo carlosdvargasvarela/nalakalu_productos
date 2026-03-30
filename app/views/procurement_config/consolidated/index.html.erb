@@ -1,0 +1,110 @@
+<div class="container-fluid py-4" style="max-width: 900px;">
+  <%= render "procurement_config/shared/nav" %>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-layers text-primary me-2"></i>Reglas Consolidadas
+      </h2>
+      <p class="text-muted small mb-0">
+        Configura piezas que agrupan múltiples variantes del mismo tipo (fibras F1/F2/F3…).
+      </p>
+    </div>
+  </div>
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+      <%= form_tag procurement_config_consolidated_path, method: :get,
+            class: "row g-2 align-items-end" do %>
+        <div class="col-md-5">
+          <label class="form-label small fw-bold text-muted">Producto:</label>
+          <%= select_tag :product_id,
+                options_from_collection_for_select(@products, :id, :name, params[:product_id]),
+                include_blank: "Seleccionar producto...",
+                class: "form-select border-2 shadow-none",
+                onchange: "this.form.submit()" %>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label small fw-bold text-muted">Tipo de Variante Consolidado:</label>
+          <%= select_tag :variant_type_id,
+                options_from_collection_for_select(@variant_types, :id, :name, params[:variant_type_id]),
+                include_blank: "Seleccionar tipo...",
+                class: "form-select border-2 shadow-none",
+                onchange: "this.form.submit()" %>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-dark w-100 fw-bold">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <% if @product && @variant_type %>
+    <%= form_tag procurement_config_save_consolidated_path(
+          product_id: @product.id, variant_type_id: @variant_type.id
+        ), method: :post do %>
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-primary text-white py-3">
+          <h5 class="mb-0 fw-bold">
+            <i class="bi bi-layers me-2"></i>
+            <%= @product.name %> + <%= @variant_type.name %>
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-muted">Pieza de Proveedor:</label>
+            <%= select_tag "rule[supplier_item_id]",
+                  options_for_select(
+                    @supplier_items.map { |i| ["#{i.name} (#{i.provider.name})", i.id] },
+                    @rule&.supplier_item_id
+                  ),
+                  include_blank: "— Seleccionar pieza —",
+                  class: "form-select border-2 shadow-none" %>
+          </div>
+          <div class="mb-4" style="max-width: 200px;">
+            <label class="form-label small fw-bold text-muted">Cantidad:</label>
+            <%= number_field_tag "rule[quantity_needed]",
+                  @rule&.quantity_needed || 1.0,
+                  step: 0.01, min: 0.01,
+                  class: "form-control border-2 shadow-none" %>
+          </div>
+          <div class="alert alert-info border-0 rounded-3 small">
+            <i class="bi bi-info-circle me-1"></i>
+            Las siguientes variantes de <strong><%= @variant_type.name %></strong> se
+            agruparán en una sola línea de compra:
+            <div class="d-flex flex-wrap gap-1 mt-2">
+              <% @variants.each do |v| %>
+                <span class="badge bg-white text-dark border fw-normal">
+                  <%= v.name %>
+                </span>
+              <% end %>
+            </div>
+          </div>
+          <% if @rule %>
+            <div class="alert alert-success border-0 rounded-3 small">
+              <i class="bi bi-check-circle me-1"></i>
+              Regla activa: <strong><%= @rule.supplier_item.name %></strong>
+              (<%= @rule.supplier_item.provider.name %>) —
+              <%= @rule.quantity_needed %> <%= @rule.supplier_item.unit %>
+            </div>
+          <% end %>
+        </div>
+        <div class="card-footer bg-white p-4 d-flex justify-content-between align-items-center border-top">
+          <% if @rule %>
+            <%= button_to "Eliminar Regla",
+                  procurement_config_save_consolidated_path(
+                    product_id: @product.id, variant_type_id: @variant_type.id
+                  ),
+                  method: :post,
+                  params: { rule: { supplier_item_id: "" } },
+                  form: { data: { turbo_confirm: "¿Eliminar esta regla consolidada?" } },
+                  class: "btn btn-outline-danger rounded-pill px-4 fw-bold" %>
+          <% else %>
+            <span></span>
+          <% end %>
+          <%= submit_tag @rule ? "Actualizar Regla" : "Crear Regla Consolidada",
+                class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
