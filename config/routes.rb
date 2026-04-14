@@ -33,6 +33,9 @@ Rails.application.routes.draw do
   end
 
   resources :variant_types do
+    member do
+      get :variants, defaults: {format: :json}
+    end
     collection do
       post :import
       patch :bulk_move

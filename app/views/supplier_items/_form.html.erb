@@ -1,8 +1,9 @@
-<%# app/views/supplier_items/_form.html.erb %>
-<%= form_with(model: supplier_item) do |f| %>
+<%= form_with(model: supplier_item, data: { controller: "supplier-item-specs" }) do |f| %>
   <% if supplier_item.errors.any? %>
     <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
-      <h6 class="fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:</h6>
+      <h6 class="fw-bold">
+        <i class="bi bi-exclamation-triangle me-2"></i>Errores al guardar:
+      </h6>
       <ul class="mb-0 ps-3 small">
         <% supplier_item.errors.full_messages.each do |message| %>
           <li><%= message %></li>
@@ -11,163 +12,154 @@
     </div>
   <% end %>
   <div class="row g-4">
-    <%# Columna izquierda: datos base %>
-    <div class="col-lg-5">
-      <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
+    <!-- ───────── IZQUIERDA ───────── -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 5rem; z-index: 1000;">        
         <div class="card-body p-4">
-          <h5 class="fw-bold mb-4 text-dark">
-            <i class="bi bi-box-seam-fill me-2 text-primary"></i>Datos de la Pieza
-          </h5>
+          <h6 class="fw-bold text-uppercase text-muted small mb-3">
+            <i class="bi bi-box-seam-fill me-2 text-primary"></i>Datos Base
+          </h6>
           <div class="mb-3">
-            <%= f.label :provider_id, "Proveedor", class: "form-label small fw-bold text-muted" %>
-            <%= f.collection_select :provider_id, Provider.where(active: true).order(:name), :id, :name,
+            <%= f.collection_select :provider_id,
+                  Provider.where(active: true).order(:name),
+                  :id, :name,
                   { prompt: "Seleccionar proveedor..." },
                   { class: "form-select border-2 shadow-none" } %>
           </div>
           <div class="mb-3">
-            <%= f.label :name, "Nombre de la Pieza", class: "form-label small fw-bold text-muted" %>
             <%= f.text_field :name,
                   class: "form-control border-2 shadow-none",
-                  placeholder: "Ej: Base Fibra de Vidrio Mesa X" %>
-            <div class="form-text small">Nombre base — las variantes se configuran como propiedades.</div>
+                  placeholder: "Nombre de la pieza",
+                  data: { action: "input->supplier-item-specs#updatePreview" } %>
           </div>
           <div class="mb-3">
-            <%= f.label :sku, "SKU del Proveedor", class: "form-label small fw-bold text-muted" %>
             <%= f.text_field :sku,
                   class: "form-control border-2 font-monospace shadow-none",
-                  placeholder: "Ej: BFV-001" %>
+                  placeholder: "SKU" %>
           </div>
           <div class="row g-2 mb-3">
             <div class="col-7">
-              <%= f.label :unit, "Unidad de Compra", class: "form-label small fw-bold text-muted" %>
               <%= f.select :unit,
-                    [["Unidad", "unidad"], ["Metro", "metro"], ["Rollo", "rollo"],
-                     ["Juego", "juego"], ["Par", "par"], ["Kg", "kg"]],
+                    SupplierItem::UNITS.map { |u| [u.capitalize, u] },
                     {},
                     { class: "form-select border-2 shadow-none" } %>
             </div>
             <div class="col-5">
-              <%= f.label :default_cost, "Costo Ref.", class: "form-label small fw-bold text-muted" %>
-              <div class="input-group">
-                <span class="input-group-text bg-light border-2 text-muted small">₡</span>
-                <%= f.number_field :default_cost,
-                      step: 0.01, min: 0,
-                      class: "form-control border-2 shadow-none",
-                      placeholder: "0.00" %>
-              </div>
+              <%= f.number_field :default_cost,
+                    step: 0.01,
+                    min: 0,
+                    class: "form-control border-2 shadow-none",
+                    placeholder: "₡0.00" %>
             </div>
           </div>
-          <div class="mb-4">
-            <%= f.label :active, "Estado", class: "form-label small fw-bold text-muted" %>
-            <div class="d-flex gap-3 mt-1">
-              <div class="form-check">
-                <%= f.radio_button :active, true, class: "form-check-input" %>
-                <%= f.label :active_true, "Activa", class: "form-check-label small" %>
-              </div>
-              <div class="form-check">
-                <%= f.radio_button :active, false, class: "form-check-input" %>
-                <%= f.label :active_false, "Inactiva", class: "form-check-label small" %>
-              </div>
-            </div>
+          <div class="rounded-3 bg-light p-3 mb-4">
+            <p class="small text-muted mb-1 fw-semibold">Vista previa en OC:</p>
+            <pre class="small text-dark mb-0 font-monospace"
+                 data-supplier-item-specs-target="previewText"><%= supplier_item.name.presence || "—" %></pre>
           </div>
-          <div class="d-flex justify-content-between align-items-center border-top pt-3">
-            <% back_path = supplier_item.persisted? ? provider_path(supplier_item.provider) : providers_path %>
-            <%= link_to back_path, class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
-              <i class="bi bi-x-lg me-1"></i>Descartar
+          <%= f.submit "Guardar", class: "btn btn-primary w-100 rounded-pill fw-bold" %>
+        </div>
+      </div>
+    </div>
+    <!-- ───────── DERECHA ───────── -->
+    <div class="col-lg-8">
+      <!-- ───── PROPIEDADES ───── -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0">Propiedades</h6>
+          <button type="button"
+                  class="btn btn-sm btn-outline-primary rounded-pill"
+                  data-action="click->supplier-item-specs#addProperty">
+            + Agregar
+          </button>
+        </div>
+        <div class="card-body" data-supplier-item-specs-target="propertiesList">
+          <% supplier_item.supplier_item_properties.properties.each do |sip| %>
+            <div class="spec-row d-flex gap-2 mb-2">
+              <select name="property_value_ids[<%= sip.property_value.property_id %>]"
+                      class="form-select form-select-sm"
+                      data-action="change->supplier-item-specs#updatePreview">
+                <% sip.property_value.property.property_values.each do |pv| %>
+                  <option value="<%= pv.id %>" <%= "selected" if pv.id == sip.property_value_id %>>
+                    <%= pv.value %>
+                  </option>
+                  <% end %>
+                </select>
+                <button type="button"
+                      class="btn btn-outline-danger btn-sm"
+                      data-action="click->supplier-item-specs#removeProperty">
+                  ✕
+                </button>
+              </div>
             <% end %>
-            <%= f.submit supplier_item.new_record? ? "Crear Pieza" : "Guardar Cambios",
-                  class: "btn btn-primary px-4 rounded-pill fw-bold shadow-sm" %>
+          </div>
+        </div>
+        <!-- ───── ESPECIFICACIONES (LABELS) ───── -->
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">Especificaciones</h6>
+            <button type="button"
+                  class="btn btn-sm btn-outline-info rounded-pill"
+                  data-action="click->supplier-item-specs#addSpec">
+              + Agregar
+            </button>
+          </div>
+          <div class="card-body" data-supplier-item-specs-target="specList">
+            <% supplier_item.supplier_item_properties.specs.each do |spec| %>
+              <div class="spec-row d-flex gap-2 mb-2">
+                <input type="text"
+                     name="spec_labels[]"
+                     value="<%= spec.label %>"
+              class="form-control form-control-sm"
+              placeholder="Ej: F1"
+              data-action="input->supplier-item-specs#updatePreview">
+                <button type="button"
+                      class="btn btn-outline-danger btn-sm"
+                      data-action="click->supplier-item-specs#removeSpec">
+                  ✕
+                </button>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
     </div>
-    <%# Columna derecha: propiedades EAV %>
-    <div class="col-lg-7">
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="fw-bold mb-0">
-              <i class="bi bi-sliders me-2 text-info"></i>Propiedades de la Pieza
-            </h5>
-            <p class="small text-muted mb-0">
-              Atributos que diferencian variantes de esta pieza (ej: N1, N2, N3 para fibra de vidrio).
-            </p>
-          </div>
-        </div>
-        <div class="card-body p-4">
-          <% if @properties.present? && @properties.any? %>
-            <% @properties.each do |property| %>
-              <%# Valor actual de esta propiedad para la pieza %>
-              <% current_pv = supplier_item.supplier_item_properties
-                   .find { |sip| sip.property_value&.property_id == property.id }
-                   &.property_value_id %>
-              <div class="mb-3">
-                <label class="form-label small fw-bold text-muted">
-                  <%= property.name %>
-                </label>
-                <% active_values = property.property_values.where(active: true).order(:value) %>
-                <% if active_values.any? %>
-                  <%= select_tag "property_value_ids[#{property.id}]",
-                        options_from_collection_for_select(active_values, :id, :value, current_pv),
-                        include_blank: "— Sin valor —",
-                        class: "form-select border-2 shadow-none" %>
-                <% else %>
-                  <div class="alert alert-warning border-0 rounded-3 py-2 px-3 small mb-0">
-                    <i class="bi bi-exclamation-triangle me-1"></i>
-                    Esta propiedad no tiene valores activos.
-                    <%= link_to "Agregar valores", property_path(property), class: "fw-bold" %>
-                  </div>
-                <% end %>
-              </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-4 text-muted">
-              <i class="bi bi-sliders fs-2 d-block mb-2 opacity-25"></i>
-              <p class="small mb-2">No hay propiedades configuradas en el sistema.</p>
-              <%= link_to new_property_path, class: "btn btn-sm btn-outline-secondary rounded-pill px-3" do %>
-                <i class="bi bi-plus-lg me-1"></i>Crear Propiedad
+    <!-- ───── TEMPLATE PROPERTIES ───── -->
+    <template data-supplier-item-specs-target="propertyTemplate">
+      <div class="spec-row d-flex gap-2 mb-2">
+        <select class="form-select form-select-sm property-group-select"
+              data-action="change->supplier-item-specs#propertyChanged">
+          <option value="">— Seleccionar —</option>
+          <% @properties.each do |prop| %>
+            <optgroup label="<%= prop.name %>">
+              <% prop.property_values.each do |pv| %>
+                <option value="<%= pv.id %>" data-property-id="<%= prop.id %>">
+                  <%= pv.value %>
+                </option>
               <% end %>
-            </div>
+            </optgroup>
           <% end %>
-        </div>
+        </select>
+        <button type="button"
+              class="btn btn-outline-danger btn-sm"
+              data-action="click->supplier-item-specs#removeProperty">
+          ✕
+        </button>
       </div>
-      <%# Reglas de abastecimiento asociadas (solo en edición) %>
-      <% if supplier_item.persisted? %>
-        <div class="card border-0 shadow-sm rounded-4 mt-4">
-          <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0">
-              <i class="bi bi-diagram-3 me-2 text-success"></i>Reglas de Abastecimiento
-            </h5>
-            <span class="badge bg-success-subtle text-success rounded-pill px-2">
-              <%= supplier_item.supply_rules.count %> reglas
-            </span>
-          </div>
-          <% rules = supplier_item.supply_rules.includes(:product, :variant, :variant_type) %>
-          <% if rules.any? %>
-            <div class="list-group list-group-flush">
-              <% rules.each do |rule| %>
-                <div class="list-group-item px-4 py-2 d-flex justify-content-between align-items-center">
-                  <div>
-                    <span class="fw-bold small text-dark"><%= rule.product&.name || "Todos" %></span>
-                    <span class="text-muted small mx-1">+</span>
-                    <span class="badge bg-light text-dark border fw-normal small">
-                      <%= rule.variant&.name || rule.variant_type&.name || "Cualquier variante" %>
-                    </span>
-                  </div>
-                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 small">
-                    <%= rule.quantity_needed %> <%= supplier_item.unit %>
-                  </span>
-                </div>
-              <% end %>
-            </div>
-          <% else %>
-            <div class="card-body text-center py-3 text-muted small">
-              <i class="bi bi-info-circle me-1"></i>
-              Sin reglas aún.
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-  </div>
-<% end %>
+    </template>
+    <!-- ───── TEMPLATE SPECS ───── -->
+    <template data-supplier-item-specs-target="specTemplate">
+      <div class="spec-row d-flex gap-2 mb-2">
+        <input type="text"
+             name="spec_labels[]"
+             class="form-control form-control-sm"
+             placeholder="Ej: F1"
+             data-action="input->supplier-item-specs#updatePreview">
+        <button type="button"
+              class="btn btn-outline-danger btn-sm"
+              data-action="click->supplier-item-specs#removeSpec">
+          ✕
+        </button>
+      </div>
+    </template>
+  <% end %>

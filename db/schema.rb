@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_30_140257) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_30_215121) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -160,10 +160,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_30_140257) do
 
   create_table "supplier_item_properties", force: :cascade do |t|
     t.integer "supplier_item_id", null: false
-    t.integer "property_value_id", null: false
+    t.integer "property_value_id"
     t.integer "position", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "label"
+    t.string "spec_type", default: "property"
     t.index ["property_value_id"], name: "index_supplier_item_properties_on_property_value_id"
     t.index ["supplier_item_id", "property_value_id"], name: "index_supplier_item_props_unique", unique: true
     t.index ["supplier_item_id"], name: "index_supplier_item_properties_on_supplier_item_id"

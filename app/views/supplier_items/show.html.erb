@@ -51,7 +51,7 @@
             <div class="d-flex flex-wrap gap-1">
               <% @supplier_item.supplier_item_properties.includes(property_value: :property).each do |prop| %>
                 <span class="badge border text-dark fw-normal">
-                  <%= prop.label %>
+                  <%= prop.label %>: <%= prop.value %>
                 </span>
               <% end %>
             </div>

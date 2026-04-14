@@ -1,4 +1,3 @@
-# app/controllers/supplier_items_controller.rb
 class SupplierItemsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
@@ -21,6 +20,7 @@ class SupplierItemsController < ApplicationController
     @supplier_item = SupplierItem.new
     @supplier_item.provider_id = params[:provider_id] if params[:provider_id]
     @properties = Property.where(active: true).includes(:property_values).order(:name)
+    @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
   end
 
   def create
@@ -32,12 +32,14 @@ class SupplierItemsController < ApplicationController
         notice: "Pieza '#{@supplier_item.name}' creada correctamente."
     else
       @properties = Property.where(active: true).includes(:property_values).order(:name)
+      @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
     @properties = Property.where(active: true).includes(:property_values).order(:name)
+    @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
   end
 
   def update
@@ -47,6 +49,7 @@ class SupplierItemsController < ApplicationController
         notice: "Pieza actualizada correctamente."
     else
       @properties = Property.where(active: true).includes(:property_values).order(:name)
+      @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -57,23 +60,17 @@ class SupplierItemsController < ApplicationController
     redirect_to provider_path(provider), notice: "Pieza eliminada."
   end
 
-  # NUEVO: Método para procesar la carga masiva
   def import
     if params[:file].present?
-      # 1. Validar extensión básica
       unless params[:file].original_filename.downcase.end_with?(".csv")
         return redirect_to supplier_items_path, alert: "Por favor sube un archivo en formato CSV."
       end
 
-      # 2. Guardar archivo temporalmente
       temp_dir = Rails.root.join("tmp", "imports")
       FileUtils.mkdir_p(temp_dir) unless Dir.exist?(temp_dir)
-
       file_path = temp_dir.join("supplier_items_#{Time.now.to_i}_#{params[:file].original_filename}")
-
       File.binwrite(file_path, params[:file].read)
 
-      # 3. Encolar el Job
       ImportSupplierItemsJob.perform_later(file_path.to_s, current_user.id)
 
       redirect_to supplier_items_path,
@@ -89,36 +86,74 @@ class SupplierItemsController < ApplicationController
     @supplier_item = SupplierItem.find(params[:id])
   end
 
-  # Sincroniza los property_values seleccionados con supplier_item_properties
+  # Sincroniza propiedades simples Y especificaciones de variante
   def sync_item_properties
-    return unless params[:property_value_ids].present?
-
-    # El form envía: params[:property_value_ids] = { "1" => "5", "2" => "8" }
-    selected_ids = params[:property_value_ids].to_h.values
-      .reject(&:blank?)
-      .map(&:to_i)
-      .uniq
+    # ✅ Usamos los parámetros permitidos para evitar UnfilteredParameters
+    safe_params = extra_properties_params
 
     ActiveRecord::Base.transaction do
-      # 1. Eliminar los que ya no están en la selección
+      # ── 1. PROPERTIES (Fijas) ─────────────────────────
+      # Convertimos el hash de IDs a un array de enteros limpios
+      selected_pv_ids = (safe_params[:property_value_ids] || {})
+        .to_h.values
+        .reject(&:blank?)
+        .map(&:to_i)
+        .uniq
+
+      # Eliminar las que ya no están seleccionadas
       @supplier_item.supplier_item_properties
-        .where.not(property_value_id: selected_ids)
+        .properties
+        .where.not(property_value_id: selected_pv_ids)
         .delete_all
 
-      # 2. Crear los nuevos sin duplicar
-      existing_ids = @supplier_item.supplier_item_properties.pluck(:property_value_id)
-      (selected_ids - existing_ids).each_with_index do |pv_id, index|
+      # Obtener las que ya existen para no duplicar
+      existing_pv_ids = @supplier_item.supplier_item_properties
+        .properties
+        .pluck(:property_value_id)
+
+      # Crear las nuevas
+      (selected_pv_ids - existing_pv_ids).each_with_index do |pv_id, idx|
         @supplier_item.supplier_item_properties.create!(
           property_value_id: pv_id,
-          position: index
+          spec_type: "property",
+          position: idx
+        )
+      end
+
+      # ── 2. SPECS (LABELS dinámicos como F1, F2) ────────
+      incoming_labels = Array(safe_params[:spec_labels])
+        .map(&:strip)
+        .reject(&:blank?)
+
+      # Eliminar labels que ya no vienen en el form
+      @supplier_item.supplier_item_properties
+        .specs
+        .where.not(label: incoming_labels)
+        .delete_all
+
+      # Posicionamiento después de las propiedades fijas
+      property_count = selected_pv_ids.size
+
+      incoming_labels.each_with_index do |label, idx|
+        # Buscamos o inicializamos para mantener consistencia
+        prop = @supplier_item.supplier_item_properties
+          .specs
+          .find_or_initialize_by(label: label)
+
+        prop.update!(
+          spec_type: "spec",
+          position: property_count + idx
         )
       end
     end
   end
 
   def supplier_item_params
-    params.require(:supplier_item).permit(
-      :provider_id, :name, :sku, :unit, :default_cost, :active
-    )
+    params.require(:supplier_item).permit(:provider_id, :name, :sku, :unit, :default_cost, :active)
+  end
+
+  # Permite property_value_ids como Hash y spec_labels como Array
+  def extra_properties_params
+    params.permit(property_value_ids: {}, spec_labels: [])
   end
 end

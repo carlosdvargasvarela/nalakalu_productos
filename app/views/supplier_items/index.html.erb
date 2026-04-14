@@ -38,14 +38,14 @@
           </thead>
           <tbody>
             <% @supplier_items.each do |item| %>
-              <tr class="<​%= 'opacity-50' unless item.active %>">
+              <tr class="<%= 'opacity-50' unless item.active %>">
                 <td class="ps-4 py-3">
                   <div class="fw-bold text-dark"><%= item.name %></div>
                   <% if item.supplier_item_properties.any? %>
                     <div class="d-flex flex-wrap gap-1 mt-1">
                       <% item.supplier_item_properties.each do |sip| %>
                         <span class="badge bg-info-soft text-info border border-info border-opacity-10 fw-normal" style="font-size: 0.7rem;">
-                          <%= sip.label %>
+                          <%= sip.label_display %>
                         </span>
                       <% end %>
                     </div>

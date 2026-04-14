@@ -17,6 +17,7 @@ class SupplierItem < ApplicationRecord
 
   scope :active, -> { where(active: true) }
 
+  # ── Presentación básica ─────────────────────────────────────────
   def display_name
     sku.present? ? "#{name} (#{sku})" : name
   end
@@ -25,16 +26,44 @@ class SupplierItem < ApplicationRecord
     ActionController::Base.helpers.number_to_currency(default_cost || 0)
   end
 
-  # Devuelve las specs formateadas para mostrar en OC o vistas
-  # Ej: "N1: MS-01 | N2: MS-07 | N3: MS-03"
+  # ── Propiedades ─────────────────────────────────────────────────
+  def has_properties?
+    supplier_item_properties.any?
+  end
+
+  # Resumen legible para vistas (compatible con código existente)
+  # Ej: "Ancho: 50mm | F1: MS-02 | F2: MS-03"
   def specs_summary
     supplier_item_properties
       .includes(property_value: :property)
-      .map { |sip| "#{sip.property_value.property.name}: #{sip.property_value.value}" }
+      .map(&:label_display)
       .join(" | ")
   end
 
-  def has_properties?
-    supplier_item_properties.any?
+  # Descripción completa para mostrar en OC
+  # Ej: "Base Fibra Mesa Cahuita (Ancho: 50mm, F1: MS-02, F2: MS-03)"
+  def full_description(specifications = {})
+    base = name
+
+    spec_lines = supplier_item_properties.specs.map do |spec|
+      value = specifications[spec.label]
+      next unless value.present?
+
+      "#{spec.label}: #{value}"
+    end.compact
+
+    return base if spec_lines.empty?
+
+    "#{base}\n" + spec_lines.join("\n")
+  end
+
+  # Array de hashes para serializar en specifications JSON de la OC
+  # Ej: [{label: "Ancho", value: "50mm"}, {label: "F1", value: "MS-02", variant_id: 3}]
+  def default_specifications
+    supplier_item_properties
+      .properties
+      .includes(property_value: :property)
+      .map(&:to_spec)
+      .compact
   end
 end

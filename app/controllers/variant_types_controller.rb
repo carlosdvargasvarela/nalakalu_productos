@@ -1,8 +1,7 @@
-# app/controllers/variant_types_controller.rb
 class VariantTypesController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_variant_type, only: %i[show edit update destroy]
+  before_action :set_variant_type, only: %i[show edit update destroy variants]
 
   def index
     @variant_types = VariantType.all
@@ -61,7 +60,15 @@ class VariantTypesController < ApplicationController
     redirect_to variant_types_path, notice: "Importación de tipos de variante iniciada."
   end
 
-  # Mover múltiples variantes a otro tipo (desde variant_types/show)
+  # GET /variant_types/:id/variants.json
+  # Usado por Stimulus para cargar variantes dinámicamente en el form de SupplierItem
+  def variants
+    render json: @variant_type.variants
+      .where(active: true)
+      .order(:name)
+      .select(:id, :name, :display_name, :code)
+  end
+
   def bulk_move
     variant_ids = Array(params[:variant_ids]).map(&:to_i).uniq
     new_type = VariantType.find(params[:new_type_id])
@@ -95,7 +102,6 @@ class VariantTypesController < ApplicationController
       notice: "#{moved} variante(s) movidas a '#{new_type.name}'."
   end
 
-  # Asignar variantes huérfanas a un tipo (desde variants/index)
   def bulk_assign
     variant_ids = Array(params[:variant_ids]).map(&:to_i).uniq
     target_type = VariantType.find(params[:variant_type_id])
