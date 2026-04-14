@@ -1,0 +1,31 @@
+<tr>
+  <td class="ps-4" style="width: 40%">
+    <div class="fw-bold text-dark">
+      <%= rule.product&.name || "Global" %>
+    </div>
+    <div class="small text-muted">
+      <%= rule.variant&.name || rule.variant_type&.name || "Todas las variantes" %>
+    </div>
+  </td>
+  <td>
+    <span class="badge <%= rule.rule_type == 'consolidated' ? 'bg-info-subtle text-info-emphasis border border-info-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle' %> rounded-pill px-3">
+      <%= rule.rule_type == 'consolidated' ? 'Consolidado' : 'Indiv.' %>
+    </span>
+  </td>
+  <td class="text-center">
+    <div class="fw-bold fs-5 text-primary"><%= rule.quantity_needed %></div>
+    <div class="small text-muted text-uppercase" style="font-size: 0.6rem;"><%= supplier_item.unit %></div>
+  </td>
+  <td class="pe-4 text-end">
+    <% 
+      target_path = case rule.rule_type
+        when "consolidated" then procurement_config_consolidated_path(product_id: rule.product_id, variant_type_id: rule.variant_type_id)
+        when "by_product" then procurement_config_by_product_path(product_id: rule.product_id)
+        else procurement_config_by_variant_type_path(variant_type_id: rule.variant_type_id)
+      end
+    %>
+    <%= link_to target_path, class: "btn btn-sm btn-outline-dark rounded-pill shadow-sm border-0 bg-light", title: "Ver flujo completo", data: { turbo_frame: "_top" } do %>
+      <i class="bi bi-gear-fill"></i>
+    <% end %>
+  </td>
+</tr>

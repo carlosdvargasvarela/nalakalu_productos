@@ -4,23 +4,45 @@ class SupplierItemsController < ApplicationController
   before_action :set_supplier_item, only: %i[show edit update destroy]
 
   def index
+    @providers = Provider.where(active: true).order(:name)
+
     @supplier_items = SupplierItem
-      .includes(:provider)
-      .includes(supplier_item_properties: {property_value: :property})
+      .joins(:provider)
+      .includes(
+        :provider,
+        :supply_rules,
+        supplier_item_properties: {property_value: :property}
+      )
       .order("providers.name ASC, supplier_items.name ASC")
+
+    @selected_supplier_item = if params[:selected_id].present?
+      SupplierItem.includes(
+        :provider,
+        supplier_item_properties: {property_value: :property}
+      ).find_by(id: params[:selected_id])
+    end
+
+    @selected_supply_rules = if @selected_supplier_item
+      @selected_supplier_item.supply_rules
+        .includes(:product, :variant, :variant_type)
+        .to_a
+        .sort_by { |rule| [rule.product&.name.to_s, rule.variant&.name.to_s, rule.variant_type&.name.to_s] }
+    else
+      []
+    end
   end
 
   def show
     @supply_rules = @supplier_item.supply_rules
       .includes(:product, :variant, :variant_type)
-      .order("products.name, variants.name")
+      .to_a
+      .sort_by { |rule| [rule.product&.name.to_s, rule.variant&.name.to_s, rule.variant_type&.name.to_s] }
   end
 
   def new
     @supplier_item = SupplierItem.new
     @supplier_item.provider_id = params[:provider_id] if params[:provider_id]
-    @properties = Property.where(active: true).includes(:property_values).order(:name)
-    @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
+    load_form_dependencies
   end
 
   def create
@@ -28,36 +50,35 @@ class SupplierItemsController < ApplicationController
 
     if @supplier_item.save
       sync_item_properties
-      redirect_to provider_path(@supplier_item.provider),
+      redirect_to supplier_items_path(selected_id: @supplier_item.id),
         notice: "Pieza '#{@supplier_item.name}' creada correctamente."
     else
-      @properties = Property.where(active: true).includes(:property_values).order(:name)
-      @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
+      load_form_dependencies
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    @properties = Property.where(active: true).includes(:property_values).order(:name)
-    @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
+    load_form_dependencies
   end
 
   def update
     if @supplier_item.update(supplier_item_params)
       sync_item_properties
-      redirect_to provider_path(@supplier_item.provider),
+      redirect_to supplier_items_path(selected_id: @supplier_item.id),
         notice: "Pieza actualizada correctamente."
     else
-      @properties = Property.where(active: true).includes(:property_values).order(:name)
-      @variant_types = VariantType.where(active: true).includes(:variants).order(:name)
+      load_form_dependencies
       render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
-    provider = @supplier_item.provider
+    deleted_name = @supplier_item.name
     @supplier_item.destroy
-    redirect_to provider_path(provider), notice: "Pieza eliminada."
+
+    redirect_to supplier_items_path,
+      notice: "Pieza '#{deleted_name}' eliminada."
   end
 
   def import
@@ -68,6 +89,7 @@ class SupplierItemsController < ApplicationController
 
       temp_dir = Rails.root.join("tmp", "imports")
       FileUtils.mkdir_p(temp_dir) unless Dir.exist?(temp_dir)
+
       file_path = temp_dir.join("supplier_items_#{Time.now.to_i}_#{params[:file].original_filename}")
       File.binwrite(file_path, params[:file].read)
 
@@ -86,32 +108,30 @@ class SupplierItemsController < ApplicationController
     @supplier_item = SupplierItem.find(params[:id])
   end
 
-  # Sincroniza propiedades simples Y especificaciones de variante
+  def load_form_dependencies
+    @properties = Property.where(active: true).includes(:property_values).order(:name)
+  end
+
   def sync_item_properties
-    # ✅ Usamos los parámetros permitidos para evitar UnfilteredParameters
     safe_params = extra_properties_params
 
     ActiveRecord::Base.transaction do
-      # ── 1. PROPERTIES (Fijas) ─────────────────────────
-      # Convertimos el hash de IDs a un array de enteros limpios
       selected_pv_ids = (safe_params[:property_value_ids] || {})
-        .to_h.values
+        .to_h
+        .values
         .reject(&:blank?)
         .map(&:to_i)
         .uniq
 
-      # Eliminar las que ya no están seleccionadas
       @supplier_item.supplier_item_properties
         .properties
         .where.not(property_value_id: selected_pv_ids)
         .delete_all
 
-      # Obtener las que ya existen para no duplicar
       existing_pv_ids = @supplier_item.supplier_item_properties
         .properties
         .pluck(:property_value_id)
 
-      # Crear las nuevas
       (selected_pv_ids - existing_pv_ids).each_with_index do |pv_id, idx|
         @supplier_item.supplier_item_properties.create!(
           property_value_id: pv_id,
@@ -120,22 +140,19 @@ class SupplierItemsController < ApplicationController
         )
       end
 
-      # ── 2. SPECS (LABELS dinámicos como F1, F2) ────────
       incoming_labels = Array(safe_params[:spec_labels])
         .map(&:strip)
         .reject(&:blank?)
+        .uniq
 
-      # Eliminar labels que ya no vienen en el form
       @supplier_item.supplier_item_properties
         .specs
         .where.not(label: incoming_labels)
         .delete_all
 
-      # Posicionamiento después de las propiedades fijas
       property_count = selected_pv_ids.size
 
       incoming_labels.each_with_index do |label, idx|
-        # Buscamos o inicializamos para mantener consistencia
         prop = @supplier_item.supplier_item_properties
           .specs
           .find_or_initialize_by(label: label)
@@ -152,7 +169,6 @@ class SupplierItemsController < ApplicationController
     params.require(:supplier_item).permit(:provider_id, :name, :sku, :unit, :default_cost, :active)
   end
 
-  # Permite property_value_ids como Hash y spec_labels como Array
   def extra_properties_params
     params.permit(property_value_ids: {}, spec_labels: [])
   end

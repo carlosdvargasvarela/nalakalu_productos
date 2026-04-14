@@ -1,15 +1,28 @@
-<%# app/views/supplier_items/new.html.erb %>
-<div class="container-fluid py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
-      <li class="breadcrumb-item active fw-bold">Nueva Pieza</li>
-    </ol>
-  </nav>
+<% content = capture do %>
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0 text-dark">
-      <i class="bi bi-plus-circle-fill me-2 text-primary"></i>Nueva Pieza de Proveedor
-    </h2>
+    <div>
+      <h2 class="fw-bold mb-0 text-dark">
+        <i class="bi bi-plus-circle-fill me-2 text-primary"></i>Nueva Pieza de Proveedor
+      </h2>
+      <p class="text-muted mb-0 small">
+        Configura datos base, propiedades fijas y specs permitidas.
+      </p>
+    </div>
   </div>
   <%= render "form", supplier_item: @supplier_item %>
-</div>
+<% end %>
+<% if turbo_frame_request? %>
+  <%= turbo_frame_tag "supplier_item_workspace" do %>
+    <%= content %>
+  <% end %>
+<% else %>
+  <div class="container-fluid py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><%= link_to "Piezas de Proveedor", supplier_items_path, class: "text-decoration-none" %></li>
+        <li class="breadcrumb-item active fw-bold">Nueva Pieza</li>
+      </ol>
+    </nav>
+    <%= content %>
+  </div>
+<% end %>

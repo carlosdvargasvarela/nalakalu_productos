@@ -1,0 +1,79 @@
+<%
+  rules = item.supply_rules.to_a
+  props = item.supplier_item_properties.to_a
+  specs = props.select { |sip| sip.spec_type == "spec" }
+  
+  has_consolidated = rules.any? { |rule| rule.rule_type == "consolidated" }
+  has_individual = rules.any? { |rule| rule.rule_type != "consolidated" }
+
+  # Determinar modo de uso
+  mode_key = has_consolidated && has_individual ? "mixed" : (has_consolidated ? "consolidated" : (has_individual ? "individual" : "unused"))
+  
+  # Análisis de Errores/Faltantes (Smart Warnings)
+  warnings = []
+  warnings << "costo" if item.default_cost.to_f <= 0
+  warnings << "reglas" if rules.empty?
+  warnings << "specs" if has_consolidated && specs.empty?
+  warnings << "inactivo" unless item.active
+
+  status_key = !item.active ? "inactive" : (warnings.empty? ? "ready" : "incomplete")
+%>
+<div
+  class="list-group-item border-0 border-bottom supplier-item-card p-3"
+  data-supplier-item-filters-target="row"
+  data-name="<%= [item.name, item.sku, item.provider&.name].join(' ').downcase %>"
+  data-provider-id="<%= item.provider_id %>"
+    data-mode="<%= mode_key %>"
+      data-status="<%= status_key %>">
+  <div class="d-flex justify-content-between align-items-start gap-3">
+    <div class="flex-grow-1">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h6 class="fw-bold mb-0 <%= 'text-muted' unless item.active %>"><%= item.name %></h6>
+        <% if status_key == "ready" %>
+          <i class="bi bi-check-circle-fill text-success" title="Configuración completa"></i>
+        <% elsif status_key == "incomplete" %>
+          <i class="bi bi-exclamation-circle-fill text-warning" title="Configuración incompleta: <%= warnings.join(', ') %>"></i>
+        <% else %>
+          <i class="bi bi-dash-circle-fill text-secondary"></i>
+        <% end %>
+      </div>
+      <div class="small text-muted mb-2 d-flex align-items-center flex-wrap gap-2">
+        <span class="d-flex align-items-center">
+          <i class="bi bi-building me-1"></i><%= item.provider&.name %>
+        </span>
+        <% if item.sku.present? %>
+          <span class="badge bg-light text-dark font-monospace border-0"><%= item.sku %></span>
+        <% end %>
+      </div>
+      <div class="d-flex flex-wrap gap-1">
+        <!-- Badge de Modo -->
+        <% mode_cfg = { 
+          "individual" => ["Individual", "bg-primary-subtle text-primary border-primary-subtle"],
+          "consolidated" => ["Consolidado", "bg-info-subtle text-info-emphasis border-info-subtle"],
+          "mixed" => ["Mixto", "bg-dark shadow-sm"],
+          "unused" => ["Sin uso", "bg-light text-muted border"]
+        }[mode_key] %>
+        <span class="badge border <%= mode_cfg[1] %>" style="font-size: 0.65rem; text-transform: uppercase;">
+          <%= mode_cfg[0] %>
+        </span>
+        <!-- Badges de Datos -->
+        <span class="badge bg-light text-muted border-0 fw-normal">
+          <i class="bi bi-diagram-3 me-1"></i><%= rules.size %>
+        </span>
+        <span class="badge bg-light text-muted border-0 fw-normal">
+          <i class="bi bi-tag me-1"></i><%= specs.size %>
+        </span>
+      </div>
+    </div>
+    <div class="text-end">
+      <div class="fw-bold text-dark small mb-2">
+        <%= number_to_currency(item.default_cost, unit: "₡", precision: 0) %>
+      </div>
+      <%= link_to supplier_item_path(item),
+        class: "btn btn-sm btn-light border shadow-sm rounded-pill px-3",
+        data: { turbo_frame: "supplier_item_workspace" } do %>
+        Ver <i class="bi bi-chevron-right ms-1 small"></i>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,121 +1,18 @@
-<%# app/views/supplier_items/show.html.erb %>
-<div class="container-fluid py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
-      <li class="breadcrumb-item">
-        <%= link_to @supplier_item.provider.name, @supplier_item.provider, class: "text-decoration-none" %>
-      </li>
-      <li class="breadcrumb-item active fw-bold"><%= @supplier_item.name %></li>
-    </ol>
-  </nav>
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2 class="fw-bold mb-0 text-dark">
-        <span class="text-primary"><%= @supplier_item.name %></span>
-      </h2>
-      <code class="text-muted small"><%= @supplier_item.sku %></code>
-    </div>
-    <div class="d-flex gap-2">
-      <%= link_to @supplier_item.provider, class: "btn btn-outline-secondary rounded-pill px-4" do %>
-        <i class="bi bi-arrow-left me-2"></i>Volver al Proveedor
-      <% end %>
-      <%= link_to edit_supplier_item_path(@supplier_item), class: "btn btn-primary rounded-pill px-4" do %>
-        <i class="bi bi-pencil me-2"></i>Editar Pieza
-      <% end %>
-    </div>
+<% content = capture do %>
+  <%= render "detail_panel", supplier_item: @supplier_item, supply_rules: @supply_rules %>
+<% end %>
+<% if turbo_frame_request? %>
+  <%= turbo_frame_tag "supplier_item_workspace" do %>
+    <%= content %>
+  <% end %>
+<% else %>
+  <div class="container-fluid py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><%= link_to "Piezas de Proveedor", supplier_items_path, class: "text-decoration-none" %></li>
+        <li class="breadcrumb-item active fw-bold"><%= @supplier_item.name %></li>
+      </ol>
+    </nav>
+    <%= content %>
   </div>
-  <div class="row g-4">
-    <%# Columna izquierda: detalles técnicos %>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-4">
-          <h6 class="fw-bold text-uppercase text-muted small mb-3">Detalles Técnicos</h6>
-          <ul class="list-unstyled mb-0">
-            <li class="mb-2 d-flex justify-content-between">
-              <span class="text-muted">Unidad</span>
-              <span class="fw-semibold"><%= @supplier_item.unit %></span>
-            </li>
-            <li class="mb-2 d-flex justify-content-between">
-              <span class="text-muted">Costo</span>
-              <span class="fw-semibold"><%= number_to_currency(@supplier_item.default_cost, unit: "₡", separator: ",", delimiter: ".") %></span>
-            </li>
-            <li class="mb-2 d-flex justify-content-between">
-              <span class="text-muted">Proveedor</span>
-              <span class="fw-semibold"><%= link_to @supplier_item.provider.name, @supplier_item.provider, class: "text-decoration-none text-primary" %></span>
-            </li>
-          </ul>
-          <% if @supplier_item.supplier_item_properties.any? %>
-            <hr class="my-3">
-            <h6 class="fw-bold text-uppercase text-muted small mb-2">Propiedades</h6>
-            <div class="d-flex flex-wrap gap-1">
-              <% @supplier_item.supplier_item_properties.includes(property_value: :property).each do |prop| %>
-                <span class="badge border text-dark fw-normal">
-                  <%= prop.label %>: <%= prop.value %>
-                </span>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-    <%# Columna derecha: reglas de abastecimiento %>
-    <div class="col-md-8">
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white py-3 px-4 border-bottom">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0">Productos que usan esta pieza</h6>
-            <span class="badge bg-light text-dark border"><%= @supply_rules.size %> regla<%= @supply_rules.size == 1 ? "" : "s" %></span>
-          </div>
-        </div>
-        <% if @supply_rules.any? %>
-          <div class="table-responsive">
-            <table class="table align-middle mb-0">
-              <thead class="table-light">
-                <tr class="small text-muted">
-                  <th class="ps-4">Producto Base</th>
-                  <th>Variante / Tipo</th>
-                  <th>Cantidad</th>
-                  <th class="pe-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @supply_rules.each do |rule| %>
-                  <tr>
-                    <td class="ps-4">
-                      <% if rule.product&.name %>
-                        <%= rule.product.name %>
-                      <% else %>
-                        <span class="text-muted fst-italic">Todos los productos</span>
-                      <% end %>
-                    </td>
-                    <td>
-                      <span class="badge bg-light text-dark border fw-normal">
-                        <%= rule.variant&.name || rule.variant_type&.name %>
-                      </span>
-                    </td>
-                    <td class="fw-semibold">
-                      <%= rule.quantity_needed %> <span class="text-muted small"><%= @supplier_item.unit %></span>
-                    </td>
-                    <td class="pe-4 text-end">
-                      <% if rule.product_id %>
-                        <%= link_to "Ver regla", procurement_config_by_product_path(product_id: rule.product_id), class: "btn btn-sm btn-outline-primary rounded-pill" %>
-                      <% else %>
-                        <%= link_to "Ver regla", procurement_config_by_variant_type_path(variant_type_id: rule.variant_type_id), class: "btn btn-sm btn-outline-primary rounded-pill" %>
-                      <% end %>
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          </div>
-        <% else %>
-          <div class="text-center py-5 text-muted">
-            <i class="bi bi-diagram-3 fs-2 d-block mb-2"></i>
-            <p class="mb-0">Esta pieza aún no tiene reglas de abastecimiento asignadas.</p>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
+<% end %>

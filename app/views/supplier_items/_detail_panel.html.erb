@@ -1,0 +1,184 @@
+<%
+  rules = Array(supply_rules)
+  props = supplier_item.supplier_item_properties.to_a
+  fixed_properties = props.select { |sip| sip.spec_type == "property" }
+  specs = props.select { |sip| sip.spec_type == "spec" }
+
+  has_consolidated = rules.any? { |rule| rule.rule_type == "consolidated" }
+  has_individual = rules.any? { |rule| rule.rule_type != "consolidated" }
+  
+  # Agrupar reglas
+  product_rules = rules.select { |r| r.product_id.present? }
+  global_rules = rules.select { |r| r.product_id.nil? }
+%>
+<div class="detail-header p-4 bg-white border-bottom rounded-top-4">
+  <div class="d-flex justify-content-between align-items-start">
+    <div>
+      <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb mb-0 small">
+          <li class="breadcrumb-item"><%= supplier_item.provider.name %></li>
+          <li class="breadcrumb-item active"><%= supplier_item.sku %></li>
+        </ol>
+      </nav>
+      <h3 class="fw-bold mb-1"><%= supplier_item.name %></h3>
+      <div class="d-flex gap-2 align-items-center">
+        <span class="text-muted small">Costo Ref: <strong><%= number_to_currency(supplier_item.default_cost, unit: "₡") %> / <%= supplier_item.unit %></strong></span>
+        <span class="badge bg-<%= supplier_item.active ? 'success' : 'secondary' %> rounded-pill" style="font-size: 0.6rem;">
+          <%= supplier_item.active ? 'ACTIVO' : 'INACTIVO' %>
+        </span>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to edit_supplier_item_path(supplier_item), class: "btn btn-primary rounded-pill px-4", data: { turbo_frame: "supplier_item_workspace" } do %>
+        <i class="bi bi-pencil-square me-2"></i>Editar
+      <% end %>
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary rounded-circle p-2" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-three-dots-vertical"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+          <li>
+            <%= button_to supplier_item_path(supplier_item), method: :delete, class: "dropdown-item text-danger", data: { confirm: "¿Eliminar esta pieza? Esto afectará las reglas de abastecimiento." } do %>
+              <i class="bi bi-trash me-2"></i>Eliminar pieza
+            <% end %>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="p-4 bg-light-subtle min-vh-100">
+  <!-- SECCIÓN 1: PROCUREMENT PREVIEW (LO NUEVO) -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 border-start border-4 border-info">
+    <div class="card-body p-4">
+      <h6 class="fw-bold text-uppercase text-info small mb-3">
+        <i class="bi bi-eye-fill me-2"></i>Simulación de Abastecimiento
+      </h6>
+      <div class="row g-4 align-items-center">
+        <div class="col-md-7">
+          <p class="small text-muted mb-3">Así se generará la línea de compra cuando este ítem sea requerido:</p>
+          <div class="bg-white border rounded-4 p-3 font-monospace shadow-sm">
+            <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+              <span class="text-primary fw-bold"><%= supplier_item.name %></span>
+              <span class="badge bg-dark">CANT: X <%= supplier_item.unit %></span>
+            </div>
+            <% if has_consolidated %>
+              <div class="ps-3 text-secondary small">
+                <% if specs.any? %>
+                  <% specs.each do |spec| %>
+                    <div><i class="bi bi-arrow-return-right me-2"></i><%= spec.label %>: <span class="bg-warning-subtle text-dark px-1">VALOR_VARIANTE</span></div>
+                  <% end %>
+                <% else %>
+                  <div class="text-danger fw-bold"><i class="bi bi-x-circle me-2"></i>ERROR: Sin specs permitidas para modo consolidado</div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="ps-3 text-muted small fst-italic">Mapeo directo (Sin especificaciones variables)</div>
+            <% end %>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="p-3 bg-white rounded-4 border border-info-subtle h-100">
+            <h6 class="small fw-bold mb-2">Lógica aplicada:</h6>
+            <div class="small text-muted">
+              <% if has_consolidated %>
+                <div class="mb-2 text-info fw-bold"><i class="bi bi-layers-half me-2"></i>Modo Consolidado</div>
+                El sistema buscará las variantes del producto vendido y las inyectará en los labels definidos (F1, F2...).
+              <% else %>
+                <div class="mb-2 text-primary fw-bold"><i class="bi bi-share-fill me-2"></i>Modo Individual</div>
+                Se generará una línea de compra limpia por cada variante involucrada.
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-4 mb-4">
+    <!-- Propiedades -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <h6 class="fw-bold mb-0">Propiedades fijas</h6>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <% if fixed_properties.any? %>
+            <div class="d-flex flex-wrap gap-2">
+              <% fixed_properties.each do |prop| %>
+                <div class="bg-light border rounded-pill px-3 py-1 small">
+                  <span class="text-muted"><%= prop.property_value.property.name %>:</span>
+                  <span class="fw-bold"><%= prop.property_value.value %></span>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="small text-muted mb-0 fst-italic">No hay propiedades de material configuradas.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <!-- Specs -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <h6 class="fw-bold mb-0">Slots de Especificación (Labels)</h6>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <% if specs.any? %>
+            <div class="d-flex flex-wrap gap-2">
+              <% specs.each do |spec| %>
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-3 py-2 fw-bold">
+                  <i class="bi bi-tag-fill me-1"></i><%= spec.label %>
+                </span>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="small text-muted mb-0 fst-italic">No hay labels de especificación dinámicos.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Reglas de Abastecimiento con Separación Lógica -->
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-dark text-white p-4 border-0 rounded-top-4">
+      <h6 class="fw-bold mb-0"><i class="bi bi-diagram-3-fill me-2"></i>Reglas de Abastecimiento Activas</h6>
+    </div>
+    <div class="card-body p-0">
+      <% if rules.any? %>
+        <% if product_rules.any? %>
+          <div class="p-3 bg-light border-bottom small fw-bold text-uppercase text-muted">Específicas por Producto</div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <tbody>
+                <% product_rules.each do |rule| %>
+                  <%= render "rule_detail_row", rule: rule, supplier_item: supplier_item %>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% end %>
+        <% if global_rules.any? %>
+          <div class="p-3 bg-light border-bottom small fw-bold text-uppercase text-muted">Globales por Tipo de Variante</div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <tbody>
+                <% global_rules.each do |rule| %>
+                  <%= render "rule_detail_row", rule: rule, supplier_item: supplier_item %>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-center py-5">
+          <i class="bi bi-patch-question display-4 text-muted mb-3 d-block"></i>
+          <p class="text-muted mb-0">Esta pieza aún no está vinculada a ninguna regla de compra.</p>
+          <%= link_to procurement_config_by_product_path, class: "btn btn-link btn-sm", data: { turbo_frame: "_top" } do %>
+            Ir a configurar reglas <i class="bi bi-arrow-right ms-1"></i>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
