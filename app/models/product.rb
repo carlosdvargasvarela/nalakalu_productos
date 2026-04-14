@@ -45,7 +45,6 @@ class Product < ApplicationRecord
 
   # --------- Helpers de proveedor ----------
 
-  # Determina el tipo de proveedor del producto según sus SupplierItems configurados.
   def supplier_type
     categories = supplier_items
       .joins(:provider)
@@ -75,31 +74,44 @@ class Product < ApplicationRecord
   # --------- Helpers de proveeduría ----------
 
   # Resuelve todos los supplier_items necesarios para una combinación de variantes.
+  # Usa la misma lógica de prioridad que ProcurementResolver para garantizar consistencia.
   # Recibe un array de Variant y devuelve un hash { supplier_item => specs }
   def resolve_supplier_items(variants)
     result = {}
+    all_rules = SupplyRule.includes(:supplier_item).to_a
 
     individual_variants = variants.select { |v| v.variant_type.individual? }
     consolidated_variants = variants.select { |v| v.variant_type.consolidated? }
 
-    # Individuales: cada variante resuelve su propia pieza
+    # Individuales: prioridad variant+product > variant global > variant_type+product > variant_type global
     individual_variants.each do |variant|
-      rule = supply_rules.find_by(variant: variant) ||
-        SupplyRule.find_by(product: nil, variant: variant)
+      rule = all_rules.find { |r| r.variant_id == variant.id && r.product_id == id } ||
+        all_rules.find { |r| r.variant_id == variant.id && r.product_id.nil? } ||
+        all_rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id == id } ||
+        all_rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id.nil? }
       next unless rule
+
       result[rule.supplier_item] = {}
     end
 
-    # Consolidados: agrupar por tipo y resolver una sola pieza con specs
+    # Consolidados: agrupar por tipo, resolver una sola pieza con specs
     consolidated_variants.group_by(&:variant_type).each do |variant_type, type_variants|
-      rule = supply_rules.find_by(variant_type: variant_type, rule_type: "consolidated") ||
-        SupplyRule.find_by(product: nil, variant_type: variant_type, rule_type: "consolidated")
+      rule = all_rules.find { |r|
+        r.variant_type_id == variant_type.id &&
+          r.product_id == id &&
+          r.rule_type == "consolidated"
+      } ||
+        all_rules.find { |r|
+          r.variant_type_id == variant_type.id &&
+            r.product_id.nil? &&
+            r.rule_type == "consolidated"
+        }
       next unless rule
 
       specs = {}
       type_variants.each do |v|
-        label = product_variant_rules.find_by(variant_type: variant_type)&.label
-        key = label.presence || variant_type.name
+        pvr = product_variant_rules.find_by(variant_type: variant_type)
+        key = pvr&.label.presence || variant_type.name
         specs[key] = v.name
       end
 

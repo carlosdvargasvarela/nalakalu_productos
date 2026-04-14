@@ -1,4 +1,3 @@
-# app/controllers/supply_managements_controller.rb — completo y limpio
 class SupplyManagementsController < ApplicationController
   before_action :authenticate_user!
 
@@ -6,11 +5,9 @@ class SupplyManagementsController < ApplicationController
     @from = params[:from] || Date.current.beginning_of_week.to_s
     @to = params[:to] || Date.current.end_of_week.to_s
 
-    ProductDecoder.clear_cache!
-    ProcurementResolver.clear_cache!
-
+    # Solo lee entregas para mostrar trazabilidad — NO resuelve ni escribe en DB.
+    # El procesamiento ocurre únicamente en sync_all y sync_delivery.
     @deliveries = LogisticsApiClient.fetch_deliveries(from: @from, to: @to)
-    @deliveries.each { |d| ProcurementResolver.resolve_delivery(d) }
 
     order_numbers = @deliveries.map { |d| d["order_number"] }
 
@@ -27,6 +24,11 @@ class SupplyManagementsController < ApplicationController
           consolidated_items: ProcurementConsolidator.consolidate(reqs)
         }
       end
+
+    # El presenter necesita el cache del decoder para la vista de trazabilidad.
+    # Se carga aquí solo para lectura, sin persistir nada.
+    ProductDecoder.clear_cache!
+    ProcurementResolver.clear_cache!
 
     @presenter = ProcurementPresenter.new(
       deliveries: @deliveries,
@@ -107,7 +109,7 @@ class SupplyManagementsController < ApplicationController
       )
 
       requirements
-        .group_by { |r| [r.supplier_item_id, r.specifications.to_s] }
+        .group_by { |r| [r.supplier_item_id, r.specifications.sort.to_h] }
         .each do |(item_id, _specs), reqs|
           first_req = reqs.first
 

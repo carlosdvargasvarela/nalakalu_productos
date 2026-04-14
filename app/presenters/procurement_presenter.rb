@@ -14,12 +14,19 @@ class ProcurementPresenter
     }
   end
 
+  # Público: permite que las vistas consulten la regla sin usar .send()
+  def find_rule_in_cache(variant, base_product)
+    @rules.find { |r| r.variant_id == variant.id && r.product_id == base_product&.id } ||
+      @rules.find { |r| r.variant_id == variant.id && r.product_id.nil? } ||
+      @rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id == base_product&.id } ||
+      @rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id.nil? }
+  end
+
   private
 
   def precompute!
     @deliveries.each do |delivery|
       delivery["items"].each do |item|
-        # 🔥 Usamos el decoder (que ya tiene el cache cargado por el controller)
         decoding = ProductDecoder.decode(item["product_name"])
         next unless decoding.has_variants
 
@@ -27,7 +34,6 @@ class ProcurementPresenter
         qty_delivered = item["quantity_delivered"].to_f
 
         decoding.variants.each do |variant|
-          # 🔥 Usamos la misma lógica de prioridad que el Resolver
           rule = find_rule_in_cache(variant, base_product)
           next unless rule
 
@@ -43,16 +49,5 @@ class ProcurementPresenter
         end
       end
     end
-  end
-
-  def find_rule_in_cache(variant, base_product)
-    # Prioridad 1: Variante + Producto
-    @rules.find { |r| r.variant_id == variant.id && r.product_id == base_product&.id } ||
-      # Prioridad 2: Variante sola
-      @rules.find { |r| r.variant_id == variant.id && r.product_id.nil? } ||
-      # Prioridad 3: Tipo de Variante + Producto
-      @rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id == base_product&.id } ||
-      # Prioridad 4: Tipo de Variante solo
-      @rules.find { |r| r.variant_id.nil? && r.variant_type_id == variant.variant_type_id && r.product_id.nil? }
   end
 end
