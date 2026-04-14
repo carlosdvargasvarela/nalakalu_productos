@@ -1,0 +1,139 @@
+<div class="card border-0 shadow-sm rounded-4">
+  <%# ── HEADER ── %>
+  <div class="card-header bg-white border-bottom p-4 rounded-top-4">
+    <div class="d-flex justify-content-between align-items-start gap-3">
+      <div class="flex-grow-1 min-width-0">
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+          <h4 class="fw-bold mb-0 text-truncate"><%= product.name %></h4>
+          <span class="badge rounded-pill px-3
+            <%= product.active? ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary' %>">
+            <%= product.active? ? 'Activo' : 'Inactivo' %>
+          </span>
+          <% sup_color = product.supplier_type_color %>
+          <% if product.supplier_type != "sin_definir" %>
+            <span class="badge rounded-pill px-3 bg-<%= sup_color %> bg-opacity-10 text-<%= sup_color %>">
+              <%= product.supplier_type.capitalize %>
+            </span>
+          <% end %>
+        </div>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <code class="text-muted small"><%= product.base_code %></code>
+          <% if product.family.present? %>
+            <span class="text-muted small">
+              <i class="bi bi-diagram-3 me-1 text-info"></i>
+              <span class="text-info fw-bold"><%= product.family.name %></span>
+            </span>
+          <% end %>
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-shrink-0">
+        <%= link_to edit_product_path(product),
+            class: "btn btn-sm btn-outline-primary rounded-pill px-3",
+            data: { turbo_frame: "product_workspace" } do %>
+          <i class="bi bi-pencil me-1"></i>Editar
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <%# ── DNA ── %>
+    <%= render "dna_section", product: product %>
+    <%# ── PROCUREMENT PREVIEW ── %>
+    <%= render "procurement_preview", product: product %>
+    <%# ── VARIANTES COMPATIBLES ── %>
+    <% rules = product.effective_rules %>
+    <% if rules.any? %>
+      <div class="p-4 border-top">
+        <h6 class="fw-bold mb-3">
+          <i class="bi bi-palette me-2 text-info"></i>Variantes Compatibles
+        </h6>
+        <div class="d-flex flex-column gap-3">
+          <% rules.each do |rule| %>
+            <% compatible = product.compatible_variants_for(rule.variant_type).where(active: true) %>
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-primary rounded-pill px-2 small">
+                    <%= rule.label.presence || rule.variant_type.name %>
+                  </span>
+                  <span class="text-muted x-small"><%= rule.variant_type.name %></span>
+                  <% if rule.variant_type.respond_to?(:individual?) %>
+                    <span class="badge x-small rounded-pill
+                      <%= rule.variant_type.individual? ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-warning bg-opacity-10 text-warning' %>">
+                      <%= rule.variant_type.individual? ? 'individual' : 'consolidado' %>
+                    </span>
+                  <% end %>
+                </div>
+                <button type="button"
+                        class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalRule<%= rule.id %>">
+                  <i class="bi bi-gear-fill me-1"></i><span class="x-small">Gestionar</span>
+                </button>
+              </div>
+              <% if compatible.any? %>
+                <div class="d-flex flex-wrap gap-1">
+                  <% compatible.limit(12).each do |v| %>
+                    <span class="badge bg-light text-dark border rounded-pill px-2 x-small">
+                      <%= v.display_name.presence || v.name %>
+                      <code class="text-primary ms-1"><%= v.code %></code>
+                    </span>
+                  <% end %>
+                  <% if compatible.count > 12 %>
+                    <span class="text-muted x-small align-self-center">
+                      +<%= compatible.count - 12 %> más
+                    </span>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="text-warning x-small fw-bold">
+                  <i class="bi bi-exclamation-triangle me-1"></i>Sin variantes asignadas
+                </div>
+              <% end %>
+            </div>
+            <%= render "compatibility_modal", product: product, rule: rule %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    <%# ── IMPACTO ── %>
+    <% supply_rules_count = product.supply_rules.count %>
+    <% supplier_items_count = product.supplier_items.distinct.count %>
+    <div class="p-4 border-top bg-light bg-opacity-50 rounded-bottom-4">
+      <h6 class="fw-bold mb-3">
+        <i class="bi bi-graph-up me-2 text-warning"></i>Impacto en Abastecimiento
+      </h6>
+      <div class="row g-3">
+        <% [
+          ["Reglas de compra", supply_rules_count, "bi-list-check", "primary"],
+          ["Supplier Items", supplier_items_count, "bi-box2", "success"],
+        ].each do |label, val, icon, color| %>
+          <div class="col-6">
+            <div class="bg-white rounded-3 p-3 text-center shadow-sm">
+              <i class="bi <%= icon %> fs-4 text-<%= color %> d-block mb-1"></i>
+              <div class="fw-bold fs-5"><%= val %></div>
+              <div class="x-small text-muted"><%= label %></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <%# Zona peligro %>
+      <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+        <span class="x-small text-danger fw-bold">Zona de Peligro</span>
+        <%= form_with url: product_path(product), method: :delete,
+            data: { turbo_confirm: "¿Eliminar '#{product.name}'? Esta acción no se puede deshacer." } do %>
+          <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+            <i class="bi bi-trash me-1"></i>Eliminar
+          </button>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .x-small { font-size: 0.7rem; }
+  .btn-xs { font-size: 0.7rem; padding: 0.15rem 0.5rem; }
+  .min-width-0 { min-width: 0; }
+  .rounded-top-4 { border-radius: 1rem 1rem 0 0 !important; }
+  .rounded-bottom-4 { border-radius: 0 0 1rem 1rem !important; }
+</style>

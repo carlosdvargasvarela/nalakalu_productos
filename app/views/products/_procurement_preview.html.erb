@@ -1,0 +1,149 @@
+<%
+  rules        = product.effective_rules
+  supply_rules = product.supply_rules.includes(:supplier_item, :variant, :variant_type).to_a
+  ready        = product.procurement_ready?
+%>
+<div class="p-4 border-bottom">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0">
+      <i class="bi bi-cart-check me-2 text-success"></i>Preview de Procurement
+    </h6>
+    <% if ready %>
+      <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 small">
+        <i class="bi bi-check-circle me-1"></i>Listo
+      </span>
+    <% else %>
+      <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 small">
+        <i class="bi bi-exclamation-triangle me-1"></i>Incompleto
+      </span>
+    <% end %>
+  </div>
+  <% if rules.empty? %>
+    <div class="text-center py-3 text-muted small">
+      <i class="bi bi-diagram-3 d-block fs-3 mb-2 opacity-25"></i>
+      Define primero la estructura DNA para ver el preview de compra.
+    </div>
+  <% else %>
+    <%# Agrupar reglas por VariantType %>
+    <% rules.group_by(&:variant_type).each do |variant_type, vt_rules| %>
+      <%
+        # Buscar supply rules para este variant_type en este producto
+        matching_supply = supply_rules.select { |sr|
+          sr.variant_type_id == variant_type.id
+        }
+        is_consolidated = variant_type.respond_to?(:consolidated?) && variant_type.consolidated?
+        is_individual   = !is_consolidated
+        supplier_item   = matching_supply.first&.supplier_item
+      %>
+      <div class="rounded-3 border mb-3 overflow-hidden">
+        <%# Header del bloque %>
+        <div class="px-3 py-2 d-flex justify-content-between align-items-center
+          <%= is_consolidated ? 'bg-warning bg-opacity-10' : 'bg-secondary bg-opacity-10' %>">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi <%= is_consolidated ? 'bi-layers-fill text-warning' : 'bi-box2 text-secondary' %> small"></i>
+            <span class="fw-bold small"><%= variant_type.name %></span>
+            <span class="badge x-small rounded-pill
+              <%= is_consolidated ? 'bg-warning bg-opacity-20 text-warning' : 'bg-secondary bg-opacity-20 text-secondary' %>">
+              <%= is_consolidated ? 'consolidado' : 'individual' %>
+            </span>
+          </div>
+          <% if supplier_item %>
+            <span class="x-small text-muted fw-bold">
+              → <code class="text-dark"><%= supplier_item.name %></code>
+            </span>
+          <% else %>
+            <span class="x-small text-danger fw-bold">
+              <i class="bi bi-x-circle me-1"></i>Sin regla de compra
+            </span>
+          <% end %>
+        </div>
+        <%# Cuerpo del bloque %>
+        <div class="px-3 py-2 bg-white">
+          <% if is_consolidated %>
+            <%# Modo consolidado: mostrar specs por label %>
+            <% vt_rules.each do |pvr| %>
+              <% compatible_variants = product.compatible_variants_for(variant_type).where(active: true).limit(3) %>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <code class="badge bg-primary bg-opacity-10 text-primary rounded px-2 x-small fw-bold">
+                  <%= pvr.label.presence || variant_type.name %>
+                </code>
+                <span class="text-muted x-small">→</span>
+                <% if compatible_variants.any? %>
+                  <div class="d-flex gap-1 flex-wrap">
+                    <% compatible_variants.each do |v| %>
+                      <span class="badge bg-light text-dark border rounded-pill x-small">
+                        <%= v.code %>
+                      </span>
+                    <% end %>
+                    <% total = product.compatible_variants_for(variant_type).count %>
+                    <% if total > 3 %>
+                      <span class="text-muted x-small">+<%= total - 3 %></span>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="text-muted x-small fst-italic">sin variantes asignadas</span>
+                <% end %>
+              </div>
+            <% end %>
+            <% if supplier_item %>
+              <div class="mt-2 pt-2 border-top x-small text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                Se genera <strong>1 línea de compra</strong> con specs por label.
+              </div>
+            <% end %>
+          <% else %>
+            <%# Modo individual: 1 línea por variante %>
+            <% compatible_variants = product.compatible_variants_for(variant_type).where(active: true).limit(4) %>
+            <% if compatible_variants.any? %>
+              <% compatible_variants.each do |v| %>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="bi bi-arrow-right-short text-muted"></i>
+                  <span class="badge bg-light text-dark border rounded-pill x-small">
+                    <%= v.display_name.presence || v.name %>
+                  </span>
+                  <code class="x-small text-primary"><%= v.code %></code>
+                  <% if supplier_item %>
+                    <span class="text-muted x-small ms-auto">→ <%= supplier_item.name %></span>
+                  <% end %>
+                </div>
+              <% end %>
+              <% total = product.compatible_variants_for(variant_type).count %>
+              <% if total > 4 %>
+                <div class="x-small text-muted mt-1">
+                  <i class="bi bi-three-dots me-1"></i>y <%= total - 4 %> variante(s) más
+                </div>
+              <% end %>
+              <% if supplier_item %>
+                <div class="mt-2 pt-2 border-top x-small text-muted">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Se genera <strong>1 línea por variante</strong> (total: <%= total %>).
+                </div>
+              <% end %>
+            <% else %>
+              <div class="x-small text-muted fst-italic py-1">
+                <i class="bi bi-exclamation-circle me-1 text-warning"></i>
+                Sin variantes compatibles asignadas.
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    <%# Resumen final %>
+    <% if ready %>
+      <div class="alert alert-success border-0 rounded-3 py-2 px-3 mb-0 small">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Este producto tiene todas sus reglas de compra configuradas.
+      </div>
+    <% else %>
+      <div class="alert alert-warning border-0 rounded-3 py-2 px-3 mb-0 small">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        Faltan reglas de compra. Configúralas en
+        <strong>Gestión de Abastecimiento → Configuración</strong>.
+      </div>
+    <% end %>
+  <% end %>
+</div>
+<style>
+  .x-small { font-size: 0.7rem; }
+</style>

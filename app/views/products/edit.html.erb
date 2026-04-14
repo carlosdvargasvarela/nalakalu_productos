@@ -1,28 +1,25 @@
-<div class="container-fluid py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <%= link_to "Productos", products_path, class: "text-decoration-none" %>
-      </li>
-      <li class="breadcrumb-item">
-        <%= link_to @product.name, @product, class: "text-decoration-none" %>
-      </li>
-      <li class="breadcrumb-item active fw-bold">Editar</li>
-    </ol>
-  </nav>
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2 class="fw-bold mb-0">Editando: <span class="text-primary"><%= @product.name %></span></h2>
-      <p class="text-muted small mb-0">Código base: <code><%= @product.base_code %></code></p>
+<%= turbo_frame_tag "product_workspace" do %>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white border-bottom p-4 rounded-top-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Editando: <%= @product.name %>
+          </h5>
+          <code class="text-muted small"><%= @product.base_code %></code>
+        </div>
+        <%= link_to products_path(selected_id: @product.id),
+            class: "btn btn-sm btn-outline-secondary rounded-pill px-3",
+            data: { turbo_frame: "product_workspace" } do %>
+          <i class="bi bi-x-lg me-1"></i>Cancelar
+        <% end %>
+      </div>
     </div>
-    <div class="d-flex gap-2">
-      <%= link_to @product, class: "btn btn-outline-secondary rounded-pill px-4" do %>
-        <i class="bi bi-eye me-2"></i>Ver Producto
-      <% end %>
-      <%= link_to products_path, class: "btn btn-link text-muted text-decoration-none" do %>
-        <i class="bi bi-arrow-left me-1"></i>Cancelar
-      <% end %>
+    <div class="card-body p-4">
+      <%= render "form", product: @product %>
     </div>
   </div>
-  <%= render "form", product: @product %>
-</div>
+<% end %>
+<style>
+  .rounded-top-4 { border-radius: 1rem 1rem 0 0 !important; }
+</style>

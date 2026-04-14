@@ -1,0 +1,101 @@
+<% rules = product.effective_rules %>
+<div class="p-4 border-bottom">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0">
+      <i class="bi bi-diagram-3-fill me-2 text-primary"></i>Estructura DNA del Código
+    </h6>
+    <%= link_to edit_product_path(product),
+        class: "btn btn-xs btn-outline-secondary rounded-pill px-2",
+        data: { turbo_frame: "product_workspace" } do %>
+      <i class="bi bi-pencil me-1"></i><span class="x-small">Modificar</span>
+    <% end %>
+  </div>
+  <% if rules.any? %>
+    <%# Cadena visual %>
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <span class="badge bg-dark rounded-pill px-3 fs-6"><%= product.base_code %></span>
+      <% rules.each do |rule| %>
+        <i class="bi bi-plus text-muted small"></i>
+        <div class="d-flex align-items-center gap-1">
+          <span class="badge bg-secondary bg-opacity-75 rounded-pill px-2">
+            <%= rule.separator %>
+          </span>
+          <span class="badge bg-primary rounded-pill px-3">
+            <%= rule.label.presence || rule.variant_type.name %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+    <%# Preview del código %>
+    <div class="bg-light rounded-3 p-3 mb-3">
+      <p class="x-small text-muted fw-bold mb-1">Ejemplo de código generado:</p>
+      <code class="fs-6 text-dark"><%= product.code_structure_preview %></code>
+    </div>
+    <%# Tabla de pasos %>
+    <div class="table-responsive">
+      <table class="table table-sm table-borderless mb-0">
+        <thead>
+          <tr class="x-small text-muted text-uppercase">
+            <th>#</th>
+            <th>Label</th>
+            <th>Tipo de Variante</th>
+            <th>Modo</th>
+            <th>Sep.</th>
+            <th>Req.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rules.each_with_index do |rule, i| %>
+            <tr class="align-middle">
+              <td>
+                <span class="badge bg-primary rounded-circle" style="width:22px;height:22px;font-size:0.65rem;">
+                  <%= i + 1 %>
+                </span>
+              </td>
+              <td>
+                <code class="fw-bold text-primary"><%= rule.label.presence || "—" %></code>
+              </td>
+              <td class="small"><%= rule.variant_type&.name %></td>
+              <td>
+                <% if rule.variant_type.respond_to?(:individual?) %>
+                  <span class="badge x-small rounded-pill
+                    <%= rule.variant_type.individual? ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-warning bg-opacity-10 text-warning' %>">
+                    <%= rule.variant_type.individual? ? 'individual' : 'consolidado' %>
+                  </span>
+                <% end %>
+              </td>
+              <td><code class="small"><%= rule.separator %></code></td>
+              <td>
+                <% if rule.required? %>
+                  <i class="bi bi-check-circle-fill text-success small"></i>
+                <% else %>
+                  <i class="bi bi-dash-circle text-muted small"></i>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if product.family.present? && product.product_variant_rules.empty? %>
+      <div class="alert alert-info border-0 rounded-3 mt-3 mb-0 py-2 px-3 small">
+        <i class="bi bi-arrow-up-circle me-1"></i>
+        Estructura heredada de la familia <strong><%= product.family.name %></strong>.
+      </div>
+    <% end %>
+  <% else %>
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-exclamation-circle d-block fs-2 mb-2 opacity-25"></i>
+      <p class="small mb-2">Sin estructura de código definida.</p>
+      <%= link_to edit_product_path(product),
+          class: "btn btn-sm btn-primary rounded-pill px-4",
+          data: { turbo_frame: "product_workspace" } do %>
+        <i class="bi bi-plus-lg me-1"></i>Definir estructura
+      <% end %>
+    </div>
+  <% end %>
+</div>
+<style>
+  .x-small { font-size: 0.7rem; }
+  .btn-xs { font-size: 0.7rem; padding: 0.15rem 0.5rem; }
+</style>

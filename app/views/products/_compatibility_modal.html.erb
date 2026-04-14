@@ -23,9 +23,12 @@
               Seleccionar visibles
             </label>
           </div>
+          <%# ── Precarga: 1 query para todos los IDs compatibles ── %>
+          <% compatible_ids = rule.compatibilities.pluck(:variant_id).to_set %>
+          <% all_variants = Variant.where(variant_type_id: rule.variant_type_id, active: true).order(:name) %>
           <div class="list-group list-group-flush">
-            <% Variant.where(variant_type_id: rule.variant_type_id, active: true).order(:name).each do |v| %>
-              <% is_compatible = rule.allowed_variants.include?(v) %>
+            <% all_variants.each do |v| %>
+              <% is_compatible = compatible_ids.include?(v.id) %>
               <label class="list-group-item border-0 px-0 d-flex align-items-center gap-3 cursor-pointer"
                      data-compatibility-selector-target="item"
                      data-search-text="<%= v.name %> <%= v.code %>">

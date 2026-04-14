@@ -1,0 +1,89 @@
+<%
+  sup_type   = supplier_type_map[product.id] || "sin_definir"
+  sup_color  = case sup_type
+               when "interno" then "success"
+               when "externo" then "warning"
+               when "mixto"   then "info"
+               else "secondary"
+               end
+  ready      = procurement_ready_map[product.id]
+  has_rules  = product.product_variant_rules.any?
+  family_name = product.family&.name
+%>
+<a href="<%= products_path(selected_id: product.id) %>"
+  class="list-group-item list-group-item-action border-0 border-bottom px-3 py-3
+  <%= 'bg-primary bg-opacity-10 border-start border-3 border-primary' if selected %>"
+  data-turbo-frame="product_workspace"
+  data-product-filters-target="item"
+  data-name="<%= product.name.downcase %>"
+    data-code="<%= product.base_code.downcase %>"
+      data-family="<%= product.family_id %>"
+        data-status="<%= product.active? ? 'active' : 'inactive' %>"
+          data-procurement="<%= ready ? 'ready' : 'incomplete' %>"
+  data-has-rules="<%= has_rules %>">
+  <div class="d-flex align-items-start gap-3">
+    <%# Ícono %>
+    <div class="bg-primary bg-opacity-10 rounded-3 p-2 flex-shrink-0 mt-1">
+      <i class="bi bi-box-seam text-primary"></i>
+    </div>
+    <%# Info principal %>
+    <div class="flex-grow-1 min-width-0">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div>
+          <div class="fw-bold text-truncate"><%= product.name %></div>
+          <code class="x-small text-muted"><%= product.base_code %></code>
+          <% if family_name %>
+            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill ms-1 x-small">
+              <i class="bi bi-diagram-3 me-1"></i><%= family_name %>
+            </span>
+          <% end %>
+        </div>
+        <div class="d-flex flex-column align-items-end gap-1 flex-shrink-0">
+          <span class="badge rounded-pill px-2 x-small
+            <%= product.active? ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary' %>">
+            <%= product.active? ? 'Activo' : 'Inactivo' %>
+          </span>
+          <% if sup_type != "sin_definir" %>
+            <span class="badge rounded-pill px-2 x-small bg-<%= sup_color %> bg-opacity-10 text-<%= sup_color %>">
+              <%= sup_type.capitalize %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+      <%# DNA preview %>
+      <div class="d-flex flex-wrap gap-1 mt-2">
+        <span class="badge bg-dark rounded-pill x-small"><%= product.base_code %></span>
+        <% product.product_variant_rules.each do |rule| %>
+          <span class="badge bg-secondary bg-opacity-75 rounded-pill x-small">
+            <%= rule.separator %><%= rule.label.presence || rule.variant_type&.name %>
+          </span>
+        <% end %>
+        <% if !has_rules && family_name %>
+          <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill x-small">
+            ↑ Hereda familia
+          </span>
+        <% end %>
+      </div>
+      <%# Estado procurement %>
+      <div class="mt-2">
+        <% if ready %>
+          <span class="x-small text-success fw-bold">
+            <i class="bi bi-cart-check me-1"></i>Listo para compra
+          </span>
+        <% elsif !has_rules %>
+          <span class="x-small text-warning fw-bold">
+            <i class="bi bi-exclamation-triangle me-1"></i>Sin estructura de código
+          </span>
+        <% else %>
+          <span class="x-small text-danger fw-bold">
+            <i class="bi bi-x-circle me-1"></i>Reglas de compra incompletas
+          </span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</a>
+<style>
+  .x-small { font-size: 0.7rem; }
+  .min-width-0 { min-width: 0; }
+</style>
