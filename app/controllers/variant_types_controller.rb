@@ -4,10 +4,20 @@ class VariantTypesController < ApplicationController
   before_action :set_variant_type, only: %i[show edit update destroy variants]
 
   def index
-    @variant_types = VariantType.all
+    @variant_types = VariantType.includes(:variants).order(:name)
+    @selected = params[:selected_id].present? ? VariantType.find_by(id: params[:selected_id]) : nil
+    @stats = {
+      total: @variant_types.size,
+      variants: Variant.count,
+      active: Variant.where(active: true).count
+    }
   end
 
   def show
+    respond_to do |format|
+      format.html
+      format.json { render :show }
+    end
   end
 
   def new
@@ -19,35 +29,27 @@ class VariantTypesController < ApplicationController
 
   def create
     @variant_type = VariantType.new(variant_type_params)
-    respond_to do |format|
-      if @variant_type.save
-        format.html { redirect_to @variant_type, notice: "Tipo de variante creado exitosamente." }
-        format.json { render :show, status: :created, location: @variant_type }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @variant_type.errors, status: :unprocessable_entity }
-      end
+    if @variant_type.save
+      redirect_to variant_types_path(selected_id: @variant_type.id),
+        notice: "Tipo de variante creado exitosamente."
+    else
+      render :new, status: :unprocessable_entity
     end
   end
 
   def update
-    respond_to do |format|
-      if @variant_type.update(variant_type_params)
-        format.html { redirect_to @variant_type, notice: "Tipo de variante actualizado exitosamente." }
-        format.json { render :show, status: :ok, location: @variant_type }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @variant_type.errors, status: :unprocessable_entity }
-      end
+    if @variant_type.update(variant_type_params)
+      redirect_to variant_types_path(selected_id: @variant_type.id),
+        notice: "Tipo de variante actualizado exitosamente."
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
     @variant_type.destroy!
-    respond_to do |format|
-      format.html { redirect_to variant_types_path, status: :see_other, notice: "Tipo de variante eliminado." }
-      format.json { head :no_content }
-    end
+    redirect_to variant_types_path, status: :see_other,
+      notice: "Tipo de variante eliminado."
   end
 
   def import
@@ -55,13 +57,11 @@ class VariantTypesController < ApplicationController
       redirect_to variant_types_path, alert: "Por favor, selecciona un archivo CSV."
       return
     end
-    csv_content = params[:file].read
-    ImportVariantTypesJob.perform_later(csv_content, current_user.id)
-    redirect_to variant_types_path, notice: "Importación de tipos de variante iniciada."
+    ImportVariantTypesJob.perform_later(params[:file].read, current_user.id)
+    redirect_to variant_types_path, notice: "Importación iniciada."
   end
 
   # GET /variant_types/:id/variants.json
-  # Usado por Stimulus para cargar variantes dinámicamente en el form de SupplierItem
   def variants
     render json: @variant_type.variants
       .where(active: true)
@@ -72,13 +72,11 @@ class VariantTypesController < ApplicationController
   def bulk_move
     variant_ids = Array(params[:variant_ids]).map(&:to_i).uniq
     new_type = VariantType.find(params[:new_type_id])
-    variants = Variant.where(id: variant_ids)
     moved = 0
 
-    variants.each do |variant|
+    Variant.where(id: variant_ids).each do |variant|
       old_rule_ids = ProductVariantRule
-        .where(variant_type_id: variant.variant_type_id)
-        .pluck(:id)
+        .where(variant_type_id: variant.variant_type_id).pluck(:id)
 
       Compatibility.where(
         variant_id: variant.id,
@@ -105,15 +103,13 @@ class VariantTypesController < ApplicationController
   def bulk_assign
     variant_ids = Array(params[:variant_ids]).map(&:to_i).uniq
     target_type = VariantType.find(params[:variant_type_id])
-    variants = Variant.where(id: variant_ids)
     assigned = 0
 
-    variants.each do |variant|
+    Variant.where(id: variant_ids).each do |variant|
       next if variant.variant_type_id == target_type.id
 
       old_rule_ids = ProductVariantRule
-        .where(variant_type_id: variant.variant_type_id)
-        .pluck(:id)
+        .where(variant_type_id: variant.variant_type_id).pluck(:id)
 
       Compatibility.where(
         variant_id: variant.id,

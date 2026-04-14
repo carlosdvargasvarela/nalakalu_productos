@@ -1,12 +1,21 @@
-<div class="container-fluid py-4">
+<%# Workspace: panel izquierdo (lista) + panel derecho (detalle via Turbo Frame) %>
+<div class="container-fluid py-4" data-controller="vt-filters">
+  <%# ── HEADER ── %>
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="fw-bold mb-0 text-dark">Tipos de Variante</h1>
-      <p class="text-muted mb-0">Categorías generales para agrupar las opciones de los productos.</p>
+      <h4 class="fw-bold mb-0 text-dark">Tipos de Variante</h4>
+      <p class="text-muted mb-0 small">
+        <%= @stats[:total] %> tipos ·
+        <span class="text-success fw-bold"><%= @stats[:active] %> variantes activas</span>
+        de <%= @stats[:variants] %> totales
+      </p>
     </div>
-    <%= link_to new_variant_type_path, class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
-      <i class="bi bi-plus-lg me-2"></i>Nuevo Tipo
-    <% end %>
+    <div class="d-flex gap-2">
+      <%= link_to new_variant_type_path,
+          class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Tipo
+      <% end %>
+    </div>
   </div>
   <% if @variant_types.empty? %>
     <div class="text-center py-5 text-muted">
@@ -18,113 +27,69 @@
       <% end %>
     </div>
   <% else %>
-    <div class="row g-3 mb-4">
-      <% @variant_types.each do |vt| %>
-        <div class="col-md-6 col-xl-4">
-          <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
-            <div class="card-body p-4">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="bg-info bg-opacity-10 p-3 rounded-3 flex-shrink-0">
-                  <i class="bi bi-tags fs-4 text-info"></i>
-                </div>
-                <div class="d-flex gap-1">
-                  <%= link_to vt,
-                      class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
-                      title: "Ver detalle" do %>
-                    <i class="bi bi-eye"></i>
-                  <% end %>
-                  <%= link_to edit_variant_type_path(vt),
-                      class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm",
-                      title: "Editar" do %>
-                    <i class="bi bi-pencil"></i>
-                  <% end %>
-                  <%= button_to vt, method: :delete,
-                      class: "btn btn-sm btn-light text-danger rounded-pill px-3 border shadow-sm",
-                      form: { data: { turbo_confirm: "¿Eliminar '#{vt.name}'? Esto podría afectar reglas de productos existentes." } } do %>
-                    <i class="bi bi-trash"></i>
-                  <% end %>
-                </div>
-              </div>
-              <h5 class="fw-bold mb-1">
-                <%= link_to vt.name, vt, class: "text-decoration-none text-dark" %>
-              </h5>
-              <%# Preview de variantes activas %>
-              <% sample = vt.variants.where(active: true).order(:name).limit(4) %>
-              <% if sample.any? %>
-                <div class="d-flex flex-wrap gap-1 mb-3 mt-2">
-                  <% sample.each do |v| %>
-                    <span class="badge bg-light text-dark border rounded-pill px-2"
-                          style="font-size: 0.7rem;">
-                      <%= v.display_name.presence || v.name %>
-                    </span>
-                  <% end %>
-                  <% remaining = vt.variants.where(active: true).count - sample.count %>
-                  <% if remaining > 0 %>
-                    <span class="badge bg-secondary-soft text-secondary rounded-pill px-2"
-                          style="font-size: 0.7rem;">
-                      +<%= remaining %> más
-                    </span>
-                  <% end %>
-                </div>
-              <% else %>
-                <p class="text-muted small fst-italic mt-2 mb-3">Sin variantes activas aún.</p>
-              <% end %>
-              <div class="d-flex gap-3 pt-2 border-top">
-                <div class="text-center">
-                  <div class="fw-bold text-success fs-5">
-                    <%= vt.variants.where(active: true).count %>
-                  </div>
-                  <div class="text-muted" style="font-size: 0.7rem;">Activas</div>
-                </div>
-                <div class="text-center">
-                  <div class="fw-bold text-info fs-5">
-                    <%= vt.variants.count %>
-                  </div>
-                  <div class="text-muted" style="font-size: 0.7rem;">Total</div>
-                </div>
-                <div class="ms-auto d-flex align-items-end">
-                  <%= link_to new_variant_path(variant_type_id: vt.id),
-                      class: "btn btn-sm btn-info text-white rounded-pill px-3 fw-bold" do %>
-                    <i class="bi bi-plus-lg me-1"></i>Agregar
-                  <% end %>
-                </div>
-              </div>
+    <div class="row g-4" style="min-height: 70vh;">
+      <%# ── PANEL IZQUIERDO ── %>
+      <div class="col-lg-4 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+          <div class="card-header bg-white py-3 border-bottom">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light border-0 rounded-start-3">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input type="text"
+                     class="form-control bg-light border-0 shadow-none rounded-end-3"
+                     placeholder="Filtrar tipos..."
+                     data-vt-filters-target="search"
+                     data-action="input->vt-filters#filter">
             </div>
           </div>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
-  <!-- Importador CSV -->
-  <div class="card border-0 shadow-sm rounded-4 border-start border-info border-4">
-    <div class="card-body p-4">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <h5 class="fw-bold mb-1">
-            <i class="bi bi-file-earmark-spreadsheet text-info me-2"></i>Importación Masiva
-          </h5>
-          <p class="text-muted small mb-0">
-            Formato CSV esperado: <code class="bg-light px-2 py-1 rounded">nombre</code>
-          </p>
-        </div>
-        <div class="col-md-4 mt-3 mt-md-0">
-          <%= form_with url: import_variant_types_path, multipart: true, local: true do |f| %>
-            <div class="input-group shadow-sm">
-              <%= f.file_field :file, class: "form-control rounded-start-pill small", accept: ".csv" %>
-              <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
-                <i class="bi bi-cloud-upload me-1"></i>Importar
-              </button>
+          <div class="card-body p-0 overflow-auto" style="max-height: calc(100vh - 260px);">
+            <div class="list-group list-group-flush" id="vt-list">
+              <% @variant_types.each do |vt| %>
+                <%= render "variant_types/variant_type_row",
+                    vt: vt,
+                    selected: @selected&.id == vt.id %>
+              <% end %>
             </div>
-          <% end %>
+          </div>
+          <%# Importador CSV %>
+          <div class="card-footer bg-white border-top p-3">
+            <%= form_with url: import_variant_types_path, multipart: true, local: true do |f| %>
+              <p class="small text-muted fw-bold mb-2">
+                <i class="bi bi-file-earmark-spreadsheet me-1 text-info"></i>Importar CSV
+                <span class="fw-normal opacity-75">(columna: nombre)</span>
+              </p>
+              <div class="input-group input-group-sm shadow-sm">
+                <%= f.file_field :file,
+                    class: "form-control rounded-start-pill small", accept: ".csv" %>
+                <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
+                  <i class="bi bi-cloud-upload"></i>
+                </button>
+              </div>
+            <% end %>
+          </div>
         </div>
       </div>
+      <%# ── PANEL DERECHO (Turbo Frame) ── %>
+      <div class="col-lg-8 col-xl-9">
+        <%= turbo_frame_tag "vt_workspace" do %>
+          <% if @selected %>
+            <%= render "variant_types/detail_panel", variant_type: @selected %>
+          <% else %>
+            <%= render "variant_types/workspace_placeholder" %>
+          <% end %>
+        <% end %>
+      </div>
     </div>
-  </div>
+  <% end %>
 </div>
 <style>
-  .hover-card { transition: all 0.2s ease; }
-  .hover-card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1.25rem rgba(0,0,0,.1) !important; }
+  .vt-row-active { background-color: #f0f7ff; border-left: 3px solid #0d6efd !important; }
+  .vt-row        { border-left: 3px solid transparent; transition: background 0.15s; }
+  .vt-row:hover  { background-color: #f8f9fa; }
   .bg-success-soft   { background-color: #e1f6eb; }
   .bg-secondary-soft { background-color: #f0f2f5; }
   .bg-info-soft      { background-color: #e0f4ff; }
+  .bg-warning-soft   { background-color: #fff8e1; }
+  .hover-shadow:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
 </style>

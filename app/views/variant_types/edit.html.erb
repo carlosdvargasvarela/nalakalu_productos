@@ -1,32 +1,31 @@
-<div class="container-fluid py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item">
-        <%= link_to "Tipos de Variante", variant_types_path, class: "text-decoration-none" %>
-      </li>
-      <li class="breadcrumb-item">
-        <%= link_to @variant_type.name, @variant_type, class: "text-decoration-none" %>
-      </li>
-      <li class="breadcrumb-item active fw-bold">Editar</li>
-    </ol>
-  </nav>
-  <div class="row justify-content-center">
-    <div class="col-lg-6">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="fw-bold mb-0 text-dark">
-            Editando: <span class="text-primary"><%= @variant_type.name %></span>
-          </h2>
-          <p class="text-muted small mb-0">
-            <span class="fw-bold text-info"><%= @variant_type.variants.count %> variantes</span>
-            asociadas a este tipo.
-          </p>
-        </div>
-        <%= link_to @variant_type, class: "btn btn-outline-secondary rounded-pill px-4" do %>
-          <i class="bi bi-eye me-2"></i>Ver Tipo
-        <% end %>
+<%# Turbo Frame aware: si viene del workspace carga dentro del frame %>
+<%= turbo_frame_tag "vt_workspace" do %>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item">
+              <%= link_to "Tipos de Variante", variant_types_path, class: "text-decoration-none" %>
+            </li>
+            <li class="breadcrumb-item">
+              <%= link_to @variant_type.name, variant_types_path(selected_id: @variant_type.id),
+                  data: { turbo_frame: "vt_workspace" }, class: "text-decoration-none" %>
+            </li>
+            <li class="breadcrumb-item active fw-bold">Editar</li>
+          </ol>
+        </nav>
+        <h5 class="fw-bold mb-0 mt-2">
+          Editando: <span class="text-primary"><%= @variant_type.name %></span>
+        </h5>
+        <p class="text-muted small mb-0">
+          <span class="fw-bold text-info"><%= @variant_type.variants.count %> variantes</span>
+          asociadas a este tipo.
+        </p>
       </div>
+    </div>
+    <div class="card-body p-4">
       <%= render "form", variant_type: @variant_type %>
     </div>
   </div>
-</div>
+<% end %>

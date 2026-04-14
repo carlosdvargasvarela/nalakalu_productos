@@ -1,0 +1,120 @@
+<%# Panel derecho: detalle completo del tipo seleccionado %>
+<div data-controller="variant-modal bulk-select">
+
+  <%# ── HEADER DEL PANEL ── %>
+  <div class="card border-0 shadow-sm rounded-4 mb-3">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="bg-info bg-opacity-10 p-3 rounded-4 flex-shrink-0">
+          <i class="bi bi-tags-fill fs-3 text-info"></i>
+        </div>
+        <div class="flex-grow-1">
+          <h5 class="fw-bold mb-0"><%= variant_type.name %></h5>
+          <div class="d-flex gap-2 mt-1 flex-wrap">
+            <span class="badge bg-success-soft text-success rounded-pill">
+              <%= variant_type.variants.where(active: true).count %> activas
+            </span>
+            <span class="badge bg-info-soft text-info rounded-pill">
+              <%= variant_type.variants.count %> totales
+            </span>
+            <span class="badge bg-secondary-soft text-secondary rounded-pill">
+              <%= variant_type.variants.where(active: false).count %> inactivas
+            </span>
+          </div>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+          <%= link_to new_variant_path(variant_type_id: variant_type.id),
+              data: { action: "click->variant-modal#openNew" },
+              class: "btn btn-info text-white rounded-pill px-3 fw-bold shadow-sm btn-sm" do %>
+            <i class="bi bi-plus-lg me-1"></i>Nueva Variante
+          <% end %>
+          <%= link_to edit_variant_type_path(variant_type),
+              class: "btn btn-outline-primary rounded-pill px-3 btn-sm" do %>
+            <i class="bi bi-pencil me-1"></i>Editar
+          <% end %>
+          <%= button_to variant_type_path(variant_type), method: :delete,
+              class: "btn btn-outline-danger rounded-pill px-3 btn-sm",
+              form: { data: { turbo_confirm: "¿Eliminar '#{variant_type.name}'? Esto podría afectar reglas de productos existentes." } } do %>
+            <i class="bi bi-trash"></i>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# ── BULK TOOLBAR ── %>
+  <div class="d-none mb-3 px-4 py-3 bg-warning bg-opacity-10 border border-warning
+              border-opacity-25 rounded-4 shadow-sm align-items-center gap-3"
+       data-bulk-select-target="toolbar">
+    <i class="bi bi-check2-square text-warning fs-5"></i>
+    <span class="fw-bold text-warning">
+      <span data-bulk-select-target="counter">0</span> seleccionadas
+    </span>
+    <button class="btn btn-warning text-white rounded-pill px-3 fw-bold ms-auto btn-sm"
+            data-action="click->bulk-select#openModal">
+      <i class="bi bi-arrow-left-right me-1"></i>Mover seleccionadas
+    </button>
+  </div>
+
+  <div class="row g-3">
+    <%# ── TABLA DE VARIANTES ── %>
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0">
+            <i class="bi bi-list-ul me-2 text-info"></i>Variantes
+          </h6>
+          <% if variant_type.variants.any? %>
+            <input type="checkbox"
+                   class="form-check-input"
+                   data-bulk-select-target="selectAll"
+                   data-action="change->bulk-select#toggleAll"
+                   title="Seleccionar todas">
+          <% end %>
+        </div>
+        <div class="card-body p-0">
+          <% if variant_type.variants.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light border-bottom">
+                  <tr>
+                    <th class="px-3 py-2" style="width: 36px;"></th>
+                    <th class="py-2 text-muted small fw-bold">Variante</th>
+                    <th class="py-2 text-muted small fw-bold">Código</th>
+                    <th class="py-2 text-muted small fw-bold">Regla</th>
+                    <th class="py-2 text-muted small fw-bold text-center">Estado</th>
+                    <th class="py-2 pe-3 text-end text-muted small fw-bold">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="variants-table-body">
+                  <% variant_type.variants.order(active: :desc, name: :asc).each do |variant| %>
+                    <%= render "variant_types/variant_row", variant: variant %>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-tag fs-1 opacity-25 d-block mb-2"></i>
+              <p class="small fst-italic mb-3">No hay variantes aún.</p>
+              <%= link_to new_variant_path(variant_type_id: variant_type.id),
+                  data: { action: "click->variant-modal#openNew" },
+                  class: "btn btn-sm btn-info text-white rounded-pill px-3 fw-bold" do %>
+                <i class="bi bi-plus-lg me-1"></i>Agregar primera variante
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <%# ── SIDEBAR STATS ── %>
+    <div class="col-lg-4">
+      <%= render "variant_types/sidebar_stats", variant_type: variant_type %>
+    </div>
+  </div>
+
+  <%# ── MODALES ── %>
+  <%= render "variant_types/bulk_move_modal", variant_type: variant_type %>
+  <%= render "variant_types/variant_modal" %>
+</div>
