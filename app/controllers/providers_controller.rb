@@ -1,4 +1,3 @@
-# app/controllers/providers_controller.rb
 class ProvidersController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
@@ -6,41 +5,69 @@ class ProvidersController < ApplicationController
 
   def index
     @providers = Provider.includes(:supplier_items).order(:name)
+    @selected = params[:selected_id].present? ? Provider.find_by(id: params[:selected_id]) : nil
+
+    @stats = {
+      total: Provider.count,
+      active: Provider.where(active: true).count,
+      internal: Provider.where(category: "interno").count,
+      external: Provider.where(category: "externo").count
+    }
   end
 
   def show
-    @supplier_items = @provider.supplier_items.active.order(:name)
+    @supplier_items = @provider.supplier_items.active
+      .includes(:supplier_item_properties)
+      .order(:name)
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 
   def new
-    @provider = Provider.new
+    @provider = Provider.new(active: true, category: "externo")
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 
   def edit
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 
   def create
     @provider = Provider.new(provider_params)
 
-    respond_to do |format|
-      if @provider.save
-        format.html { redirect_to @provider, notice: "Proveedor creado exitosamente." }
-        format.json { render :show, status: :created, location: @provider }
-      else
+    if @provider.save
+      respond_to do |format|
+        format.html { redirect_to providers_path(selected_id: @provider.id), notice: "Proveedor creado." }
+        format.turbo_stream
+      end
+    else
+      respond_to do |format|
         format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @provider.errors, status: :unprocessable_entity }
+        format.turbo_stream { render :new, status: :unprocessable_entity }
       end
     end
   end
 
   def update
-    respond_to do |format|
-      if @provider.update(provider_params)
-        format.html { redirect_to @provider, notice: "Proveedor actualizado exitosamente." }
-        format.json { render :show, status: :ok, location: @provider }
-      else
+    if @provider.update(provider_params)
+      @supplier_items = @provider.supplier_items.active
+        .includes(:supplier_item_properties).order(:name)
+      respond_to do |format|
+        format.html { redirect_to providers_path(selected_id: @provider.id), notice: "Proveedor actualizado." }
+        format.turbo_stream
+      end
+    else
+      respond_to do |format|
         format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @provider.errors, status: :unprocessable_entity }
+        format.turbo_stream { render :edit, status: :unprocessable_entity }
       end
     end
   end
@@ -48,8 +75,8 @@ class ProvidersController < ApplicationController
   def destroy
     @provider.destroy!
     respond_to do |format|
-      format.html { redirect_to providers_path, status: :see_other, notice: "Proveedor eliminado." }
-      format.json { head :no_content }
+      format.html { redirect_to providers_path, notice: "Proveedor eliminado." }
+      format.turbo_stream
     end
   end
 

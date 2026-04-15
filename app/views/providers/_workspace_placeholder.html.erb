@@ -1,0 +1,18 @@
+<div class="card border-0 shadow-sm rounded-4 h-100">
+  <div class="card-body d-flex flex-column align-items-center justify-content-center
+              text-center py-5 text-muted" style="min-height: 400px;">
+    <div class="bg-primary bg-opacity-10 rounded-4 p-4 mb-4">
+      <i class="bi bi-truck fs-1 text-primary opacity-50"></i>
+    </div>
+    <h5 class="fw-bold text-dark mb-2">Selecciona un proveedor</h5>
+    <p class="small mb-4 px-4">
+      Haz clic en cualquier proveedor de la lista para ver su perfil,
+      catálogo de piezas y datos de contacto.
+    </p>
+    <%= link_to new_provider_path,
+        data: { turbo_frame: "provider_workspace" },
+        class: "btn btn-primary rounded-pill px-4 fw-bold shadow-sm" do %>
+      <i class="bi bi-plus-lg me-2"></i>Crear nuevo proveedor
+    <% end %>
+  </div>
+</div>

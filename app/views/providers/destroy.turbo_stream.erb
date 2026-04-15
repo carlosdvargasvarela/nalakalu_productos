@@ -1,0 +1,4 @@
+<%= turbo_stream.remove "provider-list-item-#{@provider.id}" %>
+<%= turbo_stream.update "provider_workspace" do %>
+  <%= render "providers/workspace_placeholder" %>
+<% end %>

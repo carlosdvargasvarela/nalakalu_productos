@@ -1,66 +1,112 @@
-<%# app/views/providers/index.html.erb %>
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" data-controller="provider-filters">
+  <%# ── HEADER ── %>
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="fw-bold mb-0 text-dark">Proveedores</h1>
-      <p class="text-muted mb-0">Gestión de suministros, materiales y órdenes de compra.</p>
+      <h4 class="fw-bold mb-0 text-dark">Proveedores</h4>
+      <p class="text-muted mb-0 small">
+        <span class="text-success fw-bold"><%= @stats[:active] %> activos</span>
+        de <%= @stats[:total] %> totales ·
+        <span class="text-muted"><%= @stats[:internal] %> internos</span> ·
+        <span class="text-muted"><%= @stats[:external] %> externos</span>
+      </p>
     </div>
-    <%= link_to new_provider_path, class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
-      <i class="bi bi-plus-lg me-2"></i>Nuevo Proveedor
-    <% end %>
+    <div class="d-flex gap-2">
+      <%= link_to new_provider_path,
+          data: { turbo_frame: "provider_workspace" },
+          class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Proveedor
+      <% end %>
+    </div>
   </div>
-  <div class="row g-4">
-    <% @providers.each do |provider| %>
-      <div class="col-md-6 col-xl-4">
-        <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
-          <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <div class="bg-primary bg-opacity-10 p-3 rounded-3">
-                <i class="bi bi-truck fs-3 text-primary"></i>
-              </div>
-              <span class="badge <%= provider.active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' %> rounded-pill px-3">
-                <%= provider.active ? 'Activo' : 'Inactivo' %>
+  <% if @providers.empty? %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-truck d-block fs-1 mb-3 opacity-25"></i>
+      <p class="fw-bold">No hay proveedores registrados aún.</p>
+      <%= link_to new_provider_path, class: "btn btn-primary rounded-pill px-4" do %>
+        <i class="bi bi-plus-lg me-2"></i>Crear primer proveedor
+      <% end %>
+    </div>
+  <% else %>
+    <div class="row g-4" style="min-height: 70vh;">
+      <%# ── PANEL IZQUIERDO ── %>
+      <div class="col-lg-4 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+          <%# Filtros %>
+          <div class="card-header bg-white py-3 border-bottom">
+            <div class="input-group input-group-sm mb-2">
+              <span class="input-group-text bg-light border-0 rounded-start-3">
+                <i class="bi bi-search text-muted"></i>
               </span>
+              <input type="text"
+                     class="form-control bg-light border-0 shadow-none rounded-end-3"
+                     placeholder="Buscar proveedor..."
+                     data-provider-filters-target="search"
+                     data-action="input->provider-filters#filter">
             </div>
-            <h5 class="fw-bold mb-1"><%= provider.name %></h5>
-            <div class="d-flex align-items-center gap-2 mb-3">
-              <span class="badge bg-light text-muted border rounded-pill px-2 small">
-                <%= provider.category %>
-              </span>
-              <% if provider.contact_name.present? %>
-                <span class="text-muted small">
-                  <i class="bi bi-person me-1"></i><%= provider.contact_name %>
-                </span>
-              <% end %>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm bg-light border-0 shadow-none rounded-3"
+                      data-provider-filters-target="categoryFilter"
+                      data-action="change->provider-filters#filter">
+                <option value="">Todas las categorías</option>
+                <option value="interno">Interno</option>
+                <option value="externo">Externo</option>
+              </select>
+              <select class="form-select form-select-sm bg-light border-0 shadow-none rounded-3"
+                      data-provider-filters-target="statusFilter"
+                      data-action="change->provider-filters#filter">
+                <option value="">Todos</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+              </select>
             </div>
-            <div class="bg-light rounded-3 p-3 mb-4">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small text-muted fw-bold">Piezas en Catálogo:</span>
-                <span class="badge bg-primary rounded-pill"><%= provider.supplier_items.count %></span>
-              </div>
-              <div class="d-flex flex-wrap gap-1">
-                <% provider.supplier_items.limit(5).each do |item| %>
-                  <span class="badge bg-white border text-dark rounded-pill px-2" style="font-size: 0.65rem;">
-                    <%= item.name.truncate(20) %>
-                  </span>
-                <% end %>
-                <% extra = provider.supplier_items.count - 5 %>
-                <% if extra > 0 %>
-                  <span class="text-muted" style="font-size: 0.7rem;">+<%= extra %> más</span>
-                <% end %>
-              </div>
-            </div>
-            <div class="d-flex gap-2 mt-auto">
-              <%= link_to provider, class: "btn btn-sm btn-outline-primary rounded-pill flex-fill fw-bold" do %>
-                <i class="bi bi-eye me-1"></i>Ver Perfil
-              <% end %>
-              <%= link_to edit_provider_path(provider), class: "btn btn-sm btn-outline-secondary rounded-pill px-3" do %>
-                <i class="bi bi-pencil"></i>
+          </div>
+          <%# Lista de proveedores %>
+          <div class="card-body p-0 overflow-auto" style="max-height: calc(100vh - 300px);">
+            <div id="providers-list">
+              <% @providers.each do |provider| %>
+                <%= render "providers/provider_list_item",
+                    provider: provider,
+                    selected: @selected&.id == provider.id %>
               <% end %>
             </div>
           </div>
+          <%# Importador CSV %>
+          <div class="card-footer bg-white border-top p-3">
+            <%= form_with url: import_providers_path, multipart: true, local: true do |f| %>
+              <p class="small text-muted fw-bold mb-2">
+                <i class="bi bi-file-earmark-spreadsheet me-1 text-info"></i>Importar CSV
+              </p>
+              <div class="input-group input-group-sm shadow-sm">
+                <%= f.file_field :file,
+                    class: "form-control rounded-start-pill small", accept: ".csv" %>
+                <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
+                  <i class="bi bi-cloud-upload"></i>
+                </button>
+              </div>
+            <% end %>
+          </div>
         </div>
       </div>
-    <% end %>
-  </div>
+      <%# ── PANEL DERECHO (Turbo Frame) ── %>
+      <div class="col-lg-8 col-xl-9">
+        <%= turbo_frame_tag "provider_workspace" do %>
+          <% if @selected %>
+            <%= render "providers/show_panel",
+                provider: @selected,
+                supplier_items: @selected.supplier_items.active
+                  .includes(:supplier_item_properties).order(:name) %>
+          <% else %>
+            <%= render "providers/workspace_placeholder" %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 </div>
+<style>
+  .provider-row-active { background-color: #f0f7ff; border-left: 3px solid #0d6efd !important; }
+  .provider-row        { border-left: 3px solid transparent; transition: background 0.15s; }
+  .provider-row:hover  { background-color: #f8f9fa; }
+  .bg-success-soft     { background-color: #e1f6eb; }
+  .bg-secondary-soft   { background-color: #f0f2f5; }
+</style>

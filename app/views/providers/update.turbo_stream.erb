@@ -1,0 +1,11 @@
+<%# 1. Actualizar fila en el panel izquierdo %>
+<%= turbo_stream.replace "provider-list-item-#{@provider.id}" do %>
+  <%= render "providers/provider_list_item", provider: @provider, selected: true %>
+<% end %>
+
+<%# 2. Recargar show panel con datos frescos %>
+<%= turbo_stream.update "provider_workspace" do %>
+  <%= render "providers/show_panel",
+      provider: @provider,
+      supplier_items: @supplier_items %>
+<% end %>

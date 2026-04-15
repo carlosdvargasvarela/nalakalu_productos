@@ -1,0 +1,11 @@
+<%# 1. Agregar fila al panel izquierdo %>
+<%= turbo_stream.prepend "providers-list" do %>
+  <%= render "providers/provider_list_item", provider: @provider, selected: true %>
+<% end %>
+<%# 2. Cargar show panel en el workspace %>
+<%= turbo_stream.update "provider_workspace" do %>
+  <%= render "providers/show_panel",
+      provider: @provider,
+      supplier_items: @provider.supplier_items.active
+        .includes(:supplier_item_properties).order(:name) %>
+<% end %>

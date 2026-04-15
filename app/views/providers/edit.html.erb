@@ -1,19 +1,26 @@
-<%# app/views/providers/edit.html.erb %>
-<div class="container-fluid py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><%= link_to "Proveedores", providers_path, class: "text-decoration-none" %></li>
-      <li class="breadcrumb-item"><%= link_to @provider.name, @provider, class: "text-decoration-none" %></li>
-      <li class="breadcrumb-item active fw-bold">Editar</li>
-    </ol>
-  </nav>
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0 text-dark">
-      Editando: <span class="text-primary"><%= @provider.name %></span>
-    </h2>
-    <%= link_to @provider, class: "btn btn-outline-secondary rounded-pill px-4" do %>
-      <i class="bi bi-eye me-2"></i>Ver Perfil
-    <% end %>
+<%= turbo_frame_tag "provider_workspace" do %>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white py-3 border-bottom">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 small">
+          <li class="breadcrumb-item">
+            <%= link_to "Proveedores", providers_path, class: "text-decoration-none" %>
+          </li>
+          <li class="breadcrumb-item">
+            <%= link_to @provider.name,
+                providers_path(selected_id: @provider.id),
+                data: { turbo_frame: "provider_workspace" },
+                class: "text-decoration-none" %>
+          </li>
+          <li class="breadcrumb-item active fw-bold">Editar</li>
+        </ol>
+      </nav>
+      <h5 class="fw-bold mb-0 mt-2">
+        Editando: <span class="text-primary"><%= @provider.name %></span>
+      </h5>
+    </div>
+    <div class="card-body p-4">
+      <%= render "form", provider: @provider %>
+    </div>
   </div>
-  <%= render "form", provider: @provider %>
-</div>
+<% end %>
