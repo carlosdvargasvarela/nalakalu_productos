@@ -187,6 +187,7 @@
           </div>
         <% end %>
         <%# 3. Acciones del documento %>
+        <%# 3. Acciones del documento %>
         <div class="card border-0 shadow-sm mb-3">
           <div class="card-header bg-white border-bottom py-2">
             <span class="small fw-bold text-muted text-uppercase">
@@ -196,25 +197,37 @@
           <div class="card-body d-grid gap-2 py-3">
             <% if @purchase_order.status == "borrador" %>
               <%= link_to edit_purchase_order_path(@purchase_order),
-                    class: "btn btn-outline-primary btn-sm fw-bold py-2" do %>
+            class: "btn btn-outline-primary btn-sm fw-bold py-2" do %>
                 <i class="bi bi-pencil-square me-2"></i>Editar Cantidades y Costos
               <% end %>
             <% end %>
-            <button class="btn btn-outline-dark btn-sm py-2" onclick="window.print()">
-              <i class="bi bi-printer me-2"></i>Imprimir
-            </button>
+            <%# PDF %>
+            <%= link_to download_pdf_purchase_order_path(@purchase_order),
+          class: "btn btn-outline-dark btn-sm py-2" do %>
+              <i class="bi bi-file-earmark-pdf me-2"></i>Descargar PDF
+            <% end %>
+            <%# Email %>
             <% if @purchase_order.provider.email.present? %>
-              <%= link_to @purchase_order.mailto_url,
-                    class: "btn btn-outline-secondary btn-sm py-2" do %>
+              <%= button_to send_email_purchase_order_path(@purchase_order),
+            method: :post,
+            class: "btn btn-outline-secondary btn-sm py-2",
+            data: {
+              turbo_confirm: "¿Enviar la OC #{@purchase_order.number} a #{@purchase_order.provider.email}?"
+            } do %>
                 <i class="bi bi-envelope me-2"></i>Enviar por Correo
               <% end %>
+            <% else %>
+              <button class="btn btn-outline-secondary btn-sm py-2" disabled
+              title="El proveedor no tiene correo registrado">
+                <i class="bi bi-envelope me-2"></i>Sin correo registrado
+              </button>
             <% end %>
             <% if current_user.role == "admin" || @purchase_order.status == "borrador" %>
               <hr class="my-1">
               <%= button_to purchase_order_path(@purchase_order),
-                    method: :delete,
-                    class: "btn btn-outline-danger btn-sm py-2",
-                    data: { turbo_confirm: "¿Eliminar la orden #{@purchase_order.number}?\n\nLos requerimientos asociados volverán a estado pendiente." } do %>
+            method: :delete,
+            class: "btn btn-outline-danger btn-sm py-2",
+            data: { turbo_confirm: "¿Eliminar la orden #{@purchase_order.number}?\n\nLos requerimientos asociados volverán a estado pendiente." } do %>
                 <i class="bi bi-trash me-2"></i>Eliminar Orden
               <% end %>
             <% end %>

@@ -78,6 +78,8 @@ Rails.application.routes.draw do
       get "origin_order/:order_number", to: "purchase_orders#origin_order_detail",
         as: :origin_order_detail, constraints: {order_number: /[^\/]+/}
       patch :transition
+      get :download_pdf
+      post :send_email
     end
   end
 

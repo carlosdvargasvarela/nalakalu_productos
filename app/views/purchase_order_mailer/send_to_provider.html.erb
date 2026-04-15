@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body { font-family: Arial, sans-serif; color: #111827; margin: 0; padding: 0; background: #f9fafb; }
+      .wrapper { max-width: 600px; margin: 32px auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+      .header { background: #1a56db; padding: 28px 32px; }
+      .header h1 { color: #ffffff; margin: 0; font-size: 20px; letter-spacing: -0.5px; }
+      .header p { color: #bfdbfe; margin: 4px 0 0; font-size: 13px; }
+      .body { padding: 28px 32px; }
+      .body p { font-size: 14px; line-height: 1.6; color: #374151; margin: 0 0 16px; }
+      .detail-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 20px; margin: 20px 0; }
+      .detail-box table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .detail-box td { padding: 5px 0; color: #374151; }
+      .detail-box td:first-child { color: #6b7280; width: 40%; }
+      .detail-box td strong { color: #111827; }
+      .footer { background: #f9fafb; border-top: 1px solid #e5e7eb; padding: 16px 32px; text-align: center; }
+      .footer p { font-size: 11px; color: #9ca3af; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="header">
+        <h1>NALAKALÚ</h1>
+        <p>Orden de Compra — <%= @po.number %></p>
+      </div>
+      <div class="body">
+        <p>Estimados,</p>
+        <p>
+          Por medio del presente correo les hacemos llegar la
+          <strong>Orden de Compra <%= @po.number %></strong>,
+          adjunta en formato PDF para su revisión y confirmación.
+        </p>
+        <div class="detail-box">
+          <table>
+            <tr>
+              <td>Número de OC:</td>
+              <td><strong><%= @po.number %></strong></td>
+            </tr>
+            <tr>
+              <td>Fecha de emisión:</td>
+              <td><strong><%= @po.issued_date&.strftime("%d/%m/%Y") %></strong></td>
+            </tr>
+            <% if @po.delivery_deadline.present? %>
+              <tr>
+                <td>Fecha máx. de entrega:</td>
+                <td><strong><%= @po.delivery_deadline.strftime("%d/%m/%Y") %></strong></td>
+              </tr>
+            <% end %>
+            <tr>
+              <td>Líneas:</td>
+              <td><strong><%= @items.size %> ítem<%= @items.size == 1 ? "" : "s" %></strong></td>
+            </tr>
+            <tr>
+              <td>Total estimado:</td>
+              <td><strong>₡<%= number_with_delimiter(@po.total_amount.round(2), delimiter: ".", separator: ",") %></strong></td>
+            </tr>
+          </table>
+        </div>
+        <% if @po.notes.present? %>
+          <p><strong>Notas e instrucciones:</strong><br>
+            <%= @po.notes %></p>
+        <% end %>
+        <p>
+          Agradecemos confirmar la recepción de esta orden y la disponibilidad
+          de los materiales indicados.<br>
+          Ante cualquier consulta, no duden en contactarnos.
+        </p>
+        <p>Atentamente,<br>
+          <strong>Nalakalú Solutions S.A.</strong><br>
+          Tel. +(506) 2453-8003</p>
+      </div>
+      <div class="footer">
+        <p>Nalakalú Solutions S.A. · Ced. Jurídica: 3-101-477431 · 800m este de Concrepal, Palmares, Alajuela</p>
+      </div>
+    </div>
+  </body>
+</html>

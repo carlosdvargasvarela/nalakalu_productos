@@ -45,6 +45,34 @@ class PurchaseOrdersController < ApplicationController
     end
   end
 
+  def download_pdf
+    @po = PurchaseOrder.find(params[:id])
+    @items = @po.purchase_order_items
+      .includes(:supplier_item, :procurement_requirements)
+      .order(:id)
+
+    pdf = PurchaseOrderPdf.new(@po, @items).render
+
+    send_data pdf,
+      filename: "OC-#{@po.number}.pdf",
+      type: "application/pdf",
+      disposition: "attachment"
+  end
+
+  def send_email
+    @purchase_order = PurchaseOrder.find(params[:id])
+
+    unless @purchase_order.provider.email.present?
+      return redirect_to @purchase_order,
+        alert: "El proveedor no tiene correo registrado."
+    end
+
+    PurchaseOrderMailer.send_to_provider(@purchase_order).deliver_later
+
+    redirect_to @purchase_order,
+      notice: "Orden enviada a #{@purchase_order.provider.email}."
+  end
+
   def transition
     next_status = params[:transition]
     allowed = ALLOWED_TRANSITIONS[@purchase_order.status] || []
