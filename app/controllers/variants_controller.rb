@@ -8,18 +8,23 @@ class VariantsController < ApplicationController
       .includes(:variant_type, :compatibilities)
       .order("variant_types.name, variants.name")
       .joins(:variant_type)
+
+    @selected = params[:selected_id].present? ? Variant.find_by(id: params[:selected_id]) : nil
+
+    @stats = {
+      total: Variant.count,
+      active: Variant.where(active: true).count,
+      types: VariantType.count,
+      no_rules: Variant.left_joins(:supply_rules).where(supply_rules: {id: nil}).count
+    }
   end
 
   def show
-    rule_ids = @variant.compatibilities
-      .where(compatible_type: "ProductVariantRule")
-      .pluck(:compatible_id)
-
-    @compatible_products = Product
-      .joins(:product_variant_rules)
-      .where(product_variant_rules: {id: rule_ids})
-      .distinct
-      .order(:name)
+    @compatible_products = compatible_products_for(@variant)
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 
   def new
@@ -43,7 +48,7 @@ class VariantsController < ApplicationController
     if @variant.save
       sync_compatible_variants
       respond_to do |format|
-        format.html { redirect_to @variant.variant_type, notice: "Variante creada." }
+        format.html { redirect_to variants_path(selected_id: @variant.id), notice: "Variante creada." }
         format.turbo_stream
       end
     else
@@ -60,7 +65,7 @@ class VariantsController < ApplicationController
     if @variant.save
       sync_compatible_variants
       respond_to do |format|
-        format.html { redirect_to @variant.variant_type, notice: "Variante actualizada." }
+        format.html { redirect_to variants_path(selected_id: @variant.id), notice: "Variante actualizada." }
         format.turbo_stream
       end
     else
@@ -75,8 +80,8 @@ class VariantsController < ApplicationController
     type = @variant.variant_type
     @variant.destroy
     respond_to do |format|
-      format.html { redirect_to variant_type_path(type), notice: "Variante eliminada." }
-      format.turbo_stream { render turbo_stream: turbo_stream.remove(@variant) }
+      format.html { redirect_to variants_path, notice: "Variante eliminada." }
+      format.turbo_stream
     end
   end
 
@@ -99,10 +104,10 @@ class VariantsController < ApplicationController
           compatible_id: rule.id
         )
       end
-      redirect_to variant_type_path(new_type),
+      redirect_to variants_path(selected_id: @variant.id),
         notice: "Variante movida a '#{new_type.name}' exitosamente."
     else
-      redirect_to variant_type_path(old_type),
+      redirect_to variants_path(selected_id: @variant.id),
         alert: "No se pudo mover la variante."
     end
   end
@@ -127,6 +132,17 @@ class VariantsController < ApplicationController
 
   def set_variant
     @variant = Variant.find(params[:id])
+  end
+
+  def compatible_products_for(variant)
+    rule_ids = variant.compatibilities
+      .where(compatible_type: "ProductVariantRule")
+      .pluck(:compatible_id)
+    Product
+      .joins(:product_variant_rules)
+      .where(product_variant_rules: {id: rule_ids})
+      .distinct
+      .order(:name)
   end
 
   def sync_compatible_variants

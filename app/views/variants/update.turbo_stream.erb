@@ -1,8 +1,14 @@
-<%# 1. Actualizar la fila en la tabla %>
-<%= turbo_stream.replace dom_id(@variant) do %>
-  <%= render "variant_types/variant_row", variant: @variant %>
+<%# 1. Actualizar fila en el panel izquierdo %>
+<%= turbo_stream.replace "variant-list-item-#{@variant.id}" do %>
+  <%= render "variants/variant_list_item", variant: @variant, selected: true %>
 <% end %>
-<%# 2. Señal para cerrar el modal %>
+<%# 2. Recargar el show panel con datos frescos %>
+<%= turbo_stream.update "variant_workspace" do %>
+  <%= render "variants/show_panel",
+      variant: @variant,
+      compatible_products: compatible_products_for(@variant) %>
+<% end %>
+<%# 3. Señal para cerrar modal si aplica %>
 <%= turbo_stream.replace "variant-modal-signal" do %>
   <div id="variant-modal-signal" data-variant-modal-target="signal"></div>
 <% end %>

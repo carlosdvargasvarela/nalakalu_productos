@@ -132,7 +132,9 @@
           <div class="small">
             Las <strong>propiedades técnicas</strong> (acabado, material, etc.) ahora se
             configuran en la <strong>Pieza de Proveedor</strong> correspondiente, no en la variante.
-            <%= link_to "Ver piezas de proveedor", supplier_items_path, class: "fw-bold" %>
+            <%= link_to "Ver piezas de proveedor", supplier_items_path,
+                data: { turbo_frame: "_top" },
+                class: "fw-bold" %>
           </div>
         </div>
       </div>
@@ -144,6 +146,7 @@
       <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-3 d-flex justify-content-between align-items-center">
           <%= link_to variants_path,
+              data: { turbo_frame: "_top" },
               class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
             <i class="bi bi-x-lg me-2"></i>Descartar
           <% end %>

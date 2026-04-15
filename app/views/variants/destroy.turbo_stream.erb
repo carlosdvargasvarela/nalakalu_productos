@@ -1,1 +1,5 @@
-<%= turbo_stream.remove dom_id(@variant) %>
+<%# Sin cambios — remueve la fila del panel izquierdo y limpia el workspace %>
+<%= turbo_stream.remove "variant-list-item-#{@variant.id}" %>
+<%= turbo_stream.update "variant_workspace" do %>
+  <%= render "variants/workspace_placeholder" %>
+<% end %>

@@ -1,10 +1,14 @@
-<%# 1. Agregar a la tabla %>
-<%= turbo_stream.prepend "variants-table-body" do %>
-  <%= render "variant_types/variant_row", variant: @variant %>
+<%# 1. Agregar fila al panel izquierdo (dentro del grupo del tipo) %>
+<%= turbo_stream.prepend "variant-group-#{@variant.variant_type_id}" do %>
+  <%= render "variants/variant_list_item", variant: @variant, selected: true %>
 <% end %>
-<%# 2. Señal para cerrar el modal %>
+<%# 2. Cargar el show panel en el workspace %>
+<%= turbo_stream.update "variant_workspace" do %>
+  <%= render "variants/show_panel",
+      variant: @variant,
+      compatible_products: compatible_products_for(@variant) %>
+<% end %>
+<%# 3. Señal para cerrar modal si aplica %>
 <%= turbo_stream.replace "variant-modal-signal" do %>
   <div id="variant-modal-signal" data-variant-modal-target="signal"></div>
 <% end %>
-<%# 3. Limpiar mensaje de "No hay variantes" %>
-<%= turbo_stream.remove "empty-variants-state" %>

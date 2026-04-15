@@ -6,7 +6,9 @@
       </h5>
       <span class="x-small text-muted">Reglas de abastecimiento configuradas para esta variante</span>
     </div>
-    <%= link_to supply_rules_path, class: "btn btn-sm btn-light rounded-pill border px-3" do %>
+    <%= link_to supply_rules_path,
+        data: { turbo_frame: "_top" },
+        class: "btn btn-sm btn-light rounded-pill border px-3" do %>
       <i class="bi bi-gear me-1"></i><span class="small">Gestionar</span>
     <% end %>
   </div>
@@ -47,7 +49,9 @@
       <p class="x-small text-muted mb-3">
         Esta variante no tiene piezas de proveedor configuradas.
       </p>
-      <%= link_to supply_rules_path, class: "btn btn-sm btn-outline-primary rounded-pill px-4" do %>
+      <%= link_to supply_rules_path,
+          data: { turbo_frame: "_top" },
+          class: "btn btn-sm btn-outline-primary rounded-pill px-4" do %>
         <i class="bi bi-plus-lg me-1"></i>Configurar regla
       <% end %>
     </div>

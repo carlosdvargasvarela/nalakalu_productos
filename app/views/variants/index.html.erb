@@ -1,12 +1,26 @@
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" data-controller="variant-filters">
+  <%# ── HEADER ── %>
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="fw-bold mb-0 text-dark">Variantes</h1>
-      <p class="text-muted mb-0">Opciones individuales disponibles para configurar productos.</p>
+      <h4 class="fw-bold mb-0 text-dark">Variantes</h4>
+      <p class="text-muted mb-0 small">
+        <%= @stats[:types] %> tipos ·
+        <span class="text-success fw-bold"><%= @stats[:active] %> activas</span>
+        de <%= @stats[:total] %> totales
+        <% if @stats[:no_rules] > 0 %>
+          · <span class="text-warning fw-bold">
+            <i class="bi bi-exclamation-circle me-1"></i><%= @stats[:no_rules] %> sin regla
+          </span>
+        <% end %>
+      </p>
     </div>
-    <%= link_to new_variant_path, class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
-      <i class="bi bi-plus-lg me-2"></i>Nueva Variante
-    <% end %>
+    <div class="d-flex gap-2">
+      <%= link_to new_variant_path,
+          data: { turbo_frame: "variant_workspace" },
+          class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
+        <i class="bi bi-plus-lg me-2"></i>Nueva Variante
+      <% end %>
+    </div>
   </div>
   <% if @variants.empty? %>
     <div class="text-center py-5 text-muted">
@@ -17,86 +31,102 @@
       <% end %>
     </div>
   <% else %>
-    <% @variants.group_by(&:variant_type).each do |type, variants| %>
-      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-2">
-            <div class="bg-info bg-opacity-10 p-2 rounded-3">
-              <i class="bi bi-tags text-info"></i>
-            </div>
-            <div>
-              <span class="fw-bold text-dark"><%= type.name %></span>
-              <span class="text-muted small ms-2">
-                <%= variants.count(&:active) %> activas · <%= variants.count %> totales
+    <div class="row g-4" style="min-height: 70vh;">
+      <%# ── PANEL IZQUIERDO ── %>
+      <div class="col-lg-4 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+          <%# Filtros %>
+          <div class="card-header bg-white py-3 border-bottom">
+            <div class="input-group input-group-sm mb-2">
+              <span class="input-group-text bg-light border-0 rounded-start-3">
+                <i class="bi bi-search text-muted"></i>
               </span>
+              <input type="text"
+                     class="form-control bg-light border-0 shadow-none rounded-end-3"
+                     placeholder="Buscar variante..."
+                     data-variant-filters-target="search"
+                     data-action="input->variant-filters#filter">
+            </div>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm bg-light border-0 shadow-none rounded-3"
+                      data-variant-filters-target="typeFilter"
+                      data-action="change->variant-filters#filter">
+                <option value="">Todos los tipos</option>
+                <% VariantType.order(:name).each do |vt| %>
+                  <option value="<%= vt.id %>"><%= vt.name %></option>
+                <% end %>
+              </select>
+              <select class="form-select form-select-sm bg-light border-0 shadow-none rounded-3"
+                      data-variant-filters-target="statusFilter"
+                      data-action="change->variant-filters#filter">
+                <option value="">Todos</option>
+                <option value="active">Activas</option>
+                <option value="inactive">Inactivas</option>
+                <option value="no_rule">Sin regla</option>
+              </select>
             </div>
           </div>
-          <%= link_to new_variant_path(variant_type_id: type.id),
-              class: "btn btn-sm btn-outline-primary rounded-pill px-3" do %>
-            <i class="bi bi-plus-lg me-1"></i>Agregar
-          <% end %>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="bg-light border-bottom">
-                <tr>
-                  <th class="px-4 py-3 text-muted small fw-bold text-uppercase">Variante</th>
-                  <th class="py-3 text-muted small fw-bold text-uppercase">Código QB</th>
-                  <th class="py-3 text-muted small fw-bold text-uppercase">Propiedades</th>
-                  <th class="py-3 text-muted small fw-bold text-uppercase text-center">Estado</th>
-                  <th class="py-3 pe-4 text-end text-muted small fw-bold text-uppercase">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
+          <%# Lista agrupada por tipo %>
+          <div class="card-body p-0 overflow-auto" style="max-height: calc(100vh - 300px);">
+            <% @variants.group_by(&:variant_type).each do |type, variants| %>
+              <div class="variant-type-group"
+                   data-type-id="<%= type.id %>"
+                data-variant-filters-target="group">
+                <div class="px-3 py-2 bg-light border-bottom sticky-top">
+                  <span class="small fw-bold text-muted text-uppercase">
+                    <i class="bi bi-tags me-1 text-info"></i><%= type.name %>
+                  </span>
+                  <span class="badge bg-info bg-opacity-10 text-info rounded-pill ms-1"
+                        style="font-size: 0.6rem;">
+                    <%= variants.count %>
+                  </span>
+                </div>
                 <% variants.each do |variant| %>
-                  <%= render "variant_row", variant: variant %>
+                  <%= render "variants/variant_list_item",
+                      variant: variant,
+                      selected: @selected&.id == variant.id %>
                 <% end %>
-              </tbody>
-            </table>
+              </div>
+            <% end %>
+          </div>
+          <%# Importador CSV %>
+          <div class="card-footer bg-white border-top p-3">
+            <%= form_with url: import_variants_path, multipart: true, local: true do |f| %>
+              <p class="small text-muted fw-bold mb-2">
+                <i class="bi bi-file-earmark-spreadsheet me-1 text-info"></i>Importar CSV
+              </p>
+              <div class="input-group input-group-sm shadow-sm">
+                <%= f.file_field :file,
+                    class: "form-control rounded-start-pill small", accept: ".csv" %>
+                <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
+                  <i class="bi bi-cloud-upload"></i>
+                </button>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
-    <% end %>
-  <% end %>
-  <!-- Importador CSV -->
-  <div class="card border-0 shadow-sm rounded-4 border-start border-4 mt-2" style="border-color: #7c3aed !important;">
-    <div class="card-body p-4">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <h5 class="fw-bold mb-1">
-            <i class="bi bi-file-earmark-spreadsheet me-2" style="color: #7c3aed;"></i>Importación Masiva
-          </h5>
-          <p class="text-muted small mb-1">
-            Columnas requeridas:
-            <code class="bg-light px-1 rounded">tipo_de_variante</code>
-            <code class="bg-light px-1 rounded">nombre</code>
-            <code class="bg-light px-1 rounded">codigo</code>
-          </p>
-          <p class="text-muted small mb-0">
-            Opcionales:
-            <code class="bg-light px-1 rounded">proveedor</code>
-            <code class="bg-light px-1 rounded">sku_proveedor</code>
-            <code class="bg-light px-1 rounded">costo</code>
-          </p>
-        </div>
-        <div class="col-md-4 mt-3 mt-md-0">
-          <%= form_with url: import_variants_path, multipart: true, local: true do |f| %>
-            <div class="input-group shadow-sm">
-              <%= f.file_field :file, class: "form-control rounded-start-pill small", accept: ".csv" %>
-              <button class="btn text-white rounded-end-pill fw-bold px-3"
-                      style="background-color: #7c3aed;" type="submit">
-                <i class="bi bi-cloud-upload me-1"></i>Importar
-              </button>
-            </div>
+      <%# ── PANEL DERECHO (Turbo Frame) ── %>
+      <div class="col-lg-8 col-xl-9">
+        <%= turbo_frame_tag "variant_workspace" do %>
+          <% if @selected %>
+            <%= render "variants/show_panel",
+                variant: @selected,
+                compatible_products: compatible_products_for(@selected) %>
+          <% else %>
+            <%= render "variants/workspace_placeholder" %>
           <% end %>
-        </div>
+        <% end %>
       </div>
     </div>
-  </div>
+  <% end %>
 </div>
 <style>
-  .bg-success-soft   { background-color: #e1f6eb; }
-  .bg-secondary-soft { background-color: #f0f2f5; }
-  .x-small { font-size: 0.7rem; }
+  .variant-row-active { background-color: #f0f7ff; border-left: 3px solid #0d6efd !important; }
+  .variant-row        { border-left: 3px solid transparent; transition: background 0.15s; }
+  .variant-row:hover  { background-color: #f8f9fa; }
+  .bg-success-soft    { background-color: #e1f6eb; }
+  .bg-warning-soft    { background-color: #fff8e1; }
+  .bg-secondary-soft  { background-color: #f0f2f5; }
+  .x-small            { font-size: 0.72rem; }
 </style>

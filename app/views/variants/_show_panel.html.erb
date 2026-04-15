@@ -1,0 +1,127 @@
+<div data-controller="move-variant" id="variant-show-<%= variant.id %>">
+  <%# ── HEADER ── %>
+  <div class="card border-0 shadow-sm rounded-4 mb-3">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-start gap-3">
+        <div class="rounded-3 p-3 flex-shrink-0" style="background-color: #f0ebff;">
+          <i class="bi bi-palette fs-3" style="color: #7c3aed;"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <h5 class="fw-bold mb-0">
+              <%= variant.display_name.presence || variant.name %>
+            </h5>
+            <span class="badge bg-secondary rounded-pill px-2">
+              <%= variant.variant_type.name %>
+            </span>
+            <span class="badge <%= variant.active ? 'bg-success' : 'bg-secondary' %> rounded-pill px-2">
+              <%= variant.active ? 'Activa' : 'Inactiva' %>
+            </span>
+          </div>
+          <% if variant.display_name.present? && variant.display_name != variant.name %>
+            <div class="text-muted small">
+              <i class="bi bi-truck me-1"></i>Nombre técnico: <strong><%= variant.name %></strong>
+            </div>
+          <% end %>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0 flex-wrap justify-content-end">
+          <button class="btn btn-outline-warning rounded-pill px-3 btn-sm shadow-sm"
+                  data-action="click->move-variant#open"
+            title="Mover a otro tipo">
+            <i class="bi bi-arrow-left-right me-1"></i>Mover
+          </button>
+          <%= link_to edit_variant_path(variant),
+              data: { turbo_frame: "variant_workspace" },
+              class: "btn btn-outline-primary rounded-pill px-3 btn-sm shadow-sm" do %>
+            <i class="bi bi-pencil me-1"></i>Editar
+          <% end %>
+          <%= button_to variant_path(variant), method: :delete,
+              form: { data: { turbo_confirm: "ATENCIÓN: Se eliminarán todos los precios y compatibilidades de esta variante. ¿Continuar?" } },
+              class: "btn btn-outline-danger rounded-pill px-3 btn-sm shadow-sm" do %>
+            <i class="bi bi-trash"></i>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%# ── CONTENIDO EN 2 COLUMNAS ── %>
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <%= render "variants/variant_data_card", variant: variant %>
+      <%= render "variants/technical_specs_card", variant: variant %>
+      <% if variant.technical_description.present? %>
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="fw-bold mb-0">
+              <i class="bi bi-card-text me-2 text-primary"></i>Notas Técnicas
+            </h5>
+          </div>
+          <div class="card-body p-4">
+            <p class="mb-0 small text-muted"><%= variant.technical_description %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <div class="col-lg-8">
+      <%= render "variants/compatible_products_card",
+          variant: variant,
+          compatible_products: compatible_products %>
+      <%= render "variants/compatible_variants_card", variant: variant %>
+    </div>
+  </div>
+  <%# ── MODAL: Mover variante ── %>
+  <div class="modal fade" id="moveVariantModal-<%= variant.id %>" tabindex="-1" aria-hidden="true"
+       data-move-variant-target="modal">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 rounded-4 shadow">
+        <%= form_with url: move_to_type_variant_path(variant),
+            method: :patch,
+            local: true,
+            data: { turbo_frame: "_top" } do |f| %>
+          <div class="modal-header border-0 pb-0 p-4">
+            <div>
+              <h5 class="fw-bold mb-1">
+                <i class="bi bi-arrow-left-right me-2 text-warning"></i>Mover Variante
+              </h5>
+              <p class="text-muted small mb-0">
+                Reasignar <strong><%= variant.display_name.presence || variant.name %></strong>
+                a otro tipo de variante.
+              </p>
+            </div>
+            <button type="button" class="btn-close ms-auto"
+                    data-action="click->move-variant#close"></button>
+          </div>
+          <div class="modal-body p-4 pt-2">
+            <div class="alert alert-warning rounded-3 small">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              Al mover esta variante, las reglas de compatibilidad con productos del tipo
+              <strong><%= variant.variant_type.name %></strong> dejarán de aplicar.
+            </div>
+            <label class="form-label fw-bold small">Nuevo Tipo de Variante</label>
+            <%= f.select :new_type_id,
+                options_from_collection_for_select(
+                  VariantType.where.not(id: variant.variant_type_id).order(:name),
+                  :id, :name
+                ),
+                { include_blank: "Selecciona un tipo..." },
+                class: "form-select rounded-3 shadow-sm" %>
+          </div>
+          <div class="modal-footer border-0 p-4 pt-0">
+            <button type="button" class="btn btn-light rounded-pill px-4"
+                    data-action="click->move-variant#close">
+              Cancelar
+            </button>
+            <%= f.submit "Mover Variante",
+                class: "btn btn-warning text-white rounded-pill px-4 fw-bold shadow-sm" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .bg-success-soft   { background-color: #e1f6eb; }
+  .bg-secondary-soft { background-color: #f0f2f5; }
+  .bg-warning-soft   { background-color: #fff8e1; }
+  .x-small           { font-size: 0.7rem; }
+</style>
