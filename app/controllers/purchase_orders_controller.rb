@@ -1,4 +1,3 @@
-# app/controllers/purchase_orders_controller.rb
 class PurchaseOrdersController < ApplicationController
   before_action :authenticate_user!
   before_action :set_purchase_order, only: %i[show edit update destroy transition]
@@ -110,7 +109,6 @@ class PurchaseOrdersController < ApplicationController
       .where(purchase_order_item_id: po_item_ids, origin_order_number: @order_number)
       .includes(:supplier_item, supply_rule: [:product, {variant: :variant_type}])
 
-    # Respondemos solo el partial dentro del frame
     render partial: "purchase_orders/origin_order_modal",
       locals: {order_number: @order_number, requirements: @requirements}
   end

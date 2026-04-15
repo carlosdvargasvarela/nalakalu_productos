@@ -1,5 +1,26 @@
 <%# app/views/purchase_orders/show.html.erb %>
-<div class="container-fluid mt-4 pb-5" style="max-width: 1100px;">
+<% content_for :head do %>
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
+<%
+  status_context = {
+    "borrador"   => { color: "secondary", icon: "bi-pencil-fill",
+                      desc: "Esta orden aún no ha sido enviada al proveedor. Podés editar cantidades y costos antes de enviarla." },
+    "enviado"    => { color: "info",      icon: "bi-send-fill",
+                      desc: "La orden fue enviada. Esperando confirmación del proveedor." },
+    "confirmado" => { color: "primary",   icon: "bi-check-circle-fill",
+                      desc: "El proveedor confirmó la orden. Pendiente de recepción de materiales." },
+    "recibido"   => { color: "success",   icon: "bi-box-seam-fill",
+                      desc: "Materiales recibidos. Esta orden está cerrada." },
+    "cancelado"  => { color: "danger",    icon: "bi-x-circle-fill",
+                      desc: "Esta orden fue cancelada. Los requerimientos volvieron a estado pendiente." }
+  }
+  ctx = status_context[@purchase_order.status]
+  origin_orders = @items
+    .flat_map { |i| i.procurement_requirements.map(&:origin_order_number) }
+    .uniq.compact.sort
+%>
+<div class="container-fluid mt-4 pb-5" style="max-width: 1100px;" data-controller="<%= origin_orders.any? ? 'origin-modal' : '' %>">
   <%# Breadcrumb %>
   <div class="mb-3">
     <%= link_to purchase_orders_path, class: "text-decoration-none text-muted small" do %>
@@ -7,13 +28,15 @@
     <% end %>
   </div>
   <div class="row g-4">
-    <%# ── COLUMNA PRINCIPAL: EL DOCUMENTO ── %>
+    <%# ══════════════════════════════════════════
+        COLUMNA PRINCIPAL — EL DOCUMENTO
+    ══════════════════════════════════════════ %>
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm p-4 p-md-5 bg-white">
-        <%# Header del Documento %>
+        <%# Header del documento %>
         <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
           <div>
-            <div class="fw-black text-dark mb-1" style="font-size: 1.5rem; letter-spacing: -0.5px;">
+            <div class="fw-bold text-dark mb-1" style="font-size: 1.4rem; letter-spacing: -0.5px;">
               NALAKALÚ
             </div>
             <div class="small text-muted lh-sm">
@@ -24,14 +47,18 @@
             </div>
           </div>
           <div class="text-end">
-            <div class="text-uppercase text-muted small fw-bold tracking-wide mb-1">Orden de Compra</div>
+            <div class="text-uppercase text-muted small fw-bold mb-1">Orden de Compra</div>
             <div class="h3 fw-bold text-dark mb-1">#<%= @purchase_order.number %></div>
             <div class="small text-muted">
               Emitida: <strong><%= @purchase_order.issued_date&.strftime("%d/%m/%Y") %></strong>
             </div>
             <% if @purchase_order.delivery_deadline.present? %>
-              <div class="small text-muted">
-                Entrega máx.: <strong class="text-danger"><%= @purchase_order.delivery_deadline.strftime("%d/%m/%Y") %></strong>
+              <% overdue = @purchase_order.delivery_deadline < Date.current &&
+                           !%w[recibido cancelado].include?(@purchase_order.status) %>
+              <div class="small <%= overdue ? 'text-danger fw-bold' : 'text-muted' %>">
+                Entrega máx.:
+                <strong><%= @purchase_order.delivery_deadline.strftime("%d/%m/%Y") %></strong>
+                <%= "<i class='bi bi-exclamation-triangle-fill ms-1'></i>".html_safe if overdue %>
               </div>
             <% end %>
           </div>
@@ -51,15 +78,15 @@
           <div class="col-6">
             <div class="text-uppercase small fw-bold text-muted mb-2">Enviar a</div>
             <div class="fw-bold text-dark">Nalakalú Solutions S.A.</div>
-            <div class="small text-muted">800m este de Concrepal</div>
+            <div class="small text-muted">800m este de Concrepal, Palmares</div>
             <div class="small text-muted">Ced. Jurídica: 3-101-477431</div>
           </div>
         </div>
-        <%# Tabla de Ítems %>
+        <%# Tabla de ítems %>
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr class="border-bottom border-dark">
-              <th class="pb-2 fw-bold small text-uppercase text-muted" style="width: 12%;">Código</th>
+              <th class="pb-2 fw-bold small text-uppercase text-muted" style="width: 11%;">Código</th>
               <th class="pb-2 fw-bold small text-uppercase text-muted">Descripción</th>
               <th class="pb-2 fw-bold small text-uppercase text-muted text-center" style="width: 8%;">Cant.</th>
               <th class="pb-2 fw-bold small text-uppercase text-muted text-center" style="width: 7%;">U/M</th>
@@ -67,18 +94,23 @@
               <th class="pb-2 fw-bold small text-uppercase text-muted text-end" style="width: 13%;">Total</th>
             </tr>
           </thead>
-          <tbody class="border-top-0">
+          <tbody>
             <% @items.each do |item| %>
               <tr class="border-bottom border-light">
                 <td class="py-3 small text-muted">
                   <code class="bg-transparent p-0"><%= item.supplier_item&.sku || "—" %></code>
                 </td>
                 <td class="py-3">
-                  <div class="fw-bold text-dark small"><%= item.supplier_item&.name %></div>
+                  <div class="fw-bold text-dark small">
+                    <%= item.description_override.presence || item.supplier_item&.name %>
+                  </div>
                   <% if item.specifications.present? %>
                     <div class="mt-1 d-flex flex-wrap gap-1">
                       <% item.specifications.each do |k, v| %>
-                        <span class="text-muted small"><%= k %>: <strong><%= v %></strong></span>
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal"
+                              style="font-size: 0.65rem;">
+                          <%= k %>: <strong><%= v %></strong>
+                        </span>
                       <% end %>
                     </div>
                   <% end %>
@@ -102,7 +134,7 @@
             <tr>
               <td colspan="4"></td>
               <td class="pt-3 text-end small fw-bold text-muted text-uppercase">Total Estimado</td>
-              <td class="pt-3 text-end fw-bold text-dark">
+              <td class="pt-3 text-end fw-bold text-dark fs-6">
                 <%= number_to_currency(@purchase_order.total_amount, unit: "₡", delimiter: ".", separator: ",") %>
               </td>
             </tr>
@@ -117,106 +149,99 @@
         <% end %>
       </div>
     </div>
-    <%# ── COLUMNA LATERAL: ACCIONES ── %>
+    <%# ══════════════════════════════════════════
+        COLUMNA LATERAL — PANEL DE ACCIÓN (sticky)
+    ══════════════════════════════════════════ %>
     <div class="col-lg-4">
-      <%# Estado y Transiciones %>
-      <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="small fw-bold text-muted text-uppercase">Estado</span>
-            <%= render "purchase_orders/status_badge", status: @purchase_order.status %>
+      <div style="position: sticky; top: 1rem;">
+        <%# 1. Estado actual con contexto %>
+        <div class="card border-0 shadow-sm mb-3 border-top border-<%= ctx[:color] %> border-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <i class="bi <%= ctx[:icon] %> text-<%= ctx[:color] %>" style="font-size: 1.1rem;"></i>
+              <span class="fw-bold text-<%= ctx[:color] %>"><%= @purchase_order.status.capitalize %></span>
+            </div>
+            <p class="small text-muted mb-0"><%= ctx[:desc] %></p>
           </div>
-          <div class="d-grid gap-2">
-            <% transitions_for(@purchase_order).each do |t| %>
-              <%= button_to transition_purchase_order_path(@purchase_order),
-                    params: { transition: t[:next] },
-                    method: :patch,
-                    class: "btn #{t[:style]} btn-sm fw-bold py-2",
-                    data: { turbo_confirm: "¿Cambiar estado a \"#{t[:next]}\"?" } do %>
-                <i class="bi <%= t[:icon] %> me-2"></i><%= t[:label] %>
+        </div>
+        <%# 2. Transiciones %>
+        <% transitions = transitions_for(@purchase_order) %>
+        <% if transitions.any? %>
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-2">
+              <span class="small fw-bold text-muted text-uppercase">
+                <i class="bi bi-arrow-right-circle me-1"></i>Cambiar Estado
+              </span>
+            </div>
+            <div class="card-body d-grid gap-2 py-3">
+              <% transitions.each do |t| %>
+                <%= button_to transition_purchase_order_path(@purchase_order),
+                      params: { transition: t[:next] },
+                      method: :patch,
+                      class: "btn #{t[:style]} btn-sm fw-bold py-2",
+                      data: { turbo_confirm: "¿Confirmar cambio de estado a \"#{t[:next]}\"?\n\n#{ctx[:desc]}" } do %>
+                  <i class="bi <%= t[:icon] %> me-2"></i><%= t[:label] %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+        <%# 3. Acciones del documento %>
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-header bg-white border-bottom py-2">
+            <span class="small fw-bold text-muted text-uppercase">
+              <i class="bi bi-gear me-1"></i>Acciones
+            </span>
+          </div>
+          <div class="card-body d-grid gap-2 py-3">
+            <% if @purchase_order.status == "borrador" %>
+              <%= link_to edit_purchase_order_path(@purchase_order),
+                    class: "btn btn-outline-primary btn-sm fw-bold py-2" do %>
+                <i class="bi bi-pencil-square me-2"></i>Editar Cantidades y Costos
+              <% end %>
+            <% end %>
+            <button class="btn btn-outline-dark btn-sm py-2" onclick="window.print()">
+              <i class="bi bi-printer me-2"></i>Imprimir
+            </button>
+            <% if @purchase_order.provider.email.present? %>
+              <%= link_to @purchase_order.mailto_url,
+                    class: "btn btn-outline-secondary btn-sm py-2" do %>
+                <i class="bi bi-envelope me-2"></i>Enviar por Correo
+              <% end %>
+            <% end %>
+            <% if current_user.role == "admin" || @purchase_order.status == "borrador" %>
+              <hr class="my-1">
+              <%= button_to purchase_order_path(@purchase_order),
+                    method: :delete,
+                    class: "btn btn-outline-danger btn-sm py-2",
+                    data: { turbo_confirm: "¿Eliminar la orden #{@purchase_order.number}?\n\nLos requerimientos asociados volverán a estado pendiente." } do %>
+                <i class="bi bi-trash me-2"></i>Eliminar Orden
               <% end %>
             <% end %>
           </div>
         </div>
-      </div>
-      <%# Acciones del Documento %>
-      <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body d-grid gap-2">
-          <% if @purchase_order.status == "borrador" %>
-            <%= link_to edit_purchase_order_path(@purchase_order),
-                  class: "btn btn-outline-primary btn-sm fw-bold py-2" do %>
-              <i class="bi bi-pencil-square me-2"></i>Editar Cantidades y Costos
-            <% end %>
-          <% end %>
-          <button class="btn btn-outline-dark btn-sm py-2" onclick="window.print()">
-            <i class="bi bi-printer me-2"></i>Imprimir
-          </button>
-          <% if @purchase_order.provider.email.present? %>
-            <%
-              subject = CGI.escape("Orden de Compra #{@purchase_order.number} — Nalakalú")
-              body_lines = [
-                "Estimado/a #{@purchase_order.provider.contact_name.presence || @purchase_order.provider.name},",
-                "",
-                "Adjuntamos la Orden de Compra #{@purchase_order.number}.",
-                "Fecha de emisión: #{@purchase_order.issued_date&.strftime('%d/%m/%Y')}",
-                @purchase_order.delivery_deadline ? "Fecha máxima de entrega: #{@purchase_order.delivery_deadline.strftime('%d/%m/%Y')}" : nil,
-                "",
-                "Materiales solicitados:"
-              ].compact
-              @items.each do |item|
-                body_lines << "  • #{item.line_description} — #{item.quantity.to_f.round(2)} #{item.unit}"
-              end
-              body_lines += ["", "Saludos cordiales,", "Equipo Nalakalú"]
-              mailto_href = "mailto:#{@purchase_order.provider.email}?subject=#{subject}&body=#{CGI.escape(body_lines.join("\n"))}"
-            %>
-            <%= link_to mailto_href, class: "btn btn-outline-secondary btn-sm py-2" do %>
-              <i class="bi bi-envelope me-2"></i>Enviar por Correo
-            <% end %>
-          <% end %>
-          <% if current_user.role == "admin" || @purchase_order.status == "borrador" %>
-            <hr class="my-1">
-            <%= button_to purchase_order_path(@purchase_order),
-                  method: :delete,
-                  class: "btn btn-outline-danger btn-sm py-2",
-                  data: { turbo_confirm: "¿Eliminar esta orden? Los requerimientos volverán a estado pendiente." } do %>
-              <i class="bi bi-trash me-2"></i>Eliminar Orden
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-      <%# Reemplaza la sección del Panel de Trazabilidad en app/views/purchase_orders/show.html.erb %>
-      <div data-controller="origin-modal">
-        <% origin_orders = @items.flat_map { |i| i.procurement_requirements.map(&:origin_order_number) }.uniq.compact.sort %>
+        <%# 4. Pedidos de Origen (trazabilidad) %>
         <% if origin_orders.any? %>
           <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 pt-3 pb-0">
-              <span class="small fw-bold text-muted text-uppercase">Pedidos de Origen</span>
+            <div class="card-header bg-white border-bottom py-2">
+              <span class="small fw-bold text-muted text-uppercase">
+                <i class="bi bi-diagram-3 me-1"></i>Pedidos de Origen
+              </span>
             </div>
-            <div class="card-body pt-2">
+            <div class="card-body py-3">
+              <p class="small text-muted mb-2">
+                Esta OC cubre materiales para los siguientes pedidos:
+              </p>
               <div class="d-flex flex-wrap gap-1">
                 <% origin_orders.each do |order_no| %>
                   <button type="button"
-                    class="btn btn-light btn-sm border fw-normal py-0 px-2"
-                    style="font-size: 0.75rem;"
-                    data-action="click->origin-modal#open"
+                          class="btn btn-light btn-sm border fw-normal py-1 px-2"
+                          style="font-size: 0.75rem;"
+                          data-action="click->origin-modal#open"
                     data-url="<%= origin_order_detail_purchase_order_path(@purchase_order, order_number: order_no) %>">
                     <i class="bi bi-hash text-primary"></i><%= order_no %>
                     <i class="bi bi-eye ms-1 text-muted" style="font-size: 0.65rem;"></i>
                   </button>
-                <% end %>
-              </div>
-            </div>
-          </div>
-          <%# Modal Shell %>
-          <div class="modal fade" id="originOrderModal" tabindex="-1" data-origin-modal-target="modal">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-              <div class="modal-content border-0 shadow">
-                <%# El Turbo Frame debe tener el ID que el controlador busca %>
-                <%= turbo_frame_tag "origin_order_modal_body" do %>
-                  <div class="modal-body text-center py-5 text-muted">
-                    <div class="spinner-border spinner-border-sm me-2"></div>
-                    Cargando desglose...
-                  </div>
                 <% end %>
               </div>
             </div>
@@ -226,3 +251,23 @@
     </div>
   </div>
 </div>
+<%# ══════════════════════════════════════════
+    MODAL — FUERA DE TODO, DIRECTO ANTES DEL </body>
+    El data-controller va en el outer container arriba
+══════════════════════════════════════════ %>
+<% if origin_orders.any? %>
+  <div class="modal fade" id="originOrderModal" tabindex="-1"
+       aria-hidden="true"
+       data-origin-modal-target="modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div id="origin_order_modal_body">
+          <div class="modal-body text-center py-5 text-muted">
+            <div class="spinner-border spinner-border-sm me-2"></div>
+            Cargando desglose...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

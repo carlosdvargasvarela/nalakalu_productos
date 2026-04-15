@@ -1,103 +1,155 @@
 <%# app/views/purchase_orders/index.html.erb %>
 <div class="container-fluid mt-4 pb-5" style="max-width: 1100px;">
+  <%# ── HEADER ── %>
   <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
     <div>
       <h1 class="h2 fw-bold mb-0">
         <i class="bi bi-file-earmark-text-fill text-primary me-2"></i>Órdenes de Compra
       </h1>
-      <p class="text-muted mb-0 small">Historial y seguimiento de órdenes enviadas a proveedores.</p>
+      <p class="text-muted mb-0 small">Seguimiento de órdenes enviadas a proveedores.</p>
     </div>
     <%= link_to supply_managements_path, class: "btn btn-outline-primary btn-sm" do %>
-      <i class="bi bi-cart-plus me-1"></i>Ir a Panel de Proveeduría
+      <i class="bi bi-cart-plus me-1"></i>Ir a Proveeduría
     <% end %>
   </div>
-  <%# FILTROS %>
-  <%= form_tag purchase_orders_path, method: :get, class: "row g-2 mb-4 align-items-end" do %>
-    <div class="col-md-3">
-      <label class="form-label small text-muted mb-1">Proveedor</label>
+  <%# ── CARDS DE ESTADO ── %>
+  <%
+    all_counts = PurchaseOrder.group(:status).count
+    status_config = {
+      "borrador"   => { color: "secondary", icon: "bi-pencil-fill",       label: "Borrador" },
+      "enviado"    => { color: "info",      icon: "bi-send-fill",          label: "Enviado" },
+      "confirmado" => { color: "primary",   icon: "bi-check-circle-fill",  label: "Confirmado" },
+      "recibido"   => { color: "success",   icon: "bi-box-seam-fill",      label: "Recibido" },
+      "cancelado"  => { color: "danger",    icon: "bi-x-circle-fill",      label: "Cancelado" }
+    }
+  %>
+  <div class="row g-3 mb-4">
+    <% PurchaseOrder::STATUSES.each do |s| %>
+      <% cfg = status_config[s] %>
+      <% active = params[:status] == s %>
+      <div class="col">
+        <%= link_to purchase_orders_path(status: s, provider_id: params[:provider_id]),
+              class: "text-decoration-none" do %>
+          <div class="card border-0 shadow-sm text-center py-3 px-2 h-100
+                      <%= active ? "border border-#{cfg[:color]} border-2 bg-#{cfg[:color]}-subtle" : "" %>"
+               style="transition: box-shadow 0.15s;">
+            <i class="bi <%= cfg[:icon] %> text-<%= cfg[:color] %> mb-1" style="font-size: 1.1rem;"></i>
+            <div class="h4 mb-0 fw-bold text-<%= cfg[:color] %>"><%= all_counts[s] || 0 %></div>
+            <div class="small text-muted"><%= cfg[:label] %></div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    <% if params[:status].present? %>
+      <div class="col-auto d-flex align-items-center">
+        <%= link_to purchase_orders_path(provider_id: params[:provider_id]),
+              class: "btn btn-sm btn-outline-secondary",
+              title: "Limpiar filtro de estado" do %>
+          <i class="bi bi-x-lg"></i>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+  <%# ── FILTROS ── %>
+  <%= form_tag purchase_orders_path, method: :get,
+        class: "row g-2 mb-4 align-items-end p-3 bg-light rounded border" do %>
+    <%= hidden_field_tag :status, params[:status] if params[:status].present? %>
+    <div class="col-md-4">
+      <label class="form-label small fw-bold text-muted mb-1">Proveedor</label>
       <%= select_tag :provider_id,
             options_from_collection_for_select(@providers, :id, :name, params[:provider_id]),
             include_blank: "Todos los proveedores",
             class: "form-select form-select-sm" %>
     </div>
-    <div class="col-md-3">
-      <label class="form-label small text-muted mb-1">Estado</label>
-      <%= select_tag :status,
-            options_for_select(@statuses.map { |s| [s.capitalize, s] }, params[:status]),
-            include_blank: "Todos los estados",
-            class: "form-select form-select-sm" %>
+    <div class="col-md-auto">
+      <%= submit_tag "Filtrar", class: "btn btn-dark btn-sm px-4" %>
     </div>
-    <div class="col-md-2">
-      <%= submit_tag "Filtrar", class: "btn btn-dark btn-sm w-100" %>
-    </div>
-    <% if params[:status].present? || params[:provider_id].present? %>
-      <div class="col-md-2">
-        <%= link_to "Limpiar", purchase_orders_path, class: "btn btn-outline-secondary btn-sm w-100" %>
+    <% if params[:provider_id].present? %>
+      <div class="col-md-auto">
+        <%= link_to "Limpiar", purchase_orders_path(status: params[:status]),
+              class: "btn btn-outline-secondary btn-sm" %>
       </div>
     <% end %>
   <% end %>
-  <%# RESUMEN DE ESTADOS %>
-  <% status_counts = @purchase_orders.unscope(:order).group(:status).count %>
-  <% status_colors = {
-       "borrador"   => "secondary",
-       "enviado"    => "info",
-       "confirmado" => "primary",
-       "recibido"   => "success",
-       "cancelado"  => "danger"
-     } %>
-  <div class="row g-3 mb-4">
-    <% PurchaseOrder::STATUSES.each do |s| %>
-      <div class="col">
-        <%= link_to purchase_orders_path(status: s), class: "text-decoration-none" do %>
-          <div class="card border-0 shadow-sm text-center py-2 px-1 <%= params[:status] == s ? "border border-#{status_colors[s]} border-2" : "" %>">
-            <div class="h4 mb-0 fw-bold text-<%= status_colors[s] %>"><%= status_counts[s] || 0 %></div>
-            <div class="small text-muted"><%= s.capitalize %></div>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-  </div>
+  <%# ── TABLA ── %>
   <% if @purchase_orders.empty? %>
     <div class="text-center py-5 border rounded bg-white shadow-sm">
       <i class="bi bi-inbox display-1 text-muted opacity-25"></i>
-      <p class="text-muted mt-3">No hay órdenes de compra con estos filtros.</p>
+      <p class="text-muted mt-3 mb-1">No hay órdenes con estos filtros.</p>
+      <% if params[:status].present? || params[:provider_id].present? %>
+        <%= link_to "Ver todas las órdenes", purchase_orders_path,
+              class: "btn btn-sm btn-outline-secondary mt-1" %>
+      <% end %>
     </div>
   <% else %>
-    <div class="card border-0 shadow-sm overflow-hidden">
+    <div id="purchase_orders_list" class="card border-0 shadow-sm overflow-hidden">
       <table class="table table-hover mb-0 align-middle">
         <thead class="table-light small text-muted text-uppercase">
           <tr>
-            <th class="ps-4">N° Orden</th>
+            <th class="ps-4" style="width: 12%;">N° Orden</th>
             <th>Proveedor</th>
-            <th class="text-center">Estado</th>
-            <th class="text-center">Líneas</th>
-            <th class="text-end">Total Estimado</th>
-            <th>Emisión</th>
-            <th>Entrega Esp.</th>
-            <th class="pe-4 text-end">Acción</th>
+            <th class="text-center" style="width: 12%;">Estado</th>
+            <th class="text-center" style="width: 8%;">Líneas</th>
+            <th class="text-end" style="width: 14%;">Total Est.</th>
+            <th style="width: 10%;">Emisión</th>
+            <th style="width: 10%;">Entrega Esp.</th>
+            <th class="pe-4 text-end" style="width: 12%;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           <% @purchase_orders.each do |po| %>
-            <tr id="purchase_order_<%= po.id %>">
-              <td class="ps-4 fw-bold text-dark"><%= po.number %></td>
-              <td><%= po.provider.name %></td>
+            <tr id="purchase_order_<%= po.id %>" class="<%= po.status == 'cancelado' ? 'text-muted' : '' %>">
+              <td class="ps-4">
+                <span class="fw-bold text-dark small"><%= po.number %></span>
+              </td>
+              <td class="small"><%= po.provider.name %></td>
               <td class="text-center">
                 <%= render "purchase_orders/status_badge", status: po.status %>
               </td>
-              <td class="text-center text-muted small"><%= po.purchase_order_items.length %></td>
-              <td class="text-end fw-bold text-dark small">
+              <td class="text-center text-muted small">
+                <%= po.purchase_order_items.length %>
+              </td>
+              <td class="text-end fw-bold small text-dark">
                 <%= number_to_currency(po.total_amount, unit: "₡", delimiter: ".", separator: ",") %>
               </td>
-              <td class="small text-muted"><%= po.issued_date&.strftime("%d/%m/%Y") || "—" %></td>
-              <td class="small text-muted"><%= po.delivery_deadline&.strftime("%d/%m/%Y") || "—" %></td>
+              <td class="small text-muted">
+                <%= po.issued_date&.strftime("%d/%m/%Y") || "—" %>
+              </td>
+              <td class="small">
+                <% if po.delivery_deadline.present? %>
+                  <% overdue = po.delivery_deadline < Date.current && !%w[recibido cancelado].include?(po.status) %>
+                  <span class="<%= overdue ? 'text-danger fw-bold' : 'text-muted' %>">
+                    <%= po.delivery_deadline.strftime("%d/%m/%Y") %>
+                    <%= "<i class='bi bi-exclamation-triangle-fill ms-1'></i>".html_safe if overdue %>
+                  </span>
+                <% else %>
+                  <span class="text-muted">—</span>
+                <% end %>
+              </td>
               <td class="pe-4 text-end">
-                <%= link_to "Ver →", purchase_order_path(po), class: "btn btn-outline-primary btn-sm" %>
+                <div class="d-flex gap-1 justify-content-end">
+                  <%= link_to purchase_order_path(po),
+                        class: "btn btn-outline-primary btn-sm" do %>
+                    <i class="bi bi-eye me-1"></i>Ver
+                  <% end %>
+                  <% if po.status == "borrador" %>
+                    <%= button_to purchase_order_path(po),
+                          method: :delete,
+                          class: "btn btn-outline-danger btn-sm",
+                          title: "Eliminar borrador",
+                          data: { turbo_confirm: "¿Eliminar la orden #{po.number}? Los requerimientos volverán a pendiente." } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  <% end %>
+                </div>
               </td>
             </tr>
           <% end %>
         </tbody>
       </table>
+    </div>
+    <div class="text-muted small mt-2 text-end">
+      <%= @purchase_orders.count %> orden<%= @purchase_orders.count == 1 ? "" : "es" %> encontrada<%= @purchase_orders.count == 1 ? "" : "s" %>
     </div>
   <% end %>
 </div>

@@ -1,14 +1,14 @@
-// app/javascript/controllers/po_editor_controller.js
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static targets = [
+    "itemRow",
     "quantity",
     "cost",
     "lineTotal",
     "grandTotal",
     "destroyCheck",
-    "itemRow",
+    "itemsContainer",
   ];
 
   connect() {
@@ -18,37 +18,63 @@ export default class extends Controller {
   calculate() {
     let grand = 0;
 
-    this.quantityTargets.forEach((qtyInput, i) => {
-      const row = qtyInput.closest("[data-po-editor-target~='itemRow']");
-      const destroyed = row?.querySelector("input[name*='_destroy']")?.checked;
+    this.itemRowTargets.forEach((row) => {
+      const destroyCheck = row.querySelector(
+        "[data-po-editor-target='destroyCheck']",
+      );
+      if (destroyCheck?.value === "1") return;
 
-      if (destroyed) {
-        this.lineTotalTargets[i].textContent = "—";
-        return;
-      }
+      const qty =
+        parseFloat(
+          row.querySelector("[data-po-editor-target='quantity']")?.value,
+        ) || 0;
+      const cost =
+        parseFloat(
+          row.querySelector("[data-po-editor-target='cost']")?.value,
+        ) || 0;
+      const line = qty * cost;
+      grand += line;
 
-      const qty = parseFloat(qtyInput.value) || 0;
-      const cost = parseFloat(this.costTargets[i].value) || 0;
-      const total = qty * cost;
-
-      this.lineTotalTargets[i].textContent = this.formatCRC(total);
-      grand += total;
+      const lineTotal = row.querySelector(
+        "[data-po-editor-target='lineTotal']",
+      );
+      if (lineTotal) lineTotal.textContent = this.formatCurrency(line);
     });
 
-    this.grandTotalTarget.textContent = this.formatCRC(grand);
+    if (this.hasGrandTotalTarget) {
+      this.grandTotalTarget.textContent = this.formatCurrency(grand);
+    }
   }
 
-  toggleDestroy(event) {
-    const row = event.target.closest("[data-po-editor-target~='itemRow']");
-    if (row) row.classList.toggle("opacity-50", event.target.checked);
+  removeLine(event) {
+    const row = event.currentTarget.closest(
+      "[data-po-editor-target='itemRow']",
+    );
+    if (!row) return;
+
+    const destroyCheck = row.querySelector(
+      "[data-po-editor-target='destroyCheck']",
+    );
+    if (destroyCheck) destroyCheck.value = "1";
+
+    row.style.opacity = "0.35";
+    row.style.pointerEvents = "none";
+
+    // Ocultar inputs para que no confundan al usuario
+    row
+      .querySelectorAll("input:not([type='hidden'])")
+      .forEach((i) => (i.disabled = true));
+
     this.calculate();
   }
 
-  formatCRC(value) {
-    return new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-      minimumFractionDigits: 2,
-    }).format(value);
+  formatCurrency(amount) {
+    return (
+      "₡" +
+      amount.toLocaleString("es-CR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
   }
 }

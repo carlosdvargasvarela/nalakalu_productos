@@ -1,87 +1,88 @@
-<%# app/views/purchase_orders/_origin_order_modal.html.erb %>
-<%= turbo_frame_tag "origin_order_modal_body" do %>
-  <div class="modal-header border-0 pb-0">
-    <div>
-      <h5 class="modal-title fw-bold mb-0">
-        <i class="bi bi-hash text-primary"></i><%= order_number %>
-      </h5>
-      <p class="text-muted small mb-0">Trazabilidad de materiales para este pedido</p>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<%# SIN turbo_frame_tag — el frame ya existe en show.html.erb %>
+<div class="modal-header border-0 pb-0">
+  <div>
+    <h5 class="modal-title fw-bold mb-0">
+      <i class="bi bi-hash text-primary"></i><%= order_number %>
+    </h5>
+    <p class="text-muted small mb-0">
+      Materiales requeridos para este pedido de origen
+    </p>
   </div>
-  <div class="modal-body pt-3">
-    <% if requirements.empty? %>
-      <div class="text-center py-5 text-muted">
-        <i class="bi bi-search display-4 d-block mb-3 opacity-25"></i>
-        No hay detalles disponibles para este pedido.
-      </div>
-    <% else %>
-      <% requirements.each do |req| %>
-        <div class="mb-3 rounded border bg-light-subtle p-3">
-          <%# ── Productos de origen ── %>
-          <% products = req.origin_products.presence || [req.origin_product_name].compact %>
-          <% if products.any? %>
-            <div class="d-flex flex-wrap gap-1 mb-3 pb-2 border-bottom">
-              <span class="small text-muted me-1 align-self-center">
-                <i class="bi bi-box-seam text-primary"></i> Producto<%= products.size > 1 ? "s" : "" %>:
-              </span>
-              <% products.each do |p| %>
-                <span class="badge bg-white border text-dark fw-normal" style="font-size: 0.72rem;">
-                  <%= p %>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+</div>
+<div class="modal-body pt-3">
+  <% if requirements.empty? %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-search display-4 d-block mb-3 opacity-25"></i>
+      <p class="mb-0">No hay detalles disponibles para este pedido.</p>
+    </div>
+  <% else %>
+    <div class="d-flex gap-2 flex-wrap mb-3 pb-3 border-bottom">
+      <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal">
+        <i class="bi bi-layers me-1"></i><%= requirements.size %> requerimiento<%= requirements.size == 1 ? "" : "s" %>
+      </span>
+      <% products_all = requirements.flat_map { |r| r.origin_products.presence || [r.origin_product_name].compact }.uniq.compact %>
+      <% if products_all.any? %>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-normal">
+          <i class="bi bi-box-seam me-1"></i><%= products_all.size %> producto<%= products_all.size == 1 ? "" : "s" %>
+        </span>
+      <% end %>
+    </div>
+    <% requirements.each do |req| %>
+      <div class="mb-3 rounded border bg-light-subtle p-3">
+        <% products = req.origin_products.presence || [req.origin_product_name].compact %>
+        <% if products.any? %>
+          <div class="d-flex flex-wrap gap-1 mb-3 pb-2 border-bottom align-items-center">
+            <span class="small text-muted me-1">
+              <i class="bi bi-box-seam text-primary"></i>
+              Producto<%= products.size > 1 ? "s" : "" %>:
+            </span>
+            <% products.each do |p| %>
+              <span class="badge bg-white border text-dark fw-normal" style="font-size: 0.72rem;"><%= p %></span>
+            <% end %>
+          </div>
+        <% end %>
+        <div class="d-flex align-items-start gap-3">
+          <div class="text-muted mt-1"><i class="bi bi-arrow-return-right"></i></div>
+          <div class="flex-grow-1">
+            <% if req.supply_rule&.variant.present? %>
+              <div class="mb-2">
+                <span class="text-muted small">Configuración:</span>
+                <span class="badge bg-white text-dark border fw-medium ms-1" style="font-size: 0.7rem;">
+                  <%= req.supply_rule.variant.variant_type&.name %>:
+                  <span class="text-primary"><%= req.supply_rule.variant.name %></span>
                 </span>
+              </div>
+            <% end %>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <i class="bi bi-cpu text-muted" style="font-size: 0.8rem;"></i>
+              <span class="fw-bold text-dark small"><%= req.supplier_item.name %></span>
+              <% if req.supplier_item.sku.present? %>
+                <code class="small text-muted bg-transparent p-0">[<%= req.supplier_item.sku %>]</code>
               <% end %>
             </div>
-          <% end %>
-          <div class="d-flex align-items-start gap-3">
-            <div class="text-muted mt-1">
-              <i class="bi bi-arrow-return-right"></i>
-            </div>
-            <div class="flex-grow-1">
-              <%# ── Configuración (Variante) ── %>
-              <% if req.supply_rule&.variant.present? %>
-                <div class="mb-1">
-                  <span class="text-muted small">Configuración:</span>
-                  <span class="badge bg-white text-dark border fw-medium ms-1" style="font-size: 0.7rem;">
-                    <%= req.supply_rule.variant.variant_type&.name %>:
-                    <span class="text-primary"><%= req.supply_rule.variant.name %></span>
+            <% if req.specifications.present? %>
+              <div class="d-flex flex-wrap gap-1 mb-2 ps-4">
+                <% req.specifications.each do |k, v| %>
+                  <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal"
+                        style="font-size: 0.65rem;">
+                    <%= k %>: <strong><%= v %></strong>
                   </span>
-                </div>
-              <% end %>
-              <%# ── Material resultante ── %>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <i class="bi bi-cpu text-muted" style="font-size: 0.8rem;"></i>
-                <span class="fw-bold text-dark small"><%= req.supplier_item.name %></span>
-                <% if req.supplier_item.sku.present? %>
-                  <code class="small text-muted bg-transparent p-0">[<%= req.supplier_item.sku %>]</code>
                 <% end %>
               </div>
-              <%# ── Especificaciones (N1, N2, etc.) ── %>
-              <% if req.specifications.present? %>
-                <div class="d-flex flex-wrap gap-1 mb-1 ps-4">
-                  <% req.specifications.each do |k, v| %>
-                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal"
-                          style="font-size: 0.65rem;">
-                      <%= k %>: <strong><%= v %></strong>
-                    </span>
-                  <% end %>
-                </div>
-              <% end %>
-              <%# ── Cantidad ── %>
-              <div class="ps-4 text-muted" style="font-size: 0.72rem;">
-                Cantidad requerida:
-                <strong class="text-dark">
-                  <%= req.quantity.to_f.round(2) %> <%= req.supplier_item.unit %>
-                </strong>
-              </div>
+            <% end %>
+            <div class="ps-4 text-muted" style="font-size: 0.72rem;">
+              Cantidad requerida:
+              <strong class="text-dark"><%= req.quantity.to_f.round(2) %> <%= req.supplier_item.unit %></strong>
             </div>
           </div>
         </div>
-      <% end %>
+      </div>
     <% end %>
-  </div>
-  <div class="modal-footer border-0 pt-0">
-    <button type="button" class="btn btn-light btn-sm fw-bold text-muted" data-bs-dismiss="modal">
-      Cerrar
-    </button>
-  </div>
-<% end %>
+  <% end %>
+</div>
+<div class="modal-footer border-0 pt-0">
+  <button type="button" class="btn btn-light btn-sm fw-bold text-muted" data-bs-dismiss="modal">
+    Cerrar
+  </button>
+</div>

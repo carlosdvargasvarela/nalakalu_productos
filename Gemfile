@@ -18,6 +18,9 @@ gem "csv"
 gem "faraday"
 gem "fuzzy_match"
 gem "fuzzy-string-match"
+# Gemfile
+gem "prawn"
+gem "prawn-table"
 
 group :development, :test do
   gem "dotenv-rails"
@@ -25,6 +28,7 @@ group :development, :test do
   gem "brakeman", require: false
   gem "sqlite3"
   gem "standard", ">= 1.35.1"
+  gem "letter_opener"  # preview de emails en dev sin SMTP
 end
 
 group :development do
