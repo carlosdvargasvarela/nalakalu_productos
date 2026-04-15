@@ -466,6 +466,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   letter_opener
+  matrix
   microsoft_graph
   omniauth-microsoft_graph
   omniauth-rails_csrf_protection

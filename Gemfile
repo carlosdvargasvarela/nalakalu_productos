@@ -21,6 +21,7 @@ gem "fuzzy-string-match"
 # Gemfile
 gem "prawn"
 gem "prawn-table"
+gem "matrix"
 
 # Gemfile
 gem "omniauth-microsoft_graph" # Corregido con guion bajo
