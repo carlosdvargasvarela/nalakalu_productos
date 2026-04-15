@@ -1,0 +1,69 @@
+<div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="bg-white border-bottom small text-muted text-uppercase"
+           style="font-size: 0.68rem;">
+      <tr>
+        <th class="ps-4" style="width: 25%;">Variante</th>
+        <th style="width: 45%;">Pieza de Proveedor</th>
+        <th class="text-center pe-4" style="width: 15%;">Cantidad</th>
+        <th class="text-center pe-4" style="width: 15%;">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% variant_type.variants.where(active: true).order(:name).each do |variant| %>
+        <% form_key   = "#{variant_type.id}_#{variant.id}" %>
+        <% rule       = individual_rules[form_key] %>
+        <% global     = global_rules[variant.id] %>
+        <tr>
+          <td class="ps-4 py-2">
+            <div class="fw-bold small">
+              <%= variant.display_name.presence || variant.name %>
+            </div>
+            <% if variant.code.present? %>
+              <code class="text-muted" style="font-size:0.68rem;"><%= variant.code %></code>
+            <% end %>
+            <% if global && rule.nil? %>
+              <div class="mt-1">
+                <span class="badge bg-info-subtle text-info border border-info-subtle"
+                      style="font-size:0.6rem;">
+                  <i class="bi bi-globe me-1"></i>Global: <%= global.supplier_item.name %>
+                </span>
+              </div>
+            <% end %>
+          </td>
+          <td class="py-2">
+            <%= select_tag "individual_rules[#{form_key}][supplier_item_id]",
+                  options_for_select(
+                    supplier_items.map { |i| ["#{i.name} (#{i.provider.name})", i.id] },
+                    rule&.supplier_item_id
+                  ),
+                  include_blank: global ? "— Usar regla global —" : "— No comprar —",
+                  class: "form-select form-select-sm border-0 bg-light shadow-none fw-bold" %>
+          </td>
+          <td class="py-2 text-center">
+            <%= number_field_tag "individual_rules[#{form_key}][quantity_needed]",
+                  rule&.quantity_needed || global&.quantity_needed || 1.0,
+                  step: 0.01, min: 0.01,
+                  class: "form-control form-control-sm text-center border-0 bg-light shadow-none" %>
+          </td>
+          <td class="py-2 text-center pe-4">
+            <% if rule %>
+              <span class="badge bg-success-subtle text-success rounded-pill"
+                    style="font-size:0.65rem;">
+                <i class="bi bi-check-circle me-1"></i>Específica
+              </span>
+            <% elsif global %>
+              <span class="badge bg-info-subtle text-info rounded-pill"
+                    style="font-size:0.65rem;">
+                <i class="bi bi-globe me-1"></i>Global
+              </span>
+            <% else %>
+              <span class="badge bg-secondary-subtle text-secondary rounded-pill"
+                    style="font-size:0.65rem;">Sin regla</span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

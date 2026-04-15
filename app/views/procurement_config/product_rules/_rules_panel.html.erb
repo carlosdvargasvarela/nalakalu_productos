@@ -1,0 +1,93 @@
+<%= turbo_frame_tag "product_rules_workspace" do %>
+  <%= form_tag procurement_config_save_product_rules_path(product), method: :post do %>
+    <%# ── HEADER ── %>
+    <div class="card border-0 shadow-sm rounded-4 mb-3">
+      <div class="card-body px-4 py-3 d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="fw-bold mb-0 text-dark"><%= product.name %></h5>
+          <p class="text-muted small mb-0">
+            <%= product_variant_rules.size %> tipo<%= product_variant_rules.size == 1 ? "" : "s" %>
+            de variante configurado<%= product_variant_rules.size == 1 ? "" : "s" %>
+          </p>
+        </div>
+        <%= submit_tag "Guardar Reglas",
+              class: "btn btn-primary rounded-pill px-4 fw-bold shadow-sm" %>
+      </div>
+    </div>
+    <% if product_variant_rules.empty? %>
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body text-center py-5 text-muted">
+          <i class="bi bi-tags d-block fs-1 mb-3 opacity-25"></i>
+          <p class="fw-bold mb-1">Este producto no tiene tipos de variante asignados.</p>
+          <p class="small mb-0">
+            Configura los tipos de variante en
+            <%= link_to "la ficha del producto", edit_product_path(product),
+                class: "text-primary fw-bold text-decoration-none" %>.
+          </p>
+        </div>
+      </div>
+    <% else %>
+      <% product_variant_rules.each do |pvr| %>
+        <% vt = pvr.variant_type %>
+        <div class="card border-0 shadow-sm rounded-4 mb-3">
+          <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
+            <% if vt.consolidated? %>
+              <span class="rounded-circle bg-info d-inline-flex align-items-center
+                           justify-content-center flex-shrink-0"
+                    style="width:28px;height:28px;">
+                <i class="bi bi-layers text-white" style="font-size:0.75rem;"></i>
+              </span>
+            <% else %>
+              <span class="rounded-circle bg-primary d-inline-flex align-items-center
+                           justify-content-center flex-shrink-0"
+                    style="width:28px;height:28px;">
+                <i class="bi bi-tag text-white" style="font-size:0.75rem;"></i>
+              </span>
+            <% end %>
+            <div>
+              <span class="fw-bold text-dark small"><%= vt.name %></span>
+              <% if pvr.label.present? %>
+                <span class="badge bg-light text-muted border ms-1"
+                      style="font-size:0.6rem;"><%= pvr.label %></span>
+              <% end %>
+            </div>
+            <% if vt.consolidated? %>
+              <span class="badge bg-info-subtle text-info border border-info-subtle ms-auto"
+                    style="font-size:0.65rem;">
+                <i class="bi bi-layers me-1"></i>Consolidado
+              </span>
+            <% else %>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-auto"
+                    style="font-size:0.65rem;">
+                <i class="bi bi-tag me-1"></i>Individual
+              </span>
+            <% end %>
+          </div>
+          <div class="card-body p-0">
+            <% if vt.consolidated? %>
+              <%= render "procurement_config/product_rules/consolidated_section",
+                  product: product,
+                  pvr: pvr,
+                  variant_type: vt,
+                  rule: consolidated_rules[vt.id],
+                  supplier_items: supplier_items %>
+            <% else %>
+              <%= render "procurement_config/product_rules/individual_section",
+                  product: product,
+                  pvr: pvr,
+                  variant_type: vt,
+                  individual_rules: individual_rules,
+                  global_rules: global_rules,
+                  supplier_items: supplier_items %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+      <%# ── FOOTER SAVE ── %>
+      <div class="d-flex justify-content-end mt-2 mb-4">
+        <%= submit_tag "Guardar Reglas de #{product.name}",
+              class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

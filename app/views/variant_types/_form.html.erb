@@ -1,4 +1,4 @@
-<%= form_with(model: variant_type) do |f| %>
+<%= form_with(model: variant_type, data: { controller: "procurement-strategy" }) do |f| %>
   <% if variant_type.errors.any? %>
     <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
       <h6 class="fw-bold">
@@ -29,26 +29,91 @@
           Este nombre aparecerá como etiqueta en el generador de códigos.
         </div>
       </div>
-      <div class="alert alert-info border-0 rounded-3 bg-info bg-opacity-10 mb-0">
-        <div class="d-flex gap-2 align-items-start">
-          <i class="bi bi-lightbulb-fill text-info mt-1 flex-shrink-0"></i>
-          <div class="small">
-            <strong>Ejemplos de tipos:</strong> Acabado, Tela Principal, Tela Secundaria,
-            Tipo de Madera, Color de Hilo, Dimensión, Patas...<br>
-            Cada tipo agrupa variantes del mismo "grupo de decisión" al configurar un producto.
-            Las <strong>propiedades EAV</strong> (Acabado, Material, etc.) se asignan
-            a cada variante individual, no al tipo.
+      <div class="mb-0">
+        <%= f.label :procurement_strategy, "Modo de Abastecimiento",
+            class: "form-label small fw-bold text-muted" %>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="d-block cursor-pointer"
+                   data-procurement-strategy-target="card"
+                   data-value="individual">
+              <input type="radio"
+                     name="variant_type[procurement_strategy]"
+                     value="individual"
+                     <%= "checked" if variant_type.procurement_strategy.blank? || variant_type.individual? %>
+                     class="d-none"
+                     data-procurement-strategy-target="radio"
+                     data-action="change->procurement-strategy#select">
+              <div class="card border-2 rounded-4 p-3 h-100"
+                   data-procurement-strategy-target="cardBody">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center"
+                       style="width:32px;height:32px;"
+                       data-procurement-strategy-target="icon">
+                    <i class="bi bi-tag"></i>
+                  </div>
+                  <span class="fw-bold small">Individual</span>
+                </div>
+                <p class="text-muted mb-0" style="font-size:0.75rem;">
+                  Cada variante genera su propia línea de compra independiente.
+                  <br>
+                  <span class="fw-bold">Ej: Telas, Colores, Acabados</span>
+                </p>
+              </div>
+            </label>
           </div>
+          <div class="col-md-6">
+            <label class="d-block cursor-pointer"
+                   data-procurement-strategy-target="card"
+                   data-value="consolidated">
+              <input type="radio"
+                     name="variant_type[procurement_strategy]"
+                     value="consolidated"
+                     <%= "checked" if variant_type.consolidated? %>
+                     class="d-none"
+                     data-procurement-strategy-target="radio"
+                     data-action="change->procurement-strategy#select">
+              <div class="card border-2 rounded-4 p-3 h-100"
+                   data-procurement-strategy-target="cardBody">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center"
+                       style="width:32px;height:32px;"
+                       data-procurement-strategy-target="icon">
+                    <i class="bi bi-layers"></i>
+                  </div>
+                  <span class="fw-bold small">Consolidado</span>
+                </div>
+                <p class="text-muted mb-0" style="font-size:0.75rem;">
+                  Múltiples variantes se agrupan en una sola línea de compra con especificaciones.
+                  <br>
+                  <span class="fw-bold">Ej: Fibras, posiciones múltiples</span>
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="alert alert-warning border-0 rounded-3 mt-3 small mb-0">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          <strong>Atención:</strong> Cambiar el modo de abastecimiento afecta cómo se generan
+          las órdenes de compra para todos los productos que usen este tipo de variante.
         </div>
       </div>
     </div>
   </div>
-  <div class="d-flex justify-content-between align-items-center">
-    <%= link_to variant_types_path,
-        class: "btn btn-link text-muted text-decoration-none fw-bold" do %>
-      <i class="bi bi-x-lg me-2"></i>Descartar
-    <% end %>
-    <%= f.submit variant_type.new_record? ? "Crear Tipo" : "Guardar Cambios",
+  <div class="alert alert-info border-0 rounded-3 bg-info bg-opacity-10 mb-4">
+    <div class="d-flex gap-2 align-items-start">
+      <i class="bi bi-lightbulb-fill text-info mt-1 flex-shrink-0"></i>
+      <div class="small">
+        <strong>Ejemplos de tipos:</strong> Acabado, Tela Principal, Tela Secundaria,
+        Tipo de Madera, Color de Hilo, Dimensión, Patas...<br>
+        Cada tipo agrupa variantes del mismo "grupo de decisión" al configurar un producto.
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <%= f.submit variant_type.new_record? ? "Crear Tipo de Variante" : "Guardar Cambios",
         class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
+    <%= link_to "Cancelar", variant_types_path,
+        class: "btn btn-link text-muted text-decoration-none fw-bold" %>
   </div>
 <% end %>

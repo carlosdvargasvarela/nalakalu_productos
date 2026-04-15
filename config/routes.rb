@@ -115,23 +115,21 @@ Rails.application.routes.draw do
   end
 
   namespace :procurement_config do
-    root to: "by_variant_type#index"
+    root to: "product_rules#index"
+    # Nuevo workspace unificado por producto
+    get "products", to: "product_rules#index", as: :product_rules
+    post "products/:id/rules", to: "product_rules#save", as: :save_product_rules
 
-    # Quantities PRIMERO (ruta más específica)
-    get "by_variant_type/quantities/:supply_rule_id",
-      to: "by_variant_type#quantities",
-      as: :quantities_by_variant_type
-    post "by_variant_type/quantities/:supply_rule_id",
-      to: "by_variant_type#save_quantities",
-      as: :save_quantities_by_variant_type
-
+    # Rutas legacy — mantener hasta confirmar migración completa
     get "by_variant_type", to: "by_variant_type#index", as: :by_variant_type
-    post "by_variant_type", to: "by_variant_type#save", as: :save_by_variant_type
+    post "by_variant_type/save", to: "by_variant_type#save", as: :save_by_variant_type
+    get "by_variant_type/:supply_rule_id/quantities", to: "by_variant_type#quantities", as: :quantities_by_variant_type
+    post "by_variant_type/:supply_rule_id/save_quantities", to: "by_variant_type#save_quantities", as: :save_quantities_by_variant_type
 
     get "by_product", to: "by_product#index", as: :by_product
-    post "by_product", to: "by_product#save", as: :save_by_product
+    post "by_product/save", to: "by_product#save", as: :save_by_product
 
     get "consolidated", to: "consolidated#index", as: :consolidated
-    post "consolidated", to: "consolidated#save", as: :save_consolidated
+    post "consolidated/save", to: "consolidated#save", as: :save_consolidated
   end
 end

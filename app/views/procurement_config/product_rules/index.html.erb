@@ -1,0 +1,57 @@
+<div class="container-fluid py-4" data-controller="product-rules-filters">
+  <%# ── HEADER ── %>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold mb-0 text-dark">
+        <i class="bi bi-diagram-3 me-2 text-primary"></i>Reglas de Abastecimiento
+      </h4>
+      <p class="text-muted mb-0 small">
+        Configura qué piezas comprar para cada producto según sus variantes.
+      </p>
+    </div>
+  </div>
+  <div class="row g-4" style="min-height: 70vh;">
+    <%# ── PANEL IZQUIERDO ── %>
+    <div class="col-lg-4 col-xl-3">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white py-3 border-bottom">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-0 rounded-start-3">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text"
+                   class="form-control bg-light border-0 shadow-none rounded-end-3"
+                   placeholder="Buscar producto..."
+                   data-product-rules-filters-target="search"
+                   data-action="input->product-rules-filters#filter">
+          </div>
+        </div>
+        <div class="card-body p-0 overflow-auto" style="max-height: calc(100vh - 280px);">
+          <div id="product-rules-list">
+            <% @products.each do |product| %>
+              <%= render "procurement_config/product_rules/product_list_item",
+                  product: product,
+                  selected: @product&.id == product.id %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%# ── PANEL DERECHO ── %>
+    <div class="col-lg-8 col-xl-9">
+      <%= turbo_frame_tag "product_rules_workspace" do %>
+        <% if @product %>
+          <%= render "procurement_config/product_rules/rules_panel",
+              product: @product,
+              product_variant_rules: @product_variant_rules,
+              individual_rules: @individual_rules,
+              consolidated_rules: @consolidated_rules,
+              global_rules: @global_rules,
+              supplier_items: @supplier_items %>
+        <% else %>
+          <%= render "procurement_config/product_rules/workspace_placeholder" %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>
