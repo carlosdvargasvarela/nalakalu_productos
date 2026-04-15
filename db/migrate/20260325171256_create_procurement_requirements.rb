@@ -7,7 +7,7 @@ class CreateProcurementRequirements < ActiveRecord::Migration[7.2]
       t.string :origin_delivery_id
       t.string :origin_product_name
       t.decimal :quantity, precision: 10, scale: 4, null: false
-      t.json :specifications, default: {}, null: false
+      t.jsonb :specifications, default: {}, null: false   # ← jsonb siempre
       t.string :status, default: "pending", null: false
       t.timestamps
     end
@@ -19,14 +19,9 @@ class CreateProcurementRequirements < ActiveRecord::Migration[7.2]
       unique: true,
       name: "index_procurement_req_unique"
 
-    if postgresql?
+    # GIN solo en PostgreSQL, jsonb no existe en SQLite
+    if connection.adapter_name.downcase.include?("postgresql")
       add_index :procurement_requirements, :specifications, using: :gin
     end
-  end
-
-  private
-
-  def postgresql?
-    connection.adapter_name.downcase.include?("postgres")
   end
 end
