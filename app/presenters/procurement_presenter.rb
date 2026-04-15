@@ -14,7 +14,6 @@ class ProcurementPresenter
     }
   end
 
-  # Público: permite que las vistas consulten la regla sin usar .send()
   def find_rule_in_cache(variant, base_product)
     @rules.find { |r| r.variant_id == variant.id && r.product_id == base_product&.id } ||
       @rules.find { |r| r.variant_id == variant.id && r.product_id.nil? } ||
@@ -38,13 +37,15 @@ class ProcurementPresenter
           next unless rule
 
           sid = rule.supplier_item_id
-          calc_qty = qty_delivered * rule.quantity_needed.to_f
-          cost = calc_qty * (rule.supplier_item.default_cost || 0)
+
+          qty_per_unit = ProcurementResolver.resolve_quantity(rule, base_product)
+          calc_qty = qty_delivered * qty_per_unit
+          cost = calc_qty * (rule.supplier_item&.default_cost || 0)
 
           @line_details[[delivery["order_number"], item["product_name"], sid]] = {
-            quantity: calc_qty,
-            cost: cost,
-            unit: rule.supplier_item.unit
+            quantity: calc_qty.round(4),
+            cost: cost.round(2),
+            unit: rule.supplier_item&.unit
           }
         end
       end

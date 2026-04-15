@@ -1,5 +1,5 @@
 <div class="container-fluid mt-4 pb-5">
-  <!-- Header (Estilo Logistics) -->
+  <%# ── HEADER ── %>
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h1 class="h3 mb-0">
@@ -18,7 +18,7 @@
       <% end %>
     </div>
   </div>
-  <!-- Filtros (Reutilizando tu diseño) -->
+  <%# ── FILTROS ── %>
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
       <%= form_with url: supply_managements_path, method: :get, class: "row g-3 align-items-end" do |f| %>
@@ -36,37 +36,69 @@
       <% end %>
     </div>
   </div>
-  <!-- Tabs de Navegación -->
+  <%# ── TABS ── %>
   <ul class="nav nav-tabs mb-4 border-bottom-0" id="procurementTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link active fw-bold px-4 py-3 border-0" id="purchase-tab" data-bs-toggle="tab" data-bs-target="#purchase-content" type="button">
+      <button class="nav-link active fw-bold px-4 py-3 border-0" id="purchase-tab"
+              data-bs-toggle="tab" data-bs-target="#purchase-content" type="button">
         <i class="bi bi-cart-check me-2"></i>Mesa de Compras
+        <% if @grouped_data.any? %>
+          <span class="badge bg-primary rounded-pill ms-1"><%= @grouped_data.sum { |d| d[:consolidated_items].size } %></span>
+        <% end %>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link fw-bold px-4 py-3 border-0 text-muted" id="logistics-tab" data-bs-toggle="tab" data-bs-target="#logistics-content" type="button">
+      <button class="nav-link fw-bold px-4 py-3 border-0 text-muted" id="logistics-tab"
+              data-bs-toggle="tab" data-bs-target="#logistics-content" type="button">
         <i class="bi bi-truck me-2"></i>Trazabilidad (Logística)
+        <% if @deliveries.any? %>
+          <span class="badge bg-secondary rounded-pill ms-1"><%= @deliveries.size %></span>
+        <% end %>
       </button>
     </li>
   </ul>
   <div class="tab-content" id="procurementTabsContent">
-    <!-- TAB 1: MESA DE COMPRAS (CONSOLIDADO) -->
+    <%# ── TAB 1: MESA DE COMPRAS ── %>
     <div class="tab-pane fade show active" id="purchase-content" role="tabpanel">
+      <%= render 'existing_orders', orders: @existing_orders %>
       <% if @grouped_data.any? %>
+        <h6 class="text-muted fw-bold text-uppercase small mb-3 mt-2">
+          <i class="bi bi-clock me-1"></i> Pendientes de ordenar
+        </h6>
         <% @grouped_data.each do |data| %>
-          <%= render 'provider_purchase_card', provider: data[:provider], items: data[:consolidated_items] %>
+          <%= render 'provider_purchase_card',
+                provider: data[:provider],
+                items: data[:consolidated_items] %>
         <% end %>
+      <% elsif @existing_orders.any? %>
+        <div class="alert alert-success border-0 shadow-sm d-flex align-items-center gap-3 py-3 px-4">
+          <i class="bi bi-check-circle-fill fs-4 text-success"></i>
+          <div>
+            <div class="fw-bold">Todo ordenado para este período</div>
+            <div class="small text-muted">No hay materiales pendientes. Revisá las órdenes generadas arriba.</div>
+          </div>
+        </div>
       <% else %>
         <div class="text-center py-5 bg-white rounded shadow-sm">
-          <i class="bi bi-check-circle display-1 text-light mb-3 d-block"></i>
-          <h4 class="text-muted">No hay requerimientos pendientes</h4>
-          <p class="text-muted small">Todos los materiales para este rango ya están en órdenes de compra o no hay entregas.</p>
+          <i class="bi bi-inbox display-1 text-light mb-3 d-block"></i>
+          <h4 class="text-muted">Sin actividad en este período</h4>
+          <p class="text-muted small mb-3">No hay entregas ni requerimientos para el rango seleccionado.</p>
+          <%= form_tag sync_all_supply_managements_path, method: :post, class: "d-inline" do %>
+            <%= hidden_field_tag :from, @from %>
+            <%= hidden_field_tag :to, @to %>
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-arrow-repeat me-1"></i> Sincronizar ahora
+            </button>
+          <% end %>
         </div>
       <% end %>
     </div>
-    <!-- TAB 2: TRAZABILIDAD (TU VISTA DE LOGISTICS) -->
+    <%# ── TAB 2: TRAZABILIDAD ── %>
     <div class="tab-pane fade" id="logistics-content" role="tabpanel">
-      <%= render 'logistics_view', deliveries: @deliveries, presenter: @presenter %>
+      <%= render 'logistics_view',
+            deliveries: @deliveries,
+            presenter: @presenter,
+            requirement_statuses: @requirement_statuses_by_order %>
     </div>
   </div>
 </div>

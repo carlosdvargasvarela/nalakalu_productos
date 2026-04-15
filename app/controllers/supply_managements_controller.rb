@@ -5,10 +5,7 @@ class SupplyManagementsController < ApplicationController
     @from = params[:from] || Date.current.beginning_of_week.to_s
     @to = params[:to] || Date.current.end_of_week.to_s
 
-    # Solo lee entregas para mostrar trazabilidad — NO resuelve ni escribe en DB.
-    # El procesamiento ocurre únicamente en sync_all y sync_delivery.
     @deliveries = LogisticsApiClient.fetch_deliveries(from: @from, to: @to)
-
     order_numbers = @deliveries.map { |d| d["order_number"] }
 
     pending_reqs = ProcurementRequirement
@@ -25,18 +22,34 @@ class SupplyManagementsController < ApplicationController
         }
       end
 
-    # El presenter necesita el cache del decoder para la vista de trazabilidad.
-    # Se carga aquí solo para lectura, sin persistir nada.
+    @existing_orders = PurchaseOrder
+      .includes(:provider, purchase_order_items: :supplier_item)
+      .joins(:purchase_order_items)
+      .where(
+        purchase_order_items: {
+          id: ProcurementRequirement
+            .where(origin_order_number: order_numbers)
+            .where.not(purchase_order_item_id: nil)
+            .select(:purchase_order_item_id)
+        }
+      )
+      .distinct
+      .order(created_at: :desc)
+
+    @requirement_statuses_by_order = ProcurementRequirement
+      .where(origin_order_number: order_numbers)
+      .group_by(&:origin_order_number)
+      .transform_values { |reqs| reqs.map(&:status).uniq }
+
     ProductDecoder.clear_cache!
     ProcurementResolver.clear_cache!
 
     @presenter = ProcurementPresenter.new(
       deliveries: @deliveries,
-      supply_rules: SupplyRule.includes(:supplier_item).to_a
+      supply_rules: SupplyRule.includes(:supplier_item, :supply_rule_quantities).to_a
     )
   end
 
-  # POST /supply_managements/sync_all
   def sync_all
     from = params[:from] || Date.current.beginning_of_week.to_s
     to = params[:to] || Date.current.end_of_week.to_s
@@ -58,7 +71,6 @@ class SupplyManagementsController < ApplicationController
     redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
   end
 
-  # POST /supply_managements/sync_delivery
   def sync_delivery
     delivery_id = params[:delivery_id]
     delivery = LogisticsApiClient.new.fetch_delivery(delivery_id)
@@ -80,10 +92,10 @@ class SupplyManagementsController < ApplicationController
     redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
   end
 
-  # POST /supply_managements/create_purchase_order
   def create_purchase_order
     provider = Provider.find(params[:provider_id])
     requirement_ids = params[:requirement_ids]
+    unit_costs = params[:unit_costs] || {}
 
     if requirement_ids.blank?
       return redirect_to supply_managements_path,
@@ -109,15 +121,22 @@ class SupplyManagementsController < ApplicationController
       )
 
       requirements
-        .group_by { |r| [r.supplier_item_id, r.specifications.sort.to_h] }
-        .each do |(item_id, _specs), reqs|
+        .group_by { |r| ProcurementConsolidator.grouping_key(r) }
+        .each do |_key, reqs|
           first_req = reqs.first
+          normalized_specs = ProcurementConsolidator.normalize_specs(first_req.specifications)
+
+          entered_cost = reqs.map(&:id).map(&:to_s).filter_map { |id| unit_costs[id].presence }.first
+          resolved_cost = if entered_cost.present?
+            entered_cost.gsub(/[^\d,.]/, "").delete(".").tr(",", ".").to_f
+          end
+          resolved_cost = first_req.supplier_item.default_cost&.to_f || 0 if resolved_cost.nil? || resolved_cost.zero?
 
           po_item = purchase_order.purchase_order_items.create!(
-            supplier_item_id: item_id,
+            supplier_item_id: first_req.supplier_item_id,
             quantity: reqs.sum(&:quantity),
-            unit_cost: first_req.supplier_item.default_cost || 0,
-            specifications: first_req.specifications,
+            unit_cost: resolved_cost,
+            specifications: normalized_specs,
             description_override: first_req.supplier_item.name
           )
 

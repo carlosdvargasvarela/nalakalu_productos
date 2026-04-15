@@ -9,16 +9,14 @@ class ProcurementConsolidator
           supplier_item: first_req.supplier_item,
           specifications: normalized_specs,
           total_quantity: reqs.sum(&:quantity),
-          origin_orders: reqs.map(&:origin_order_number).uniq,
           requirement_ids: reqs.map(&:id),
-          products: reqs.map(&:origin_product_name).uniq.join(", ")
+          origin_orders: reqs.map(&:origin_order_number).uniq,
+          products: reqs.map(&:origin_product_name).uniq.join(", "),
+          origin_products: build_origin_products(reqs)
         }
       end
   end
 
-  # ─────────────────────────────────────────────
-  # KEY DE AGRUPACIÓN (CLAVE)
-  # ─────────────────────────────────────────────
   def self.grouping_key(requirement)
     [
       requirement.supplier_item_id,
@@ -26,19 +24,30 @@ class ProcurementConsolidator
     ]
   end
 
-  # ─────────────────────────────────────────────
-  # NORMALIZACIÓN DE SPECS
-  # ─────────────────────────────────────────────
+  # Unifica symbol keys y string keys → siempre string keys para comparación
   def self.normalize_specs(specs)
     return [] if specs.blank?
 
-    specs
+    Array(specs)
       .map do |s|
         {
-          "label" => s["label"] || s[:label],
-          "value" => s["value"] || s[:value]
+          "label" => (s[:label] || s["label"]).to_s,
+          "value" => (s[:value] || s["value"]).to_s
         }
       end
-      .sort_by { |s| [s["label"].to_s, s["value"].to_s] }
+      .sort_by { |s| s["label"] }
+  end
+
+  def self.build_origin_products(reqs)
+    reqs
+      .map { |r|
+        {
+          product_name: r.origin_product_name || "—",
+          quantity: r.quantity,
+          order_number: r.origin_order_number
+        }
+      }
+      .uniq { |op| [op[:product_name], op[:order_number]] }
+      .sort_by { |op| op[:order_number].to_s }
   end
 end

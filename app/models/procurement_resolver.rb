@@ -222,7 +222,10 @@ class ProcurementResolver
   end
 
   def self.merge_specs(existing, incoming)
-    (existing + incoming).uniq { |s| "#{s[:label]}-#{s[:value]}" }
+    normalized_existing = existing.map { |s|
+      {label: (s[:label] || s["label"]).to_s, value: (s[:value] || s["value"]).to_s}
+    }
+    (normalized_existing + incoming).uniq { |s| "#{s[:label]}-#{s[:value]}" }
   end
 
   # ─────────────────────────────────────────────

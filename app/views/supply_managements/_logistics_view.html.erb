@@ -12,6 +12,19 @@
       <tbody class="border-top-0">
         <% if deliveries.any? %>
           <% deliveries.each do |delivery| %>
+            <%
+              req_statuses = requirement_statuses[delivery["order_number"]] || []
+
+              delivery_badge = if req_statuses.empty?
+                { label: "Sin procesar", style: "bg-secondary-subtle text-secondary border-secondary-subtle", icon: "bi-hourglass" }
+              elsif req_statuses.all? { |s| s.in?(%w[ordered confirmed received in_draft]) }
+                { label: "En OC", style: "bg-success-subtle text-success-emphasis border-success-subtle", icon: "bi-check2-circle" }
+              elsif req_statuses.include?("pending")
+                { label: "Pendiente", style: "bg-warning-subtle text-warning-emphasis border-warning-subtle", icon: "bi-clock" }
+              else
+                { label: "Parcial", style: "bg-info-subtle text-info-emphasis border-info-subtle", icon: "bi-dash-circle" }
+              end
+            %>
             <tr class="border-bottom">
               <td class="ps-4">
                 <div class="fw-bold text-dark">
@@ -20,6 +33,11 @@
                 <div class="mt-1">
                   <span class="badge bg-secondary-subtle text-secondary border border-secondary-alpha-20">
                     <i class="bi bi-receipt me-1"></i><%= delivery["order_number"] %>
+                  </span>
+                </div>
+                <div class="mt-1">
+                  <span class="badge border rounded-pill px-2 py-1 <%= delivery_badge[:style] %>" style="font-size: 0.65rem;">
+                    <i class="bi <%= delivery_badge[:icon] %> me-1"></i><%= delivery_badge[:label] %>
                   </span>
                 </div>
               </td>
@@ -34,9 +52,8 @@
               </td>
               <td class="py-3">
                 <% delivery["items"].each do |item| %>
-                  <%# Usamos el presenter para obtener los datos ya calculados %>
                   <% decoding = ProductDecoder.decode(item["product_name"]) %>
-                  <div class="mb-3 p-3 rounded-3 <%= decoding[:has_variants] ? 'bg-primary-subtle border-start border-4 border-primary' : 'bg-light border-start border-4 border-secondary' %>">
+                  <div class="mb-3 p-3 rounded-3 <%= decoding.has_variants ? 'bg-primary-subtle border-start border-4 border-primary' : 'bg-light border-start border-4 border-secondary' %>">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <span class="h6 mb-0 fw-bold">
                         <span class="badge bg-white text-primary border border-primary me-2">
@@ -46,22 +63,22 @@
                       </span>
                     </div>
                     <div class="ms-2">
-                      <% if decoding[:base_product] %>
+                      <% if decoding.base_product %>
                         <div class="mb-2">
                           <span class="badge bg-dark-subtle text-dark px-2 py-1">
                             <i class="bi bi-box-seam me-1"></i>
-                            <%= decoding[:base_product].name %>
+                            <%= decoding.base_product.name %>
                           </span>
                         </div>
                       <% end %>
-                      <% if decoding[:has_variants] %>
+                      <% if decoding.has_variants %>
                         <div class="row g-2">
-                          <% decoding[:variants].each do |variant| %>
-                            <%# Buscamos la regla para mostrar el proveedor y la cantidad calculada %>
-                            <% rule = presenter.send(:find_rule_in_cache, variant, decoding[:base_product]) %>
+                          <% decoding.variants.each do |variant| %>
+                            <% rule = presenter.find_rule_in_cache(variant, decoding.base_product) %>
+                            <% detail = presenter.details_for(delivery["order_number"], item["product_name"], rule&.supplier_item_id) %>
                             <div class="col-12">
-                              <div class="d-flex align-items-center bg-white p-2 rounded border border-primary-subtle shadow-sm">
-                                <i class="bi bi-check2-circle text-primary me-2"></i>
+                              <div class="d-flex align-items-center bg-white p-2 rounded border <%= rule ? 'border-primary-subtle' : 'border-warning-subtle' %> <%= rule ? '' : 'bg-warning-subtle' %> shadow-sm">
+                                <i class="bi <%= rule ? 'bi-check2-circle text-primary' : 'bi-exclamation-triangle text-warning' %> me-2"></i>
                                 <div class="flex-grow-1">
                                   <span class="fw-bold small text-uppercase text-muted d-block" style="font-size: 0.65rem;">
                                     <%= variant.variant_type.name %>
@@ -69,13 +86,16 @@
                                   <span class="text-dark"><%= variant.name %></span>
                                 </div>
                                 <div class="text-end border-start ps-3 ms-2">
-                                  <span class="fw-bold text-primary d-block small">
-                                    <%= rule&.supplier_item&.provider&.name || "Sin asignar" %>
-                                  </span>
-                                  <span class="text-muted" style="font-size: 0.7rem;">
-                                    <%= presenter.details_for(delivery["order_number"], item["product_name"], rule&.supplier_item_id)[:quantity] %>
-                                    <%= rule&.supplier_item&.unit %>
-                                  </span>
+                                  <% if rule %>
+                                    <span class="fw-bold text-primary d-block small">
+                                      <%= rule.supplier_item&.provider&.name %>
+                                    </span>
+                                    <span class="text-muted" style="font-size: 0.7rem;">
+                                      <%= detail[:quantity] %> <%= detail[:unit] %>
+                                    </span>
+                                  <% else %>
+                                    <span class="text-warning small fw-bold">Sin regla</span>
+                                  <% end %>
                                 </div>
                               </div>
                             </div>

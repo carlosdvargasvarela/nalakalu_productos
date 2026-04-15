@@ -1,75 +1,186 @@
+<%# app/views/supply_managements/_provider_purchase_card.html.erb %>
 <div class="card mb-4 shadow-sm border-0 overflow-hidden"
      data-controller="procurement"
      data-procurement-provider-id-value="<%= provider.id %>">
-  <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-    <div>
-      <h5 class="mb-0 fw-bold text-primary">
-        <i class="bi bi-building me-2"></i><%= provider.name %>
-      </h5>
-      <small class="text-muted">Materiales pendientes de compra</small>
+  <%# ── HEADER DEL PROVEEDOR ── %>
+  <div class="card-header bg-white border-bottom py-3">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h5 class="mb-0 fw-bold text-primary">
+          <i class="bi bi-building me-2"></i><%= provider.name %>
+        </h5>
+        <small class="text-muted">Materiales pendientes de compra</small>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="d-flex gap-2">
+          <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle px-3 py-2">
+            <i class="bi bi-box-seam me-1"></i>
+            <%= items.size %> <%= items.size == 1 ? "material" : "materiales" %>
+          </span>
+          <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-3 py-2"
+                data-procurement-target="grandTotal">
+            ₡0,00
+          </span>
+        </div>
+        <%= form_tag create_purchase_order_supply_managements_path,
+              method: :post,
+              id: "oc-form-#{provider.id}" do %>
+          <%= hidden_field_tag :provider_id, provider.id %>
+          <div data-procurement-target="hiddenContainer"></div>
+          <button type="button"
+                  data-procurement-target="submitBtn"
+                  data-action="click->procurement#openConfirmModal"
+            disabled
+            class="btn btn-primary fw-bold shadow-sm btn-sm px-4">
+            <i class="bi bi-cart-check me-1"></i> Generar OC
+          </button>
+        <% end %>
+      </div>
     </div>
-    <%= form_tag create_purchase_order_supply_managements_path, method: :post do %>
-      <%= hidden_field_tag :provider_id, provider.id %>
-      <div data-procurement-target="hiddenContainer"></div>
-      <button type="submit"
-              data-procurement-target="submitBtn"
-              disabled
-              class="btn btn-primary fw-bold shadow-sm btn-sm px-4">
-        Generar Orden de Compra
-      </button>
-    <% end %>
   </div>
+  <%# ── TABLA DE MATERIALES ── %>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="bg-light">
         <tr>
-          <th width="50" class="text-center">
+          <th width="40" class="text-center ps-3">
             <input type="checkbox"
                    class="form-check-input"
                    data-procurement-target="selectAll"
-                   data-action="change->procurement#toggleAll">
+                   data-action="change->procurement#toggleAll"
+            title="Seleccionar todos">
           </th>
-          <th>Pieza / Material</th>
-          <th>Especificaciones</th>
-          <th class="text-center">Cantidad Total</th>
-          <th>Pedidos Origen</th>
+          <th style="min-width: 260px;">Material</th>
+          <th style="min-width: 200px;">Productos que lo necesitan</th>
+          <th class="text-center" style="min-width: 100px;">Cantidad</th>
+          <th class="text-end" style="min-width: 130px;">Precio unit.</th>
+          <th class="text-end pe-4" style="min-width: 120px;">Total línea</th>
         </tr>
       </thead>
       <tbody>
         <% items.each do |item| %>
-          <tr>
-            <td class="text-center">
+          <tr data-quantity="<%= item[:total_quantity] %>">
+            <%# Checkbox %>
+            <td class="text-center ps-3">
               <input type="checkbox"
                      class="form-check-input"
                      value="<%= item[:requirement_ids].join(",") %>"
               data-procurement-target="check"
               data-action="change->procurement#toggleOne">
             </td>
+            <%# Material: nombre + SKU + specs %>
             <td>
-              <div class="fw-bold text-dark"><%= item[:supplier_item].name %></div>
-              <code class="small text-muted">SKU: <%= item[:supplier_item].sku %></code>
-            </td>
-            <td>
-              <% item[:specifications]&.each do |k, v| %>
-                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill">
-                  <%= k %>: <%= v %>
-                </span>
+              <div class="fw-bold text-dark" data-item-name>
+                <%= item[:supplier_item].name %>
+              </div>
+              <% if item[:supplier_item].sku.present? %>
+                <code class="small text-muted" data-item-sku>
+                  <%= item[:supplier_item].sku %>
+                </code>
+              <% end %>
+              <% if item[:specifications].present? %>
+                <div class="mt-1 d-flex flex-wrap gap-1">
+                  <% item[:specifications].each do |spec| %>
+                    <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill"
+                          style="font-size: 0.65rem;"
+                          data-item-spec>
+                      <%= spec["label"] || spec[:label] %>: <%= spec["value"] || spec[:value] %>
+                    </span>
+                  <% end %>
+                </div>
               <% end %>
             </td>
-            <td class="text-center">
-              <span class="h6 mb-0 fw-bold text-primary"><%= item[:total_quantity] %></span>
-              <small class="text-muted d-block"><%= item[:supplier_item].unit %></small>
-            </td>
+            <%# Productos de origen %>
             <td>
-              <div class="d-flex flex-wrap gap-1">
-                <% item[:origin_orders].each do |order| %>
-                  <span class="badge bg-light text-dark border" style="font-size: 0.7rem;"><%= order %></span>
+              <div class="d-flex flex-column gap-1">
+                <% Array(item[:origin_products]).each do |op| %>
+                  <div class="d-flex align-items-start gap-1 flex-wrap">
+                    <span class="badge bg-dark-subtle text-dark border"
+                          style="font-size: 0.65rem; white-space: normal; text-align: left;"
+                          data-origin-product>
+                      <i class="bi bi-box me-1"></i><%= op[:product_name] %>
+                      <strong class="ms-1">× <%= op[:quantity] %></strong>
+                    </span>
+                    <span class="badge bg-light text-secondary border"
+                          style="font-size: 0.6rem;">
+                      <%= op[:order_number] %>
+                    </span>
+                  </div>
                 <% end %>
               </div>
+            </td>
+            <%# Cantidad total %>
+            <td class="text-center">
+              <span class="h6 mb-0 fw-bold text-primary" data-item-qty>
+                <%= item[:total_quantity] %>
+              </span>
+              <small class="text-muted d-block" data-item-unit>
+                <%= item[:supplier_item].unit %>
+              </small>
+            </td>
+            <%# Precio editable %>
+            <td class="text-end">
+              <div class="input-group input-group-sm justify-content-end" style="max-width: 140px; margin-left: auto;">
+                <span class="input-group-text bg-light border-end-0 text-muted" style="font-size: 0.75rem;">₡</span>
+                <input type="text"
+                       class="form-control border-start-0 text-end fw-bold"
+                       style="font-size: 0.85rem; max-width: 100px;"
+                       value="<%= number_with_delimiter(item[:supplier_item].default_cost&.to_i || 0, delimiter: ".") %>"
+                placeholder="0"
+                data-price-input
+                data-procurement-target="priceInput"
+                data-action="input->procurement#updatePrice">
+              </div>
+            </td>
+            <%# Total línea — pre-renderizado server-side %>
+            <td class="text-end pe-4">
+              <%
+                default_cost = item[:supplier_item].default_cost&.to_f || 0
+                line_total   = item[:total_quantity].to_f * default_cost
+              %>
+              <span class="fw-bold text-dark" data-line-total>
+                ₡<%= number_with_delimiter(line_total.round(2), delimiter: ".", separator: ",") %>
+              </span>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
+  <%# ── MODAL DE CONFIRMACIÓN — dentro del scope del controller ── %>
+  <div class="modal fade" id="confirmModal-<%= provider.id %>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <div>
+            <h5 class="modal-title fw-bold mb-0">
+              <i class="bi bi-cart-check me-2 text-primary"></i>Confirmar Orden de Compra
+            </h5>
+            <p class="text-muted small mb-0 mt-1">
+              <i class="bi bi-building me-1"></i><%= provider.name %>
+            </p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <div class="alert alert-warning border-0 py-2 px-3 mb-3" style="font-size: 0.8rem;">
+            <i class="bi bi-info-circle me-1"></i>
+            La OC quedará en <strong>Borrador</strong>. Podés ajustar costos antes de enviarla al proveedor.
+          </div>
+          <div data-procurement-target="modalBody"></div>
+        </div>
+        <div class="modal-footer border-0 bg-light px-4 py-3">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x me-1"></i> Cancelar
+          </button>
+          <button type="button"
+                  class="btn btn-primary fw-bold px-4"
+                  data-action="click->procurement#confirmSubmit">
+            <i class="bi bi-check2 me-1"></i> Confirmar y Generar OC
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+<%# ← cierre del data-controller %>
