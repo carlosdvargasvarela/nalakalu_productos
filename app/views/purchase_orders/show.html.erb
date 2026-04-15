@@ -20,7 +20,8 @@
     .flat_map { |i| i.procurement_requirements.map(&:origin_order_number) }
     .uniq.compact.sort
 %>
-<div class="container-fluid mt-4 pb-5" style="max-width: 1100px;" data-controller="<%= origin_orders.any? ? 'origin-modal' : '' %>">
+<div class="container-fluid mt-4 pb-5" style="max-width: 1100px;"
+     data-controller="<​%= origin_orders.any? ? 'origin-modal' : '' %>">
   <%# Breadcrumb %>
   <div class="mb-3">
     <%= link_to purchase_orders_path, class: "text-decoration-none text-muted small" do %>
@@ -56,8 +57,7 @@
               <% overdue = @purchase_order.delivery_deadline < Date.current &&
                            !%w[recibido cancelado].include?(@purchase_order.status) %>
               <div class="small <%= overdue ? 'text-danger fw-bold' : 'text-muted' %>">
-                Entrega máx.:
-                <strong><%= @purchase_order.delivery_deadline.strftime("%d/%m/%Y") %></strong>
+                Entrega máx.: <strong><%= @purchase_order.delivery_deadline.strftime("%d/%m/%Y") %></strong>
                 <%= "<i class='bi bi-exclamation-triangle-fill ms-1'></i>".html_safe if overdue %>
               </div>
             <% end %>
@@ -187,7 +187,6 @@
           </div>
         <% end %>
         <%# 3. Acciones del documento %>
-        <%# 3. Acciones del documento %>
         <div class="card border-0 shadow-sm mb-3">
           <div class="card-header bg-white border-bottom py-2">
             <span class="small fw-bold text-muted text-uppercase">
@@ -197,37 +196,35 @@
           <div class="card-body d-grid gap-2 py-3">
             <% if @purchase_order.status == "borrador" %>
               <%= link_to edit_purchase_order_path(@purchase_order),
-            class: "btn btn-outline-primary btn-sm fw-bold py-2" do %>
+                    class: "btn btn-outline-primary btn-sm fw-bold py-2" do %>
                 <i class="bi bi-pencil-square me-2"></i>Editar Cantidades y Costos
               <% end %>
             <% end %>
             <%# PDF %>
             <%= link_to download_pdf_purchase_order_path(@purchase_order),
-          class: "btn btn-outline-dark btn-sm py-2" do %>
+                  class: "btn btn-outline-dark btn-sm py-2" do %>
               <i class="bi bi-file-earmark-pdf me-2"></i>Descargar PDF
             <% end %>
-            <%# Email %>
+            <%# Email — abre modal si hay correo %>
             <% if @purchase_order.provider.email.present? %>
-              <%= button_to send_email_purchase_order_path(@purchase_order),
-            method: :post,
-            class: "btn btn-outline-secondary btn-sm py-2",
-            data: {
-              turbo_confirm: "¿Enviar la OC #{@purchase_order.number} a #{@purchase_order.provider.email}?"
-            } do %>
-                <i class="bi bi-envelope me-2"></i>Enviar por Correo
-              <% end %>
+              <button type="button"
+                      class="btn btn-primary btn-sm py-2"
+                      data-bs-toggle="modal"
+                      data-bs-target="#sendEmailModal">
+                <i class="bi bi-envelope me-2"></i>Enviar por Email
+              </button>
             <% else %>
               <button class="btn btn-outline-secondary btn-sm py-2" disabled
-              title="El proveedor no tiene correo registrado">
+                      title="El proveedor no tiene correo registrado">
                 <i class="bi bi-envelope me-2"></i>Sin correo registrado
               </button>
             <% end %>
             <% if current_user.role == "admin" || @purchase_order.status == "borrador" %>
               <hr class="my-1">
               <%= button_to purchase_order_path(@purchase_order),
-            method: :delete,
-            class: "btn btn-outline-danger btn-sm py-2",
-            data: { turbo_confirm: "¿Eliminar la orden #{@purchase_order.number}?\n\nLos requerimientos asociados volverán a estado pendiente." } do %>
+                    method: :delete,
+                    class: "btn btn-outline-danger btn-sm py-2",
+                    data: { turbo_confirm: "¿Eliminar la orden #{@purchase_order.number}?\n\nLos requerimientos asociados volverán a estado pendiente." } do %>
                 <i class="bi bi-trash me-2"></i>Eliminar Orden
               <% end %>
             <% end %>
@@ -251,36 +248,92 @@
                           class="btn btn-light btn-sm border fw-normal py-1 px-2"
                           style="font-size: 0.75rem;"
                           data-action="click->origin-modal#open"
-                    data-url="<%= origin_order_detail_purchase_order_path(@purchase_order, order_number: order_no) %>">
-                    <i class="bi bi-hash text-primary"></i><%= order_no %>
-                    <i class="bi bi-eye ms-1 text-muted" style="font-size: 0.65rem;"></i>
-                  </button>
-                <% end %>
+                    data-url="<​%= origin_order_detail_purchase_order_path(@purchase_order, order_number: order_no) %>">
+                      <i class="bi bi-hash text-primary"></i><%= order_no %>
+                      <i class="bi bi-eye ms-1 text-muted" style="font-size: 0.65rem;"></i>
+                    </button>
+                  <% end %>
+                </div>
               </div>
             </div>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
-<%# ══════════════════════════════════════════
-    MODAL — FUERA DE TODO, DIRECTO ANTES DEL </body>
-    El data-controller va en el outer container arriba
-══════════════════════════════════════════ %>
-<% if origin_orders.any? %>
-  <div class="modal fade" id="originOrderModal" tabindex="-1"
-       aria-hidden="true"
-       data-origin-modal-target="modal">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content border-0 shadow">
-        <div id="origin_order_modal_body">
-          <div class="modal-body text-center py-5 text-muted">
-            <div class="spinner-border spinner-border-sm me-2"></div>
-            Cargando desglose...
-          </div>
+          <% end %>
         </div>
       </div>
     </div>
   </div>
-<% end %>
+  <%# ══════════════════════════════════════════
+    MODAL — ENVÍO POR EMAIL
+══════════════════════════════════════════ %>
+  <% if @purchase_order.provider.email.present? %>
+    <div class="modal fade" id="sendEmailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header border-bottom">
+            <h6 class="modal-title fw-bold">
+              <i class="bi bi-envelope me-2"></i>Enviar Orden de Compra
+            </h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <%= form_with url: send_by_email_purchase_order_path(@purchase_order),
+                      method: :post,
+                      multipart: true do |f| %>
+            <div class="modal-body">
+              <p class="small text-muted mb-3">
+                <i class="bi bi-paperclip me-1"></i>
+                El PDF de la OC se adjuntará automáticamente.
+                Podés agregar documentos adicionales si es necesario.
+              </p>
+              <%# Destinatario %>
+              <div class="mb-3">
+                <%= f.label :recipient_email, "Destinatario", class: "form-label small fw-bold" %>
+                <%= f.email_field :recipient_email,
+                    value: @purchase_order.provider.email,
+                    class: "form-control form-control-sm",
+                    required: true %>
+              </div>
+              <%# Adjuntos adicionales %>
+              <div class="mb-3">
+                <%= f.label :attachments, "Adjuntos adicionales (opcional)", class: "form-label small fw-bold" %>
+                <%= f.file_field :attachments,
+                    multiple: true,
+                    class: "form-control form-control-sm",
+                    accept: ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" %>
+                <div class="form-text">PDF, Word, Excel o imágenes.</div>
+              </div>
+              <%# Nota adicional %>
+              <div class="mb-1">
+                <%= f.label :note, "Nota adicional (opcional)", class: "form-label small fw-bold" %>
+                <%= f.text_area :note,
+                    rows: 3,
+                    class: "form-control form-control-sm",
+                    placeholder: "Ej: Favor confirmar recepción a la brevedad..." %>
+              </div>
+            </div>
+            <div class="modal-footer border-top">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+              <%= f.submit "Enviar", class: "btn btn-primary btn-sm" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  <%# ══════════════════════════════════════════
+    MODAL — PEDIDOS DE ORIGEN
+══════════════════════════════════════════ %>
+  <% if origin_orders.any? %>
+    <div class="modal fade" id="originOrderModal" tabindex="-1"
+       aria-hidden="true"
+       data-origin-modal-target="modal">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+          <div id="origin_order_modal_body">
+            <div class="modal-body text-center py-5 text-muted">
+              <div class="spinner-border spinner-border-sm me-2"></div>
+              Cargando desglose...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>

@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm app-navbar sticky-top" style="z-index: 1050;">  
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm app-navbar sticky-top" style="z-index: 1050;">
   <div class="container-fluid px-4">
     <%= link_to root_path, class: "navbar-brand d-flex align-items-center gap-2 fw-bold" do %>
       <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
@@ -19,9 +19,13 @@
       </ul>
       <div class="d-flex align-items-center gap-2">
         <% if user_signed_in? %>
-          <span class="navbar-text text-white-50 small">
+          <%= link_to profile_path, class: "navbar-text text-white-50 small text-decoration-none" do %>
             <i class="bi bi-person-circle me-1"></i><%= current_user.email %>
-          </span>
+            <% unless current_user.outlook_connected? %>
+              <i class="bi bi-exclamation-circle-fill text-warning ms-1" 
+                title="Outlook no conectado"></i>
+            <% end %>
+          <% end %>
           <span class="badge bg-primary rounded-pill"><%= current_user.role %></span>
           <%= button_to destroy_user_session_path, method: :delete,
               class: "btn btn-outline-light btn-sm rounded-pill px-3" do %>

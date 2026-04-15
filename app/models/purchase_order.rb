@@ -17,18 +17,12 @@ class PurchaseOrder < ApplicationRecord
     purchase_order_items.reject(&:marked_for_destruction?).sum(&:total)
   end
 
-  def mailto_url
-    subject = "Orden de Compra #{number} - Nalakalú Solutions"
-    # Formateamos el total con moneda
-    formatted_total = ActionController::Base.helpers.number_to_currency(total_amount, unit: "₡", delimiter: ".", separator: ",")
+  def as_pdf
+    items = purchase_order_items
+      .includes(:supplier_item, :procurement_requirements)
+      .order(:id)
 
-    body = "Estimados #{provider.name},\n\n" \
-           "Adjunto enviamos la Orden de Compra #{number} " \
-           "por un total de #{formatted_total}.\n\n" \
-           "Favor confirmar recepción y fecha estimada de entrega.\n\n" \
-           "Saludos cordiales,\nNalakalú Solutions S.A."
-
-    "mailto:#{provider.email}?subject=#{ERB::Util.url_encode(subject)}&body=#{ERB::Util.url_encode(body)}"
+    PurchaseOrderPdf.new(self, items).render
   end
 
   private

@@ -22,6 +22,11 @@ gem "fuzzy-string-match"
 gem "prawn"
 gem "prawn-table"
 
+# Gemfile
+gem "omniauth-microsoft_graph" # Corregido con guion bajo
+gem "omniauth-rails_csrf_protection"
+gem "microsoft_graph" # Esta es la que usaremos para enviar el correo después
+
 group :development, :test do
   gem "dotenv-rails"
   gem "debug", platforms: %i[mri windows], require: "debug/prelude"

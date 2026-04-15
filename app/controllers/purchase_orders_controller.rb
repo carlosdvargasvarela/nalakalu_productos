@@ -59,18 +59,37 @@ class PurchaseOrdersController < ApplicationController
       disposition: "attachment"
   end
 
-  def send_email
+  def send_by_email
     @purchase_order = PurchaseOrder.find(params[:id])
+    recipient = params[:recipient_email].presence || @purchase_order.provider.email
 
-    unless @purchase_order.provider.email.present?
-      return redirect_to @purchase_order,
-        alert: "El proveedor no tiene correo registrado."
+    if recipient.blank?
+      return redirect_to purchase_order_path(@purchase_order),
+        alert: "El proveedor no tiene un correo configurado."
     end
 
-    PurchaseOrderMailer.send_to_provider(@purchase_order).deliver_later
+    unless current_user.outlook_connected?
+      return redirect_to purchase_order_path(@purchase_order),
+        alert: "Tu cuenta de Outlook no está conectada. Ve a tu perfil para vincularla."
+    end
 
-    redirect_to @purchase_order,
-      notice: "Orden enviada a #{@purchase_order.provider.email}."
+    begin
+      mailer = MicrosoftGraphMailer.new(current_user)
+      extra_attachments = Array(params[:attachments])
+      note = params[:note]
+
+      if mailer.send_purchase_order(@purchase_order, recipient,
+        extra_attachments: extra_attachments,
+        note: note)
+        @purchase_order.update(status: "enviado")
+        flash[:notice] = "Orden enviada correctamente a #{recipient}."
+      end
+    rescue => e
+      Rails.logger.error "MAILER ERROR (PO ##{@purchase_order.id}): #{e.message}"
+      flash[:alert] = e.message
+    end
+
+    redirect_to purchase_order_path(@purchase_order)
   end
 
   def transition
@@ -87,13 +106,9 @@ class PurchaseOrdersController < ApplicationController
 
       case next_status
       when "enviado"
-        ProcurementRequirement
-          .for_purchase_order(@purchase_order)
-          .each(&:mark_as_ordered!)
+        ProcurementRequirement.for_purchase_order(@purchase_order).each(&:mark_as_ordered!)
       when "cancelado"
-        ProcurementRequirement
-          .for_purchase_order(@purchase_order)
-          .each(&:release!)
+        ProcurementRequirement.for_purchase_order(@purchase_order).each(&:release!)
       end
     end
 
@@ -108,10 +123,7 @@ class PurchaseOrdersController < ApplicationController
         alert: "Solo se pueden eliminar órdenes en borrador."
     end
 
-    ProcurementRequirement
-      .for_purchase_order(@purchase_order)
-      .each(&:release!)
-
+    ProcurementRequirement.for_purchase_order(@purchase_order).each(&:release!)
     @purchase_order.destroy
 
     respond_to do |format|

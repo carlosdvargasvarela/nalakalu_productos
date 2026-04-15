@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_30_215121) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_15_142630) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -155,6 +155,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_30_215121) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "sent_at"
     t.index ["provider_id"], name: "index_purchase_orders_on_provider_id"
   end
 
@@ -220,6 +221,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_30_215121) do
     t.string "role", default: "seller"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "microsoft_provider"
+    t.string "microsoft_uid"
+    t.string "microsoft_token"
+    t.string "microsoft_refresh_token"
+    t.datetime "microsoft_token_expires_at"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end

@@ -1,0 +1,76 @@
+<div class="container py-4" style="max-width: 680px;">
+  <h4 class="fw-bold mb-4">
+    <i class="bi bi-person-circle me-2 text-primary"></i>Mi Perfil
+  </h4>
+  <%# Info básica %>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom py-3">
+      <span class="fw-bold small text-uppercase text-muted">Información de Cuenta</span>
+    </div>
+    <div class="card-body py-3">
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="text-muted small">Correo</div>
+          <div class="fw-bold"><%= current_user.email %></div>
+        </div>
+        <div class="col-sm-6">
+          <div class="text-muted small">Rol</div>
+          <span class="badge bg-primary"><%= current_user.role %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%# Conexión con Outlook %>
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <span class="fw-bold small text-uppercase text-muted">
+        <i class="bi bi-envelope-fill me-2 text-primary"></i>Cuenta de Outlook
+      </span>
+      <% if current_user.outlook_connected? %>
+        <span class="badge bg-success-subtle text-success border border-success fw-normal">
+          <i class="bi bi-check-circle me-1"></i>Conectado
+        </span>
+      <% else %>
+        <span class="badge bg-warning-subtle text-warning border border-warning fw-normal">
+          <i class="bi bi-exclamation-circle me-1"></i>No conectado
+        </span>
+      <% end %>
+    </div>
+    <div class="card-body py-4">
+      <% if current_user.outlook_connected? %>
+        <div class="d-flex align-items-start gap-3 mb-4">
+          <i class="bi bi-microsoft text-primary fs-3"></i>
+          <div>
+            <div class="fw-bold"><%= current_user.email %></div>
+            <div class="text-muted small">
+              Token válido hasta: 
+              <strong><%= current_user.microsoft_token_expires_at.strftime("%d/%m/%Y %H:%M") %></strong>
+            </div>
+            <div class="text-muted small mt-1">
+              Los correos de Órdenes de Compra se enviarán desde tu cuenta y 
+              quedarán en tu carpeta de <strong>Enviados</strong>.
+            </div>
+          </div>
+        </div>
+        <%= button_to user_microsoft_graph_omniauth_authorize_path,
+              data: { turbo: false },
+              class: "btn btn-outline-primary btn-sm" do %>
+          <i class="bi bi-arrow-repeat me-2"></i>Reconectar / Renovar Token
+        <% end %>
+      <% else %>
+        <div class="text-center py-3">
+          <i class="bi bi-microsoft display-4 text-muted opacity-50 d-block mb-3"></i>
+          <p class="text-muted small mb-4" style="max-width: 360px; margin: 0 auto;">
+            Conectá tu cuenta de Outlook para poder enviar Órdenes de Compra 
+            directamente desde tu correo corporativo, con los adjuntos que necesités.
+          </p>
+          <%= button_to user_microsoft_graph_omniauth_authorize_path,
+                data: { turbo: false },
+                class: "btn btn-primary px-4" do %>
+            <i class="bi bi-microsoft me-2"></i>Conectar mi cuenta de Outlook
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

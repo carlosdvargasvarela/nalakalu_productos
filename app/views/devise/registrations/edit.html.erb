@@ -1,0 +1,23 @@
+<div class="card mt-4 border-primary">
+  <div class="card-body">
+    <h5 class="card-title fw-bold">Conexión con Outlook</h5>
+    <p class="text-muted small">Necesario para enviar Órdenes de Compra desde tu propio correo corporativo.</p>
+    <% if resource.outlook_connected? %>
+      <div class="alert alert-success d-flex align-items-center mb-0">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <div>
+          Cuenta conectada: <strong><%= resource.email %></strong>
+          <div class="small opacity-75">Token válido hasta: <%= resource.microsoft_token_expires_at.strftime("%d/%m/%Y %H:%M") %></div>
+        </div>
+      </div>
+      <%# Opcional: Podés poner un botón para reconectar y refrescar el token %>
+      <%= button_to "Re-conectar Outlook", user_microsoft_graph_omniauth_authorize_path, 
+            data: { turbo: false }, class: "btn btn-outline-primary btn-sm mt-3" %>
+    <% else %>
+      <%= button_to user_microsoft_graph_omniauth_authorize_path, 
+            data: { turbo: false }, class: "btn btn-primary" do %>
+        <i class="bi bi-microsoft me-2"></i>Conectar mi cuenta de Outlook
+      <% end %>
+    <% end %>
+  </div>
+</div>
