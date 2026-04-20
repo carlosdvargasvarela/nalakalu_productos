@@ -1,15 +1,11 @@
+# app/models/procurement_resolver.rb
 class ProcurementResolver
   def self.resolve_delivery(delivery)
+    # Cache se limpia al inicio de cada entrega para garantizar datos frescos
     clear_cache!
 
     accumulation = Hash.new do |h, k|
-      h[k] = {
-        qty: 0.0,
-        specs: [],
-        products: [],
-        rule_id: nil,
-        counted_items: Set.new
-      }
+      h[k] = {qty: 0.0, specs: [], products: [], rule_id: nil, counted_items: Set.new}
     end
 
     delivery["items"].each do |item|
@@ -22,9 +18,7 @@ class ProcurementResolver
 
       variants_by_strategy = group_variants_by_strategy(decoding.variants, base_product)
 
-      # ─────────────────────────────────────────────
-      # INDIVIDUAL
-      # ─────────────────────────────────────────────
+      # ── INDIVIDUAL ──────────────────────────────────────────────────────
       variants_by_strategy[:individual].each do |variant|
         rule = find_individual_rule(variant, base_product)
         next unless rule&.supplier_item_id
@@ -37,14 +31,11 @@ class ProcurementResolver
         accumulation[sid][:products] << item["product_name"]
         accumulation[sid][:rule_id] ||= rule.id
 
-        # ✅ NUEVO: specs
         specs = build_specifications(rule.supplier_item, [variant], base_product)
         accumulation[sid][:specs] = merge_specs(accumulation[sid][:specs], specs)
       end
 
-      # ─────────────────────────────────────────────
-      # CONSOLIDADO
-      # ─────────────────────────────────────────────
+      # ── CONSOLIDADO ─────────────────────────────────────────────────────
       variants_by_strategy[:consolidated].each do |sid, group|
         rule = group[:rule]
         next unless rule.supplier_item&.active?
@@ -58,7 +49,6 @@ class ProcurementResolver
         accumulation[sid][:products] << item["product_name"]
         accumulation[sid][:rule_id] ||= rule.id
 
-        # ✅ NUEVO: specs correctas
         specs = build_specifications(rule.supplier_item, group[:variants], base_product)
         accumulation[sid][:specs] = merge_specs(accumulation[sid][:specs], specs)
       end
@@ -67,9 +57,8 @@ class ProcurementResolver
     persist_accumulation(delivery, accumulation)
   end
 
-  # ─────────────────────────────────────────────
-  # QUANTITY
-  # ─────────────────────────────────────────────
+  # ── QUANTITY ─────────────────────────────────────────────────────────────
+
   def self.resolve_quantity(rule, base_product)
     if base_product && rule.supply_rule_quantities.any?
       specific = rule.supply_rule_quantities.find { |q| q.product_id == base_product.id }
@@ -78,9 +67,8 @@ class ProcurementResolver
     rule.quantity_needed.to_f
   end
 
-  # ─────────────────────────────────────────────
-  # PERSIST
-  # ─────────────────────────────────────────────
+  # ── PERSIST ──────────────────────────────────────────────────────────────
+
   def self.persist_accumulation(delivery, accumulation)
     results = []
 
@@ -92,13 +80,11 @@ class ProcurementResolver
 
       next if req.persisted? && req.status.in?(%w[ordered confirmed received])
 
-      new_qty = data[:qty].round(4)
-
       req.assign_attributes(
         origin_delivery_id: delivery["id"].to_s,
         origin_product_name: data[:products].uniq.first,
         origin_products: (Array(req.origin_products) | data[:products]).uniq,
-        quantity: new_qty,
+        quantity: data[:qty].round(4),
         specifications: data[:specs],
         supply_rule_id: data[:rule_id],
         status: req.persisted? ? req.status : "pending"
@@ -114,9 +100,8 @@ class ProcurementResolver
     results
   end
 
-  # ─────────────────────────────────────────────
-  # GROUPING
-  # ─────────────────────────────────────────────
+  # ── GROUPING ─────────────────────────────────────────────────────────────
+
   def self.group_variants_by_strategy(variants, base_product)
     groups = {individual: [], consolidated: {}}
 
@@ -139,9 +124,8 @@ class ProcurementResolver
     groups
   end
 
-  # ─────────────────────────────────────────────
-  # RULE RESOLUTION
-  # ─────────────────────────────────────────────
+  # ── RULE RESOLUTION ──────────────────────────────────────────────────────
+
   def self.find_individual_rule(variant, base_product)
     rules = all_supply_rules.select { |r| r.rule_type == "individual" }
 
@@ -158,57 +142,36 @@ class ProcurementResolver
       rules.find { |r| r.variant_type_id == variant_type.id && r.product_id.nil? }
   end
 
-  # ─────────────────────────────────────────────
-  # SPECS (CORE NUEVO)
-  # ─────────────────────────────────────────────
+  # ── SPECS ─────────────────────────────────────────────────────────────────
+
   def self.build_specifications(supplier_item, variants, base_product = nil)
     return [] if supplier_item.blank?
 
-    # ✅ labels definidos en SupplierItem (ej: F1, F2, F3)
-    allowed_labels = supplier_item.supplier_item_properties
-      .specs
-      .pluck(:label)
-
+    allowed_labels = supplier_item_specs_cache(supplier_item.id)
     return [] if allowed_labels.empty?
 
-    # ✅ construir specs desde variantes usando el label del ProductVariantRule
-    incoming_specs = variants.map do |v|
+    incoming_specs = variants.filter_map do |v|
       label = resolve_variant_label(v, base_product)
       next unless label.present?
-
-      {
-        label: label,
-        value: v.display_name.presence || v.name
-      }
-    end.compact
-
-    # ✅ filtrar solo los labels que el supplier_item entiende
-    filtered = incoming_specs.select do |spec|
-      allowed_labels.include?(spec[:label])
+      {label: label, value: v.display_name.presence || v.name}
     end
 
-    validate_missing_specs(supplier_item, filtered)
-
+    filtered = incoming_specs.select { |spec| allowed_labels.include?(spec[:label]) }
+    validate_missing_specs(supplier_item, filtered, allowed_labels)
     filtered
   end
 
-  # ✅ Resuelve el label correcto para una variante
-  # Prioridad: ProductVariantRule.label → variant_type.name
   def self.resolve_variant_label(variant, base_product)
     if base_product.present?
       rule = base_product.product_variant_rules
         .find { |pvr| pvr.variant_type_id == variant.variant_type_id }
-
       return rule.label if rule&.label.present?
     end
-
-    # fallback: nombre del tipo
     variant.variant_type.name
   end
 
-  # ✅ Warning si faltan specs esperadas
-  def self.validate_missing_specs(supplier_item, specs)
-    expected = supplier_item.supplier_item_properties.specs.pluck(:label)
+  def self.validate_missing_specs(supplier_item, specs, expected_labels = nil)
+    expected = expected_labels || supplier_item_specs_cache(supplier_item.id)
     received = specs.map { |s| s[:label] }
     missing = expected - received
 
@@ -222,24 +185,38 @@ class ProcurementResolver
   end
 
   def self.merge_specs(existing, incoming)
-    normalized_existing = existing.map { |s|
+    normalized = existing.map { |s|
       {label: (s[:label] || s["label"]).to_s, value: (s[:value] || s["value"]).to_s}
     }
-    (normalized_existing + incoming).uniq { |s| "#{s[:label]}-#{s[:value]}" }
+    (normalized + incoming).uniq { |s| "#{s[:label]}-#{s[:value]}" }
   end
 
-  # ─────────────────────────────────────────────
-  # CACHE
-  # ─────────────────────────────────────────────
+  # ── CACHE (Thread-local) ──────────────────────────────────────────────────
+
   def self.all_supply_rules
     Thread.current[:supply_rules_cache] ||= SupplyRule
+      .joins(:supplier_item)
       .includes(:variant_type, :variant, :supplier_item, :supply_rule_quantities)
       .where(supplier_items: {active: true})
+      .select(
+        "supply_rules.id, supply_rules.product_id, supply_rules.variant_type_id, " \
+        "supply_rules.variant_id, supply_rules.supplier_item_id, " \
+        "supply_rules.quantity_needed, supply_rules.rule_type"
+      )
       .to_a
+  end
+
+  # Cache de labels de specs por supplier_item_id — evita re-queries en el loop
+  def self.supplier_item_specs_cache(supplier_item_id)
+    cache = Thread.current[:supplier_item_specs_cache] ||= {}
+    cache[supplier_item_id] ||= SupplierItemProperty
+      .where(supplier_item_id: supplier_item_id, spec_type: "spec")
+      .pluck(:label)
   end
 
   def self.clear_cache!
     Thread.current[:supply_rules_cache] = nil
+    Thread.current[:supplier_item_specs_cache] = nil
     ProductDecoder.clear_cache!
   end
 end

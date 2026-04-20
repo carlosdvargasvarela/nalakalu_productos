@@ -1,3 +1,4 @@
+# app/controllers/supply_managements_controller.rb
 class SupplyManagementsController < ApplicationController
   before_action :authenticate_user!
 
@@ -8,6 +9,7 @@ class SupplyManagementsController < ApplicationController
     @deliveries = LogisticsApiClient.fetch_deliveries(from: @from, to: @to)
     order_numbers = @deliveries.map { |d| d["order_number"] }
 
+    # ── Requerimientos pendientes agrupados por proveedor ─────────────────
     pending_reqs = ProcurementRequirement
       .where(status: "pending", origin_order_number: order_numbers)
       .includes(supplier_item: :provider)
@@ -22,55 +24,48 @@ class SupplyManagementsController < ApplicationController
         }
       end
 
+    # ── Órdenes existentes relacionadas al rango ──────────────────────────
+    linked_po_item_ids = ProcurementRequirement
+      .where(origin_order_number: order_numbers)
+      .where.not(purchase_order_item_id: nil)
+      .pluck(:purchase_order_item_id)
+
     @existing_orders = PurchaseOrder
-      .includes(:provider, purchase_order_items: :supplier_item)
       .joins(:purchase_order_items)
-      .where(
-        purchase_order_items: {
-          id: ProcurementRequirement
-            .where(origin_order_number: order_numbers)
-            .where.not(purchase_order_item_id: nil)
-            .select(:purchase_order_item_id)
-        }
-      )
+      .where(purchase_order_items: {id: linked_po_item_ids})
+      .includes(:provider, purchase_order_items: :supplier_item)
       .distinct
       .order(created_at: :desc)
 
+    # ── Statuses por número de orden ──────────────────────────────────────
     @requirement_statuses_by_order = ProcurementRequirement
       .where(origin_order_number: order_numbers)
-      .group_by(&:origin_order_number)
-      .transform_values { |reqs| reqs.map(&:status).uniq }
+      .pluck(:origin_order_number, :status)
+      .group_by(&:first)
+      .transform_values { |rows| rows.map(&:last).uniq }
+
+    # ── Presenter para la vista de Trazabilidad ───────────────────────────
+    @presenter = ProcurementPresenter.new(
+      deliveries: @deliveries,
+      supply_rules: SupplyRule.includes(:supplier_item, :variant, :variant_type)
+    )
 
     ProductDecoder.clear_cache!
     ProcurementResolver.clear_cache!
-
-    @presenter = ProcurementPresenter.new(
-      deliveries: @deliveries,
-      supply_rules: SupplyRule.includes(:supplier_item, :supply_rule_quantities).to_a
-    )
   end
 
+  # ── SYNC ALL → Sidekiq ───────────────────────────────────────────────────
   def sync_all
     from = params[:from] || Date.current.beginning_of_week.to_s
     to = params[:to] || Date.current.end_of_week.to_s
 
-    ProductDecoder.clear_cache!
-    ProcurementResolver.clear_cache!
+    SyncDeliveriesJob.perform_later(from: from, to: to, user_id: current_user.id)
 
-    deliveries = LogisticsApiClient.fetch_deliveries(from: from, to: to)
-    results = deliveries.flat_map { |d| ProcurementResolver.resolve_delivery(d) }
-
-    new_count = results.count(&:previously_new_record?)
-    existing_count = results.size - new_count
-
-    msg = "Sincronización completa: #{new_count} requerimientos nuevos"
-    msg += ", #{existing_count} ya existían." if existing_count > 0
-
-    redirect_to supply_managements_path(from: from, to: to), notice: msg
-  rescue => e
-    redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
+    redirect_to supply_managements_path(from: from, to: to),
+      notice: "Sincronización iniciada en segundo plano. Refresca en unos segundos."
   end
 
+  # ── SYNC DELIVERY individual → síncrono (1 entrega = rápido) ────────────
   def sync_delivery
     delivery_id = params[:delivery_id]
     delivery = LogisticsApiClient.new.fetch_delivery(delivery_id)
@@ -92,6 +87,7 @@ class SupplyManagementsController < ApplicationController
     redirect_to supply_managements_path, alert: "Error al sincronizar: #{e.message}"
   end
 
+  # ── CREATE PURCHASE ORDER ────────────────────────────────────────────────
   def create_purchase_order
     provider = Provider.find(params[:provider_id])
     requirement_ids = params[:requirement_ids]
@@ -126,10 +122,8 @@ class SupplyManagementsController < ApplicationController
           first_req = reqs.first
           normalized_specs = ProcurementConsolidator.normalize_specs(first_req.specifications)
 
-          entered_cost = reqs.map(&:id).map(&:to_s).filter_map { |id| unit_costs[id].presence }.first
-          resolved_cost = if entered_cost.present?
-            entered_cost.gsub(/[^\d,.]/, "").delete(".").tr(",", ".").to_f
-          end
+          entered_cost = reqs.map { |r| unit_costs[r.id.to_s].presence }.compact.first
+          resolved_cost = parse_cost(entered_cost)
           resolved_cost = first_req.supplier_item.default_cost&.to_f || 0 if resolved_cost.nil? || resolved_cost.zero?
 
           po_item = purchase_order.purchase_order_items.create!(
@@ -149,5 +143,12 @@ class SupplyManagementsController < ApplicationController
   rescue => e
     redirect_to supply_managements_path,
       alert: "Error al crear la orden: #{e.message}"
+  end
+
+  private
+
+  def parse_cost(raw)
+    return nil if raw.blank?
+    raw.gsub(/[^\d,.]/, "").delete(".").tr(",", ".").to_f
   end
 end

@@ -1,12 +1,15 @@
 # app/models/product_decoder.rb
 class ProductDecoder
+  CACHE_KEY_PRODUCTS = "decoder:products:v1"
+  CACHE_KEY_VARIANTS = "decoder:variants:v1"
+  CACHE_TTL = 30.minutes
+
   Result = Struct.new(
-    :has_variants,
-    :base_product,
-    :variants,
-    :unrecognized_codes,
+    :has_variants, :base_product, :variants, :unrecognized_codes,
     keyword_init: true
   )
+
+  # ── API pública ──────────────────────────────────────────────────────────
 
   def self.decode(full_code, base_product: nil)
     return empty_result unless full_code.present?
@@ -15,17 +18,12 @@ class ProductDecoder
     return empty_result unless base_product
 
     if base_product.product_variant_rules.empty?
-      return Result.new(
-        has_variants: false,
-        base_product: base_product,
-        variants: [],
-        unrecognized_codes: []
-      )
+      return Result.new(has_variants: false, base_product: base_product,
+        variants: [], unrecognized_codes: [])
     end
 
     input_strict = normalize_strict(full_code)
     product_strict = normalize_strict(base_product.name)
-
     tail_strict = strip_product_from_string(input_strict, product_strict)
     tail_loose = normalize_loose(tail_strict)
 
@@ -40,7 +38,7 @@ class ProductDecoder
     )
   end
 
-  # --- Normalización ---
+  # ── Normalización ────────────────────────────────────────────────────────
 
   def self.normalize_strict(text)
     text.to_s.downcase.tr("áéíóúüñ", "aeiouun").squeeze(" ").strip
@@ -61,7 +59,7 @@ class ProductDecoder
     input_strict
   end
 
-  # --- Detección de Producto Base (OPTIMIZADO CON CACHE) ---
+  # ── Detección de Producto Base ───────────────────────────────────────────
 
   def self.detect_base_product(full_code)
     strict = normalize_strict(full_code)
@@ -69,13 +67,10 @@ class ProductDecoder
     input_tokens = loose.split
     return nil if input_tokens.empty?
 
-    # Carga masiva en RAM una sola vez por petición
-    @all_products_cache ||= Product.where(active: true).includes(:product_variant_rules).to_a
-
     best_product = nil
     best_score = -1.0
 
-    @all_products_cache.each do |p|
+    all_products_cache.each do |p|
       p_strict = normalize_strict(p.name)
       p_loose = normalize_loose(p.name)
 
@@ -99,23 +94,18 @@ class ProductDecoder
     best_product
   end
 
-  # --- Detección de Variantes (OPTIMIZADO CON CACHE) ---
+  # ── Detección de Variantes ───────────────────────────────────────────────
 
   def self.detect_variants_catalog_based(base_product, _tail_strict, tail_loose)
     tail_tokens = tail_loose.split
     return [] if tail_tokens.empty?
     tail_set = tail_tokens.to_set
-
-    # Carga masiva en RAM una sola vez por petición
-    @all_variants_cache ||= Variant.where(active: true).includes(:variant_type).to_a
-
     allowed_type_ids = base_product.product_variant_rules.map(&:variant_type_id)
     return [] if allowed_type_ids.empty?
 
     candidates = []
 
-    # Buscamos en la lista en RAM en lugar de hacer queries
-    @all_variants_cache.each do |v|
+    all_variants_cache.each do |v|
       next unless allowed_type_ids.include?(v.variant_type_id)
 
       v_name_loose = normalize_loose(v.seller_name)
@@ -123,12 +113,13 @@ class ProductDecoder
       v_code_loose = v.code.present? ? normalize_loose(v.code) : nil
 
       code_match = v_code_loose.present? && tail_set.include?(v_code_loose)
-
       name_match = false
+
       if v_name_tokens.any?
         inter = v_name_tokens & tail_tokens
         coverage = inter.size.to_f / v_name_tokens.size
-        name_match = (v_name_tokens.size == 1) ? tail_set.include?(v_name_tokens.first) : (coverage >= 0.6)
+        name_match = (v_name_tokens.size == 1) ?
+          tail_set.include?(v_name_tokens.first) : coverage >= 0.6
       end
 
       next unless code_match || name_match
@@ -151,17 +142,49 @@ class ProductDecoder
     explained = Array.new(tokens.size, false)
 
     variants.each do |v|
-      v_text = "#{v.name} #{v.seller_name} #{v.code}"
-      v_tokens = normalize_loose(v_text).split
+      v_tokens = normalize_loose("#{v.name} #{v.seller_name} #{v.code}").split
       tokens.each_with_index { |t, i| explained[i] = true if v_tokens.include?(t) }
     end
 
     tokens.each_with_index.reject { |_, i| explained[i] }.map(&:first).uniq
   end
 
+  # ── Cache (Rails.cache — sobrevive entre requests) ───────────────────────
+
+  def self.all_products_cache
+    # Thread.current como L1 (dentro del request), Rails.cache como L2 (entre requests)
+    Thread.current[:decoder_products_cache] ||=
+      Rails.cache.fetch(CACHE_KEY_PRODUCTS, expires_in: CACHE_TTL) do
+        Product
+          .where(active: true)
+          .includes(:product_variant_rules)
+          .select(:id, :name, :base_code)
+          .to_a
+      end
+  end
+
+  def self.all_variants_cache
+    Thread.current[:decoder_variants_cache] ||=
+      Rails.cache.fetch(CACHE_KEY_VARIANTS, expires_in: CACHE_TTL) do
+        Variant
+          .where(active: true)
+          .includes(:variant_type)
+          .select(:id, :name, :display_name, :code, :variant_type_id)
+          .to_a
+      end
+  end
+
+  # Limpia L1 (Thread) — no toca Rails.cache salvo que se pida explícitamente
   def self.clear_cache!
-    @all_products_cache = nil
-    @all_variants_cache = nil
+    Thread.current[:decoder_products_cache] = nil
+    Thread.current[:decoder_variants_cache] = nil
+  end
+
+  # Limpia L1 + L2 — llamar desde callbacks de modelo
+  def self.bust_cache!
+    clear_cache!
+    Rails.cache.delete(CACHE_KEY_PRODUCTS)
+    Rails.cache.delete(CACHE_KEY_VARIANTS)
   end
 
   def self.empty_result

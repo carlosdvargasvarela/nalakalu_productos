@@ -1,3 +1,4 @@
+<%# app/views/supply_managements/_logistics_view.html.erb %>
 <div class="card border-0 shadow-sm overflow-hidden">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
@@ -52,7 +53,7 @@
               </td>
               <td class="py-3">
                 <% delivery["items"].each do |item| %>
-                  <% decoding = ProductDecoder.decode(item["product_name"]) %>
+                  <% decoding = presenter.decoded(item["product_name"]) %>
                   <div class="mb-3 p-3 rounded-3 <%= decoding.has_variants ? 'bg-primary-subtle border-start border-4 border-primary' : 'bg-light border-start border-4 border-secondary' %>">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <span class="h6 mb-0 fw-bold">
@@ -74,10 +75,10 @@
                       <% if decoding.has_variants %>
                         <div class="row g-2">
                           <% decoding.variants.each do |variant| %>
-                            <% rule = presenter.find_rule_in_cache(variant, decoding.base_product) %>
+                            <% rule   = presenter.find_rule_in_cache(variant, decoding.base_product) %>
                             <% detail = presenter.details_for(delivery["order_number"], item["product_name"], rule&.supplier_item_id) %>
                             <div class="col-12">
-                              <div class="d-flex align-items-center bg-white p-2 rounded border <%= rule ? 'border-primary-subtle' : 'border-warning-subtle' %> <%= rule ? '' : 'bg-warning-subtle' %> shadow-sm">
+                              <div class="d-flex align-items-center bg-white p-2 rounded border <%= rule ? 'border-primary-subtle' : 'border-warning-subtle bg-warning-subtle' %> shadow-sm">
                                 <i class="bi <%= rule ? 'bi-check2-circle text-primary' : 'bi-exclamation-triangle text-warning' %> me-2"></i>
                                 <div class="flex-grow-1">
                                   <span class="fw-bold small text-uppercase text-muted d-block" style="font-size: 0.65rem;">

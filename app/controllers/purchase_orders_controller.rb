@@ -1,3 +1,4 @@
+# app/controllers/purchase_orders_controller.rb
 class PurchaseOrdersController < ApplicationController
   before_action :authenticate_user!
   before_action :set_purchase_order, only: %i[show edit update destroy transition]
@@ -23,40 +24,35 @@ class PurchaseOrdersController < ApplicationController
   end
 
   def show
-    @items = @purchase_order.purchase_order_items
-      .includes(:supplier_item, :procurement_requirements)
-      .order(:id)
+    @items = po_items_for_display(@purchase_order)
   end
 
   def edit
-    @items = @purchase_order.purchase_order_items
-      .includes(:supplier_item, :procurement_requirements)
-      .order(:id)
+    @items = po_items_for_display(@purchase_order)
   end
 
   def update
     if @purchase_order.update(purchase_order_params)
       redirect_to @purchase_order, notice: "Orden de Compra actualizada."
     else
-      @items = @purchase_order.purchase_order_items
-        .includes(:supplier_item, :procurement_requirements)
-        .order(:id)
+      @items = po_items_for_display(@purchase_order)
       render :edit, status: :unprocessable_entity
     end
   end
 
+  # PDF con Tempfile → no acumula el binario en RAM del proceso web
   def download_pdf
-    @po = PurchaseOrder.find(params[:id])
-    @items = @po.purchase_order_items
-      .includes(:supplier_item, :procurement_requirements)
-      .order(:id)
+    po = PurchaseOrder.find(params[:id])
+    items = po_items_for_display(po)
 
-    pdf = PurchaseOrderPdf.new(@po, @items).render
-
-    send_data pdf,
-      filename: "OC-#{@po.number}.pdf",
-      type: "application/pdf",
-      disposition: "attachment"
+    Tempfile.create(["oc_#{po.number}", ".pdf"], binmode: true) do |f|
+      f.write(PurchaseOrderPdf.new(po, items).render)
+      f.rewind
+      send_file f.path,
+        filename: "OC-#{po.number}.pdf",
+        type: "application/pdf",
+        disposition: "attachment"
+    end
   end
 
   def send_by_email
@@ -76,11 +72,10 @@ class PurchaseOrdersController < ApplicationController
     begin
       mailer = MicrosoftGraphMailer.new(current_user)
       extra_attachments = Array(params[:attachments])
-      note = params[:note]
 
       if mailer.send_purchase_order(@purchase_order, recipient,
         extra_attachments: extra_attachments,
-        note: note)
+        note: params[:note])
         @purchase_order.update(status: "enviado")
         flash[:notice] = "Orden enviada correctamente a #{recipient}."
       end
@@ -106,9 +101,10 @@ class PurchaseOrdersController < ApplicationController
 
       case next_status
       when "enviado"
-        ProcurementRequirement.for_purchase_order(@purchase_order).each(&:mark_as_ordered!)
+        ProcurementRequirement.for_purchase_order(@purchase_order).update_all(status: "ordered")
       when "cancelado"
-        ProcurementRequirement.for_purchase_order(@purchase_order).each(&:release!)
+        ProcurementRequirement.for_purchase_order(@purchase_order)
+          .update_all(status: "pending", purchase_order_item_id: nil)
       end
     end
 
@@ -123,7 +119,10 @@ class PurchaseOrdersController < ApplicationController
         alert: "Solo se pueden eliminar órdenes en borrador."
     end
 
-    ProcurementRequirement.for_purchase_order(@purchase_order).each(&:release!)
+    # update_all evita instanciar cada requirement
+    ProcurementRequirement.for_purchase_order(@purchase_order)
+      .update_all(status: "pending", purchase_order_item_id: nil)
+
     @purchase_order.destroy
 
     respond_to do |format|
@@ -159,6 +158,14 @@ class PurchaseOrdersController < ApplicationController
     @purchase_order = PurchaseOrder
       .includes(purchase_order_items: [:supplier_item, :procurement_requirements])
       .find(params[:id])
+  end
+
+  # Query reutilizable para show/edit/update — sin procurement_requirements
+  # en contextos donde no se necesitan (ej: edit de costos)
+  def po_items_for_display(po)
+    po.purchase_order_items
+      .includes(:supplier_item, :procurement_requirements)
+      .order(:id)
   end
 
   def purchase_order_params

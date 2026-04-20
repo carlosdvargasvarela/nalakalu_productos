@@ -4,10 +4,27 @@ class VariantsController < ApplicationController
   before_action :set_variant, only: %i[show edit update destroy move_to_type]
 
   def index
-    @variants = Variant.all
+    scope = Variant
       .includes(:variant_type, :compatibilities)
-      .order("variant_types.name, variants.name")
       .joins(:variant_type)
+      .order("variant_types.name, variants.name")
+
+    # Filtros server-side
+    if params[:search].present?
+      term = "%#{params[:search].strip}%"
+      scope = scope.where("variants.name LIKE ? OR variants.display_name LIKE ?", term, term)
+    end
+
+    scope = scope.where(variant_type_id: params[:type_id]) if params[:type_id].present?
+
+    case params[:status]
+    when "active" then scope = scope.where(active: true)
+    when "inactive" then scope = scope.where(active: false)
+    when "no_rule"
+      scope = scope.left_joins(:supply_rules).where(supply_rules: {id: nil})
+    end
+
+    @pagy, @variants = pagy(scope, limit: 100)
 
     @selected = params[:selected_id].present? ? Variant.find_by(id: params[:selected_id]) : nil
 

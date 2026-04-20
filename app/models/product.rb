@@ -15,6 +15,8 @@ class Product < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :base_code, presence: true
 
+  after_commit :bust_decoder_cache
+
   # --------- Helpers de variantes ----------
 
   def compatible_variants_for_rule(rule)
@@ -150,5 +152,9 @@ class Product < ApplicationRecord
       end
     end
     @should_sync_rules = false
+  end
+
+  def bust_decoder_cache
+    ProductDecoder.bust_cache!
   end
 end

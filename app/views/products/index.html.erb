@@ -13,10 +13,10 @@
   <%# ── STATS ── %>
   <div class="row g-3 mb-4">
     <% [
-      ["Total", @stats[:total],             "bi-box-seam",          "primary"],
-      ["Activos", @stats[:active],           "bi-check-circle",      "success"],
-      ["Listos para compra", @stats[:procurement_ready], "bi-cart-check", "info"],
-      ["Sin variantes", @stats[:no_variants],"bi-exclamation-circle","warning"],
+      ["Total",              @stats[:total],              "bi-box-seam",           "primary"],
+      ["Activos",            @stats[:active],             "bi-check-circle",       "success"],
+      ["Listos para compra", @stats[:procurement_ready],  "bi-cart-check",         "info"],
+      ["Sin variantes",      @stats[:no_variants],        "bi-exclamation-circle", "warning"],
     ].each do |label, value, icon, color| %>
       <div class="col-6 col-xl-3">
         <div class="card border-0 shadow-sm rounded-4 h-100">
@@ -38,62 +38,113 @@
     <%# ── PANEL IZQUIERDO ── %>
     <div class="col-xl-5">
       <div class="card border-0 shadow-sm rounded-4">
-        <%# Filtros %>
+        <%# ── Filtros (server-side GET) ── %>
         <div class="card-header bg-white border-bottom p-3 rounded-top-4">
-          <div class="input-group mb-2 shadow-sm">
-            <span class="input-group-text bg-light border-0">
-              <i class="bi bi-search text-muted"></i>
-            </span>
-            <input type="text"
-                   class="form-control bg-light border-0 shadow-none"
-                   placeholder="Buscar por nombre o código..."
-                   data-action="input->product-filters#filter"
-            data-product-filters-target="search">
-          </div>
-          <div class="row g-2">
-            <div class="col-6">
-              <select class="form-select form-select-sm border-0 bg-light shadow-none"
-                      data-action="change->product-filters#filter"
-                data-product-filters-target="family">
-                <option value="">Todas las familias</option>
-                <% Family.where(active: true).order(:name).each do |f| %>
-                  <option value="<%= f.id %>"><%= f.name %></option>
-                <% end %>
-              </select>
+          <%= form_with url: products_path, method: :get,
+              data: { turbo_action: "advance", controller: "product-filters" } do |f| %>
+            <div class="input-group mb-2 shadow-sm">
+              <span class="input-group-text bg-light border-0">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <%= f.text_field :search,
+                  value: params[:search],
+                  class: "form-control bg-light border-0 shadow-none",
+                  placeholder: "Buscar por nombre o código...",
+                  autocomplete: "off",
+                  data: { action: "input->product-filters#debounceSubmit" } %>
             </div>
-            <div class="col-6">
-              <select class="form-select form-select-sm border-0 bg-light shadow-none"
-                      data-action="change->product-filters#filter"
-                data-product-filters-target="status">
-                <option value="">Todos los estados</option>
-                <option value="active">Activos</option>
-                <option value="inactive">Inactivos</option>
-                <option value="ready">Listos para compra</option>
-                <option value="incomplete">Incompletos</option>
-              </select>
+            <div class="row g-2">
+              <div class="col-6">
+                <%= f.select :family_id,
+                    Family.where(active: true).order(:name).map { |fam| [fam.name, fam.id] },
+                    { include_blank: "Todas las familias", selected: params[:family_id] },
+                    class: "form-select form-select-sm border-0 bg-light shadow-none",
+                    data: { action: "change->product-filters#submit" } %>
+              </div>
+              <div class="col-6">
+                <%= f.select :status,
+                    [["Activos","active"],["Inactivos","inactive"],
+                     ["Listos para compra","ready"],["Incompletos","incomplete"]],
+                    { include_blank: "Todos los estados", selected: params[:status] },
+                    class: "form-select form-select-sm border-0 bg-light shadow-none",
+                    data: { action: "change->product-filters#submit" } %>
+              </div>
             </div>
-          </div>
+            <%# Preservar selected_id al filtrar %>
+            <%= f.hidden_field :selected_id, value: params[:selected_id] %>
+          <% end %>
         </div>
-        <%# Lista %>
-        <div class="list-group list-group-flush rounded-bottom-4"
-             style="max-height: calc(100vh - 320px); overflow-y: auto;"
-             data-product-filters-target="list">
+        <%# ── Lista ── %>
+        <div class="list-group list-group-flush"
+             style="max-height: calc(100vh - 380px); overflow-y: auto;">
           <% if @products.empty? %>
             <div class="text-center py-5 text-muted">
               <i class="bi bi-box-seam d-block fs-1 mb-2 opacity-25"></i>
-              <p class="fw-bold">No hay productos registrados.</p>
+              <p class="fw-bold mb-0">No hay productos para estos filtros.</p>
             </div>
           <% else %>
             <% @products.each do |product| %>
-              <%= render "product_row", product: product,
+              <%= render "product_row",
+                    product: product,
                     selected: @selected_product&.id == product.id,
                     supplier_type_map: @supplier_type_map,
                     procurement_ready_map: @procurement_ready_map %>
             <% end %>
           <% end %>
         </div>
+        <%# ── Paginación ── %>
+        <% if @pagy.pages > 1 %>
+          <% prev_page = (@pagy.page > 1) ? (@pagy.page - 1) : nil %>
+          <% next_page = (@pagy.page < @pagy.pages) ? (@pagy.page + 1) : nil %>
+          <div class="px-3 py-2 border-top bg-white rounded-bottom-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <small class="text-muted">
+              <%= @pagy.count %> productos · pág. <%= @pagy.page %> / <%= @pagy.pages %>
+            </small>
+            <nav>
+              <ul class="pagination pagination-sm mb-0 gap-1">
+                <% if prev_page %>
+                  <li class="page-item">
+                    <%= link_to products_path(params.permit(:search, :family_id, :status, :selected_id).merge(page: prev_page)),
+                        class: "page-link rounded-pill px-3" do %>
+                      <i class="bi bi-chevron-left"></i>
+                    <% end %>
+                  </li>
+                <% end %>
+                <% pagy_pages = ([@pagy.page - 1, 1].max..[@pagy.page + 1, @pagy.pages].min) %>
+                <% if pagy_pages.first > 1 %>
+                  <li class="page-item">
+                    <%= link_to "1", products_path(params.permit(:search, :family_id, :status, :selected_id).merge(page: 1)),
+                        class: "page-link rounded-pill px-3" %>
+                  </li>
+                  <li class="page-item disabled"><span class="page-link">…</span></li>
+                <% end %>
+                <% pagy_pages.each do |p| %>
+                  <li class="page-item <%= 'active' if p == @pagy.page %>">
+                    <%= link_to p, products_path(params.permit(:search, :family_id, :status, :selected_id).merge(page: p)),
+                        class: "page-link rounded-pill px-3" %>
+                  </li>
+                <% end %>
+                <% if pagy_pages.last < @pagy.pages %>
+                  <li class="page-item disabled"><span class="page-link">…</span></li>
+                  <li class="page-item">
+                    <%= link_to @pagy.pages, products_path(params.permit(:search, :family_id, :status, :selected_id).merge(page: @pagy.pages)),
+                        class: "page-link rounded-pill px-3" %>
+                  </li>
+                <% end %>
+                <% if next_page %>
+                  <li class="page-item">
+                    <%= link_to products_path(params.permit(:search, :family_id, :status, :selected_id).merge(page: next_page)),
+                        class: "page-link rounded-pill px-3" do %>
+                      <i class="bi bi-chevron-right"></i>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            </nav>
+          </div>
+        <% end %>
       </div>
-      <%# Importador %>
+      <%# ── Importador ── %>
       <div class="card border-0 shadow-sm rounded-4 border-start border-4 border-warning mt-3">
         <div class="card-body p-3">
           <div class="d-flex align-items-center gap-3 flex-wrap">
@@ -131,6 +182,6 @@
 </div>
 <style>
   .x-small { font-size: 0.72rem; }
-  .rounded-top-4 { border-radius: 1rem 1rem 0 0 !important; }
+  .rounded-top-4    { border-radius: 1rem 1rem 0 0 !important; }
   .rounded-bottom-4 { border-radius: 0 0 1rem 1rem !important; }
 </style>

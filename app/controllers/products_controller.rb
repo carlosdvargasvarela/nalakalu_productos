@@ -1,16 +1,34 @@
+# app/controllers/products_controller.rb
 class ProductsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
   before_action :set_product, only: %i[show edit update destroy update_compatibilities]
 
   def index
-    @products = Product.all
+    scope = Product
       .includes(:family, :product_variant_rules)
       .order(:name)
 
+    if params[:search].present?
+      term = "%#{params[:search].strip}%"
+      scope = scope.where("products.name LIKE ? OR products.base_code LIKE ?", term, term)
+    end
+
+    scope = scope.where(family_id: params[:family_id]) if params[:family_id].present?
+
+    case params[:status]
+    when "active" then scope = scope.where(active: true)
+    when "inactive" then scope = scope.where(active: false)
+    end
+
+    # ready/incomplete se resuelven post-query (dependen del mapa)
+    filter_by_readiness = params[:status].in?(%w[ready incomplete])
+
+    @pagy, @products = pagy(scope, limit: 150)
+
     product_ids = @products.map(&:id)
 
-    # Precalcular supplier_type: 1 sola query
+    # supplier_type map
     categories_by_product = SupplierItem
       .joins(:supply_rules, :provider)
       .where(supply_rules: {product_id: product_ids})
@@ -27,7 +45,7 @@ class ProductsController < ApplicationController
       end
     end
 
-    # Precalcular procurement_ready?: 2 queries
+    # procurement_ready map
     variant_type_ids_by_product = ProductVariantRule
       .where(product_id: product_ids)
       .pluck(:product_id, :variant_type_id)
@@ -38,7 +56,6 @@ class ProductsController < ApplicationController
       .where(product_id: product_ids)
       .where.not(variant_type_id: nil)
       .pluck(:product_id, :variant_type_id)
-      .map { |pid, vtid| [pid, vtid] }
       .to_set
 
     @procurement_ready_map = product_ids.index_with do |pid|
@@ -46,13 +63,24 @@ class ProductsController < ApplicationController
       required.any? && required.all? { |vtid| covered_pairs.include?([pid, vtid]) }
     end
 
+    # Filtro post-query para ready/incomplete
+    if filter_by_readiness
+      keep_ids = if params[:status] == "ready"
+        @procurement_ready_map.select { |_, v| v }.keys
+      else
+        @procurement_ready_map.reject { |_, v| v }.keys
+      end
+      @products = @products.select { |p| keep_ids.include?(p.id) }
+    end
+
     @selected_product = Product.find_by(id: params[:selected_id])
 
     @stats = {
-      total: @products.count,
-      active: @products.count(&:active?),
+      total: Product.count,
+      active: Product.where(active: true).count,
       procurement_ready: @procurement_ready_map.count { |_, v| v },
-      no_variants: @products.count { |p| p.product_variant_rules.empty? }
+      no_variants: Product.left_joins(:product_variant_rules)
+        .where(product_variant_rules: {id: nil}).count
     }
   end
 

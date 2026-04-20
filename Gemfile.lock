@@ -131,6 +131,8 @@ GEM
       logger
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
+    faraday-retry (2.4.0)
+      faraday (~> 2.0)
     fuzzy-string-match (1.0.1)
       RubyInline (>= 3.8.6)
     fuzzy_match (2.1.0)
@@ -253,6 +255,10 @@ GEM
       actionpack (>= 4.2)
       omniauth (~> 2.0)
     orm_adapter (0.5.0)
+    pagy (43.5.1)
+      json
+      uri
+      yaml
     parallel (1.27.0)
     parser (3.3.10.1)
       ast (~> 2.4.1)
@@ -436,8 +442,12 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    with_advisory_lock (7.5.0)
+      activerecord (>= 7.2)
+      zeitwerk (>= 2.7)
     xpath (3.2.0)
       nokogiri (~> 1.8)
+    yaml (0.4.0)
     zeitwerk (2.7.4)
 
 PLATFORMS
@@ -461,6 +471,7 @@ DEPENDENCIES
   devise
   dotenv-rails
   faraday
+  faraday-retry
   fuzzy-string-match
   fuzzy_match
   importmap-rails
@@ -470,6 +481,7 @@ DEPENDENCIES
   microsoft_graph
   omniauth-microsoft_graph
   omniauth-rails_csrf_protection
+  pagy
   pg
   prawn
   prawn-table
@@ -485,6 +497,7 @@ DEPENDENCIES
   turbo-rails
   tzinfo-data
   web-console
+  with_advisory_lock
 
 BUNDLED WITH
    2.6.7

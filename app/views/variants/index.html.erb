@@ -22,7 +22,7 @@
       <% end %>
     </div>
   </div>
-  <% if @variants.empty? %>
+  <% if @variants.empty? && !params[:search].present? && !params[:type_id].present? && !params[:status].present? %>
     <div class="text-center py-5 text-muted">
       <i class="bi bi-palette d-block fs-1 mb-3 opacity-25"></i>
       <p class="fw-bold">No hay variantes registradas aún.</p>
@@ -34,63 +34,118 @@
     <div class="row g-4" style="min-height: 70vh;">
       <%# ── PANEL IZQUIERDO ── %>
       <div class="col-lg-4 col-xl-3">
-        <div class="card border-0 shadow-sm rounded-4 h-100">
-          <%# Filtros %>
-          <div class="card-header bg-white py-3 border-bottom">
-            <div class="input-group input-group-sm mb-2">
-              <span class="input-group-text bg-light border-0 rounded-start-3">
-                <i class="bi bi-search text-muted"></i>
-              </span>
-              <input type="text"
-                     class="form-control bg-light border-0 shadow-none rounded-end-3"
-                     placeholder="Buscar variante..."
-                     data-variant-filters-target="search"
-                     data-action="input->variant-filters#filter">
-            </div>
-            <div class="d-flex gap-2">
-              <select class="form-select form-select-sm bg-light border-0 shadow-none rounded-3"
-                      data-variant-filters-target="typeFilter"
-                      data-action="change->variant-filters#filter">
-                <option value="">Todos los tipos</option>
-                <% VariantType.order(:name).each do |vt| %>
-                  <option value="<%= vt.id %>"><%= vt.name %></option>
-                <% end %>
-              </select>
-              <select class="form-select form-select-sm bg-light border-0 shadow-none rounded-3"
-                      data-variant-filters-target="statusFilter"
-                      data-action="change->variant-filters#filter">
-                <option value="">Todos</option>
-                <option value="active">Activas</option>
-                <option value="inactive">Inactivas</option>
-                <option value="no_rule">Sin regla</option>
-              </select>
-            </div>
-          </div>
-          <%# Lista agrupada por tipo %>
-          <div class="card-body p-0 overflow-auto" style="max-height: calc(100vh - 300px);">
-            <% @variants.group_by(&:variant_type).each do |type, variants| %>
-              <div class="variant-type-group"
-                   data-type-id="<%= type.id %>"
-                data-variant-filters-target="group">
-                <div class="px-3 py-2 bg-light border-bottom sticky-top">
-                  <span class="small fw-bold text-muted text-uppercase">
-                    <i class="bi bi-tags me-1 text-info"></i><%= type.name %>
-                  </span>
-                  <span class="badge bg-info bg-opacity-10 text-info rounded-pill ms-1"
-                        style="font-size: 0.6rem;">
-                    <%= variants.count %>
-                  </span>
-                </div>
-                <% variants.each do |variant| %>
-                  <%= render "variants/variant_list_item",
-                      variant: variant,
-                      selected: @selected&.id == variant.id %>
-                <% end %>
+        <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
+          <%# ── Filtros (server-side GET) ── %>
+          <div class="card-header bg-white py-3 border-bottom flex-shrink-0">
+            <%= form_with url: variants_path, method: :get,
+                data: { turbo_action: "advance" } do |f| %>
+              <div class="input-group input-group-sm mb-2">
+                <span class="input-group-text bg-light border-0 rounded-start-3">
+                  <i class="bi bi-search text-muted"></i>
+                </span>
+                <%= f.text_field :search,
+                    value: params[:search],
+                    class: "form-control bg-light border-0 shadow-none rounded-end-3",
+                    placeholder: "Buscar variante...",
+                    autocomplete: "off",
+                    data: { action: "input->variant-filters#debounceSubmit" } %>
               </div>
+              <div class="d-flex gap-2">
+                <%= f.select :type_id,
+                    VariantType.order(:name).map { |vt| [vt.name, vt.id] },
+                    { include_blank: "Todos los tipos", selected: params[:type_id] },
+                    class: "form-select form-select-sm bg-light border-0 shadow-none rounded-3",
+                    data: { action: "change->variant-filters#submit" } %>
+                <%= f.select :status,
+                    [["Activas","active"],["Inactivas","inactive"],["Sin regla","no_rule"]],
+                    { include_blank: "Todos", selected: params[:status] },
+                    class: "form-select form-select-sm bg-light border-0 shadow-none rounded-3",
+                    data: { action: "change->variant-filters#submit" } %>
+              </div>
+              <%= f.hidden_field :selected_id, value: params[:selected_id] %>
             <% end %>
           </div>
-          <%# Importador CSV %>
-          <div class="card-footer bg-white border-top p-3">
+          <%# ── Lista agrupada por tipo ── %>
+          <div class="card-body p-0 overflow-auto flex-grow-1" style="max-height: calc(100vh - 360px);">
+            <% if @variants.empty? %>
+              <div class="text-center py-5 text-muted">
+                <i class="bi bi-funnel d-block fs-2 mb-2 opacity-25"></i>
+                <p class="small fw-bold mb-0">Sin resultados para estos filtros.</p>
+              </div>
+            <% else %>
+              <% @variants.group_by(&:variant_type).each do |type, variants| %>
+                <div class="variant-type-group" data-type-id="<%= type.id %>">
+                  <div class="px-3 py-2 bg-light border-bottom sticky-top">
+                    <span class="small fw-bold text-muted text-uppercase">
+                      <i class="bi bi-tags me-1 text-info"></i><%= type.name %>
+                    </span>
+                    <span class="badge bg-info bg-opacity-10 text-info rounded-pill ms-1"
+                          style="font-size: 0.6rem;">
+                      <%= variants.count %>
+                    </span>
+                  </div>
+                  <% variants.each do |variant| %>
+                    <%= render "variants/variant_list_item",
+                        variant: variant,
+                        selected: @selected&.id == variant.id %>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+          <%# ── Paginación ── %>
+          <% if @pagy.pages > 1 %>
+            <% prev_page = (@pagy.page > 1) ? (@pagy.page - 1) : nil %>
+            <% next_page = (@pagy.page < @pagy.pages) ? (@pagy.page + 1) : nil %>
+            <div class="px-3 py-2 border-top bg-white d-flex justify-content-between align-items-center flex-wrap gap-1">
+              <small class="text-muted">
+                <%= @pagy.count %> · pág. <%= @pagy.page %>/<%= @pagy.pages %>
+              </small>
+              <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1">
+                  <% if prev_page %>
+                    <li class="page-item">
+                      <%= link_to variants_path(params.permit(:search, :type_id, :status, :selected_id).merge(page: prev_page)),
+                          class: "page-link rounded-pill px-2" do %>
+                        <i class="bi bi-chevron-left"></i>
+                      <% end %>
+                    </li>
+                  <% end %>
+                  <% pagy_pages = ([@pagy.page - 1, 1].max..[@pagy.page + 1, @pagy.pages].min) %>
+                  <% if pagy_pages.first > 1 %>
+                    <li class="page-item">
+                      <%= link_to "1", variants_path(params.permit(:search, :type_id, :status, :selected_id).merge(page: 1)),
+                          class: "page-link rounded-pill px-2" %>
+                    </li>
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                  <% end %>
+                  <% pagy_pages.each do |p| %>
+                    <li class="page-item <%= 'active' if p == @pagy.page %>">
+                      <%= link_to p, variants_path(params.permit(:search, :type_id, :status, :selected_id).merge(page: p)),
+                          class: "page-link rounded-pill px-2" %>
+                    </li>
+                  <% end %>
+                  <% if pagy_pages.last < @pagy.pages %>
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                    <li class="page-item">
+                      <%= link_to @pagy.pages, variants_path(params.permit(:search, :type_id, :status, :selected_id).merge(page: @pagy.pages)),
+                          class: "page-link rounded-pill px-2" %>
+                    </li>
+                  <% end %>
+                  <% if next_page %>
+                    <li class="page-item">
+                      <%= link_to variants_path(params.permit(:search, :type_id, :status, :selected_id).merge(page: next_page)),
+                          class: "page-link rounded-pill px-2" do %>
+                        <i class="bi bi-chevron-right"></i>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              </nav>
+            </div>
+          <% end %>
+          <%# ── Importador CSV ── %>
+          <div class="card-footer bg-white border-top p-3 flex-shrink-0">
             <%= form_with url: import_variants_path, multipart: true, local: true do |f| %>
               <p class="small text-muted fw-bold mb-2">
                 <i class="bi bi-file-earmark-spreadsheet me-1 text-info"></i>Importar CSV

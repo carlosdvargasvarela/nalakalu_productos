@@ -21,7 +21,7 @@
     .uniq.compact.sort
 %>
 <div class="container-fluid mt-4 pb-5" style="max-width: 1100px;"
-     data-controller="<​%= origin_orders.any? ? 'origin-modal' : '' %>">
+     data-controller="<%= origin_orders.any? ? 'origin-modal' : '' %>">
   <%# Breadcrumb %>
   <div class="mb-3">
     <%= link_to purchase_orders_path, class: "text-decoration-none text-muted small" do %>
@@ -248,92 +248,92 @@
                           class="btn btn-light btn-sm border fw-normal py-1 px-2"
                           style="font-size: 0.75rem;"
                           data-action="click->origin-modal#open"
-                    data-url="<​%= origin_order_detail_purchase_order_path(@purchase_order, order_number: order_no) %>">
-                      <i class="bi bi-hash text-primary"></i><%= order_no %>
-                      <i class="bi bi-eye ms-1 text-muted" style="font-size: 0.65rem;"></i>
-                    </button>
-                  <% end %>
-                </div>
+                    data-url="<%= origin_order_detail_purchase_order_path(@purchase_order, order_number: order_no) %>">
+                    <i class="bi bi-hash text-primary"></i><%= order_no %>
+                    <i class="bi bi-eye ms-1 text-muted" style="font-size: 0.65rem;"></i>
+                  </button>
+                <% end %>
               </div>
             </div>
-          <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+<%# ══════════════════════════════════════════
+    MODAL — ENVÍO POR EMAIL
+══════════════════════════════════════════ %>
+<% if @purchase_order.provider.email.present? %>
+  <div class="modal fade" id="sendEmailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-bottom">
+          <h6 class="modal-title fw-bold">
+            <i class="bi bi-envelope me-2"></i>Enviar Orden de Compra
+          </h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <%= form_with url: send_by_email_purchase_order_path(@purchase_order),
+                      method: :post,
+                      multipart: true do |f| %>
+          <div class="modal-body">
+            <p class="small text-muted mb-3">
+              <i class="bi bi-paperclip me-1"></i>
+              El PDF de la OC se adjuntará automáticamente.
+              Podés agregar documentos adicionales si es necesario.
+            </p>
+            <%# Destinatario %>
+            <div class="mb-3">
+              <%= f.label :recipient_email, "Destinatario", class: "form-label small fw-bold" %>
+              <%= f.email_field :recipient_email,
+                    value: @purchase_order.provider.email,
+                    class: "form-control form-control-sm",
+                    required: true %>
+            </div>
+            <%# Adjuntos adicionales %>
+            <div class="mb-3">
+              <%= f.label :attachments, "Adjuntos adicionales (opcional)", class: "form-label small fw-bold" %>
+              <%= f.file_field :attachments,
+                    multiple: true,
+                    class: "form-control form-control-sm",
+                    accept: ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" %>
+              <div class="form-text">PDF, Word, Excel o imágenes.</div>
+            </div>
+            <%# Nota adicional %>
+            <div class="mb-1">
+              <%= f.label :note, "Nota adicional (opcional)", class: "form-label small fw-bold" %>
+              <%= f.text_area :note,
+                    rows: 3,
+                    class: "form-control form-control-sm",
+                    placeholder: "Ej: Favor confirmar recepción a la brevedad..." %>
+            </div>
+          </div>
+          <div class="modal-footer border-top">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+            <%= f.submit "Enviar", class: "btn btn-primary btn-sm" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+<%# ══════════════════════════════════════════
+    MODAL — PEDIDOS DE ORIGEN
+══════════════════════════════════════════ %>
+<% if origin_orders.any? %>
+  <div class="modal fade" id="originOrderModal" tabindex="-1"
+       aria-hidden="true"
+       data-origin-modal-target="modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div id="origin_order_modal_body">
+          <div class="modal-body text-center py-5 text-muted">
+            <div class="spinner-border spinner-border-sm me-2"></div>
+            Cargando desglose...
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <%# ══════════════════════════════════════════
-    MODAL — ENVÍO POR EMAIL
-══════════════════════════════════════════ %>
-  <% if @purchase_order.provider.email.present? %>
-    <div class="modal fade" id="sendEmailModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-          <div class="modal-header border-bottom">
-            <h6 class="modal-title fw-bold">
-              <i class="bi bi-envelope me-2"></i>Enviar Orden de Compra
-            </h6>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <%= form_with url: send_by_email_purchase_order_path(@purchase_order),
-                      method: :post,
-                      multipart: true do |f| %>
-            <div class="modal-body">
-              <p class="small text-muted mb-3">
-                <i class="bi bi-paperclip me-1"></i>
-                El PDF de la OC se adjuntará automáticamente.
-                Podés agregar documentos adicionales si es necesario.
-              </p>
-              <%# Destinatario %>
-              <div class="mb-3">
-                <%= f.label :recipient_email, "Destinatario", class: "form-label small fw-bold" %>
-                <%= f.email_field :recipient_email,
-                    value: @purchase_order.provider.email,
-                    class: "form-control form-control-sm",
-                    required: true %>
-              </div>
-              <%# Adjuntos adicionales %>
-              <div class="mb-3">
-                <%= f.label :attachments, "Adjuntos adicionales (opcional)", class: "form-label small fw-bold" %>
-                <%= f.file_field :attachments,
-                    multiple: true,
-                    class: "form-control form-control-sm",
-                    accept: ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" %>
-                <div class="form-text">PDF, Word, Excel o imágenes.</div>
-              </div>
-              <%# Nota adicional %>
-              <div class="mb-1">
-                <%= f.label :note, "Nota adicional (opcional)", class: "form-label small fw-bold" %>
-                <%= f.text_area :note,
-                    rows: 3,
-                    class: "form-control form-control-sm",
-                    placeholder: "Ej: Favor confirmar recepción a la brevedad..." %>
-              </div>
-            </div>
-            <div class="modal-footer border-top">
-              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-              <%= f.submit "Enviar", class: "btn btn-primary btn-sm" %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-  <% end %>
-  <%# ══════════════════════════════════════════
-    MODAL — PEDIDOS DE ORIGEN
-══════════════════════════════════════════ %>
-  <% if origin_orders.any? %>
-    <div class="modal fade" id="originOrderModal" tabindex="-1"
-       aria-hidden="true"
-       data-origin-modal-target="modal">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow">
-          <div id="origin_order_modal_body">
-            <div class="modal-body text-center py-5 text-muted">
-              <div class="spinner-border spinner-border-sm me-2"></div>
-              Cargando desglose...
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  <% end %>
+<% end %>

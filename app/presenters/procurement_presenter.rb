@@ -1,9 +1,17 @@
+# app/presenters/procurement_presenter.rb
 class ProcurementPresenter
   def initialize(deliveries:, supply_rules:)
     @deliveries = deliveries
     @rules = supply_rules
     @line_details = {}
+    @decode_cache = {}
     precompute!
+  end
+
+  # ── API pública ──────────────────────────────────────────────────────────
+
+  def decoded(product_name)
+    decode_cached(product_name)
   end
 
   def details_for(order_number, product_name, supplier_item_id)
@@ -26,7 +34,7 @@ class ProcurementPresenter
   def precompute!
     @deliveries.each do |delivery|
       delivery["items"].each do |item|
-        decoding = ProductDecoder.decode(item["product_name"])
+        decoding = decode_cached(item["product_name"])
         next unless decoding.has_variants
 
         base_product = decoding.base_product
@@ -37,7 +45,6 @@ class ProcurementPresenter
           next unless rule
 
           sid = rule.supplier_item_id
-
           qty_per_unit = ProcurementResolver.resolve_quantity(rule, base_product)
           calc_qty = qty_delivered * qty_per_unit
           cost = calc_qty * (rule.supplier_item&.default_cost || 0)
@@ -50,5 +57,9 @@ class ProcurementPresenter
         end
       end
     end
+  end
+
+  def decode_cached(product_name)
+    @decode_cache[product_name] ||= ProductDecoder.decode(product_name)
   end
 end

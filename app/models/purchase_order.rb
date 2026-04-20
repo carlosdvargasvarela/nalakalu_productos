@@ -34,9 +34,27 @@ class PurchaseOrder < ApplicationRecord
   end
 
   def generate_number
-    # Buscamos el número más alto extrayendo solo los dígitos
-    last_order = PurchaseOrder.order(id: :desc).first
-    last_num = last_order ? last_order.number.gsub(/\D/, "").to_i : 0
-    "OC-#{(last_num + 1).to_s.rjust(4, "0")}"
+    adapter = ActiveRecord::Base.connection.adapter_name
+
+    if adapter == "SQLite"
+      last_num = PurchaseOrder
+        .where("number LIKE 'OC-%'")
+        .pluck(:number)
+        .map { |n| n.gsub(/[^0-9]/, "").to_i }
+        .max
+        .to_i
+
+      "OC-#{(last_num + 1).to_s.rjust(4, "0")}"
+
+    else
+      PurchaseOrder.with_advisory_lock("generate_po_number") do
+        last_num = PurchaseOrder
+          .where("number ~ ?", "^OC-[0-9]+$")
+          .maximum(Arel.sql("CAST(REGEXP_REPLACE(number, '[^0-9]', '', 'g') AS INTEGER)"))
+          .to_i
+
+        "OC-#{(last_num + 1).to_s.rjust(4, "0")}"
+      end
+    end
   end
 end

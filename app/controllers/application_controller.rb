@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  include Pagy::Method
+
   # Solo permite navegadores modernos (webp, web push, import maps, CSS nesting, :has)
   allow_browser versions: :modern
 

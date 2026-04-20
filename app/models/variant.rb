@@ -11,6 +11,7 @@ class Variant < ApplicationRecord
   validates :name, presence: true
 
   after_create :auto_link_to_rules, if: :active?
+  after_commit :bust_decoder_cache
 
   # --------- Helpers compatibilidad ----------
 
@@ -65,5 +66,9 @@ class Variant < ApplicationRecord
         compatible_id: rule.id
       )
     end
+  end
+
+  def bust_decoder_cache
+    ProductDecoder.bust_cache!
   end
 end
