@@ -1,9 +1,7 @@
-# app/models/procurement_resolver.rb
 class ProcurementResolver
-  def self.resolve_delivery(delivery)
-    # Cache se limpia al inicio de cada entrega para garantizar datos frescos
-    clear_cache!
+  CACHE_KEY_RULES = "procurement:supply_rules:v1"
 
+  def self.resolve_delivery(delivery)
     accumulation = Hash.new do |h, k|
       h[k] = {qty: 0.0, specs: [], products: [], rule_id: nil, counted_items: Set.new}
     end
@@ -191,32 +189,32 @@ class ProcurementResolver
     (normalized + incoming).uniq { |s| "#{s[:label]}-#{s[:value]}" }
   end
 
-  # ── CACHE (Thread-local) ──────────────────────────────────────────────────
+  # ── CACHE (SOLO Rails.cache — sin Thread.current) ────────────────────────
 
   def self.all_supply_rules
-    Thread.current[:supply_rules_cache] ||= SupplyRule
-      .joins(:supplier_item)
-      .includes(:variant_type, :variant, :supplier_item, :supply_rule_quantities)
-      .where(supplier_items: {active: true})
-      .select(
-        "supply_rules.id, supply_rules.product_id, supply_rules.variant_type_id, " \
-        "supply_rules.variant_id, supply_rules.supplier_item_id, " \
-        "supply_rules.quantity_needed, supply_rules.rule_type"
-      )
-      .to_a
+    Rails.cache.fetch(CACHE_KEY_RULES, expires_in: 10.minutes) do
+      SupplyRule
+        .joins(:supplier_item)
+        .includes(:variant_type, :variant, :supplier_item, :supply_rule_quantities)
+        .where(supplier_items: {active: true})
+        .to_a
+    end
   end
 
-  # Cache de labels de specs por supplier_item_id — evita re-queries en el loop
   def self.supplier_item_specs_cache(supplier_item_id)
-    cache = Thread.current[:supplier_item_specs_cache] ||= {}
-    cache[supplier_item_id] ||= SupplierItemProperty
-      .where(supplier_item_id: supplier_item_id, spec_type: "spec")
-      .pluck(:label)
+    Rails.cache.fetch("procurement:specs:#{supplier_item_id}", expires_in: 10.minutes) do
+      SupplierItemProperty
+        .where(supplier_item_id: supplier_item_id, spec_type: "spec")
+        .pluck(:label)
+    end
   end
 
   def self.clear_cache!
-    Thread.current[:supply_rules_cache] = nil
-    Thread.current[:supplier_item_specs_cache] = nil
+    Rails.cache.delete(CACHE_KEY_RULES)
     ProductDecoder.clear_cache!
+  end
+
+  def self.bust_cache!
+    clear_cache!
   end
 end

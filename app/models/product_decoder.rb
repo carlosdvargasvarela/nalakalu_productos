@@ -1,4 +1,3 @@
-# app/models/product_decoder.rb
 class ProductDecoder
   CACHE_KEY_PRODUCTS = "decoder:products:v1"
   CACHE_KEY_VARIANTS = "decoder:variants:v1"
@@ -8,8 +7,6 @@ class ProductDecoder
     :has_variants, :base_product, :variants, :unrecognized_codes,
     keyword_init: true
   )
-
-  # ── API pública ──────────────────────────────────────────────────────────
 
   def self.decode(full_code, base_product: nil)
     return empty_result unless full_code.present?
@@ -38,7 +35,7 @@ class ProductDecoder
     )
   end
 
-  # ── Normalización ────────────────────────────────────────────────────────
+  # ── NORMALIZACIÓN ────────────────────────────────────────────────────────
 
   def self.normalize_strict(text)
     text.to_s.downcase.tr("áéíóúüñ", "aeiouun").squeeze(" ").strip
@@ -59,7 +56,7 @@ class ProductDecoder
     input_strict
   end
 
-  # ── Detección de Producto Base ───────────────────────────────────────────
+  # ── PRODUCT DETECTION ────────────────────────────────────────────────────
 
   def self.detect_base_product(full_code)
     strict = normalize_strict(full_code)
@@ -94,11 +91,12 @@ class ProductDecoder
     best_product
   end
 
-  # ── Detección de Variantes ───────────────────────────────────────────────
+  # ── VARIANT DETECTION ────────────────────────────────────────────────────
 
   def self.detect_variants_catalog_based(base_product, _tail_strict, tail_loose)
     tail_tokens = tail_loose.split
     return [] if tail_tokens.empty?
+
     tail_set = tail_tokens.to_set
     allowed_type_ids = base_product.product_variant_rules.map(&:variant_type_id)
     return [] if allowed_type_ids.empty?
@@ -130,8 +128,7 @@ class ProductDecoder
 
     best_by_type = {}
     candidates.sort_by { |c| -c[:score] }.each do |c|
-      next if best_by_type.key?(c[:type_id])
-      best_by_type[c[:type_id]] = c[:variant]
+      best_by_type[c[:type_id]] ||= c[:variant]
     end
 
     best_by_type.values
@@ -149,40 +146,29 @@ class ProductDecoder
     tokens.each_with_index.reject { |_, i| explained[i] }.map(&:first).uniq
   end
 
-  # ── Cache (Rails.cache — sobrevive entre requests) ───────────────────────
+  # ── CACHE (SOLO Rails.cache) ─────────────────────────────────────────────
 
   def self.all_products_cache
-    # Thread.current como L1 (dentro del request), Rails.cache como L2 (entre requests)
-    Thread.current[:decoder_products_cache] ||=
-      Rails.cache.fetch(CACHE_KEY_PRODUCTS, expires_in: CACHE_TTL) do
-        Product
-          .where(active: true)
-          .includes(:product_variant_rules)
-          .select(:id, :name, :base_code)
-          .to_a
-      end
+    Rails.cache.fetch(CACHE_KEY_PRODUCTS, expires_in: CACHE_TTL) do
+      Product
+        .where(active: true)
+        .includes(:product_variant_rules)
+        .select(:id, :name, :base_code)
+        .to_a
+    end
   end
 
   def self.all_variants_cache
-    Thread.current[:decoder_variants_cache] ||=
-      Rails.cache.fetch(CACHE_KEY_VARIANTS, expires_in: CACHE_TTL) do
-        Variant
-          .where(active: true)
-          .includes(:variant_type)
-          .select(:id, :name, :display_name, :code, :variant_type_id)
-          .to_a
-      end
+    Rails.cache.fetch(CACHE_KEY_VARIANTS, expires_in: CACHE_TTL) do
+      Variant
+        .where(active: true)
+        .includes(:variant_type)
+        .select(:id, :name, :display_name, :code, :variant_type_id)
+        .to_a
+    end
   end
 
-  # Limpia L1 (Thread) — no toca Rails.cache salvo que se pida explícitamente
   def self.clear_cache!
-    Thread.current[:decoder_products_cache] = nil
-    Thread.current[:decoder_variants_cache] = nil
-  end
-
-  # Limpia L1 + L2 — llamar desde callbacks de modelo
-  def self.bust_cache!
-    clear_cache!
     Rails.cache.delete(CACHE_KEY_PRODUCTS)
     Rails.cache.delete(CACHE_KEY_VARIANTS)
   end
