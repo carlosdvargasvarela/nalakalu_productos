@@ -1,79 +1,67 @@
-require "base64"
+source "https://rubygems.org"
 
-class MicrosoftGraphMailer
-  GRAPH_API_URL = "https://graph.microsoft.com/v1.0/me/sendMail"
+# ── Core Rails ────────────────────────────────────────────────────────────────
+gem "rails", "~> 7.2.3"
+gem "sprockets-rails"
+gem "puma", ">= 5.0"
+gem "bootsnap", require: false
 
-  def initialize(user)
-    @user = user
-    @access_token = user.active_microsoft_token
-  end
+# ── Frontend / Hotwire ────────────────────────────────────────────────────────
+gem "importmap-rails"
+gem "turbo-rails"
+gem "stimulus-rails"
+gem "cssbundling-rails"
+gem "jbuilder"
 
-  def send_purchase_order(purchase_order, recipient_email, extra_attachments: [], note: nil)
-    raise "Usuario sin token de Microsoft activo" unless @access_token
-    raise "Destinatario no puede estar vacío" unless recipient_email.present?
+# ── Autenticación / Autorización ─────────────────────────────────────────────
+gem "devise"
+gem "omniauth-microsoft_graph"
+gem "omniauth-rails_csrf_protection"
 
-    pdf_content = purchase_order.as_pdf
-    raise "No se pudo generar el PDF" if pdf_content.nil?
+# ── HTTP / Integraciones externas ────────────────────────────────────────────
+gem "faraday"
+gem "faraday-retry"
 
-    uri = URI.parse(GRAPH_API_URL)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
+# ── Background Jobs ───────────────────────────────────────────────────────────
+gem "sidekiq"
+gem "redis", "~> 5.0"
 
-    request = Net::HTTP::Post.new(uri.request_uri)
-    request["Authorization"] = "Bearer #{@access_token}"
-    request["Content-Type"] = "application/json"
-    request.body = build_payload(purchase_order, recipient_email, pdf_content, extra_attachments, note).to_json
+# ── Procurement / Lógica de negocio ──────────────────────────────────────────
+gem "fuzzy_match"
+gem "fuzzy-string-match"
+gem "with_advisory_lock", platforms: :ruby
 
-    response = http.request(request)
-    Rails.logger.info "Graph API Response: #{response.code} - #{response.body}"
+# ── PDF ───────────────────────────────────────────────────────────────────────
+gem "prawn"
+gem "prawn-table"
+gem "matrix"
 
-    case response.code.to_i
-    when 202
-      true
-    when 401
-      raise "Token de Microsoft inválido o expirado. Reconecta tu cuenta de Outlook."
-    when 403
-      raise "Sin permisos para enviar correos. Verifica los scopes de la app en Azure."
-    else
-      raise "Error de Microsoft Graph (#{response.code}): #{response.body}"
-    end
-  end
+# ── Paginación ────────────────────────────────────────────────────────────────
+gem "pagy"
 
-  private
+# ── Utilidades ────────────────────────────────────────────────────────────────
+gem "csv"
+gem "tzinfo-data", platforms: %i[windows jruby]
 
-  def build_payload(purchase_order, recipient_email, pdf_content, extra_attachments, note)
-    body_content = "Buen día,<br><br>"
-    body_content += "Adjuntamos la orden de compra No. <b>#{purchase_order.id}</b> en formato PDF."
-    body_content += "<br><br><i>#{note}</i>" if note.present?
-    body_content += "<br><br>Saludos,<br><b>Equipo Nalakalú</b>"
+group :development, :test do
+  gem "dotenv-rails"
+  gem "debug", platforms: %i[mri windows], require: "debug/prelude"
+  gem "brakeman", require: false
+  gem "sqlite3"
+  gem "standard", ">= 1.35.1"
+  gem "letter_opener"
+  gem "derailed_benchmarks"
+end
 
-    attachments = [
-      {
-        "@odata.type": "#microsoft.graph.fileAttachment",
-        name: "Orden_Compra_#{purchase_order.id}.pdf",
-        contentType: "application/pdf",
-        contentBytes: Base64.strict_encode64(pdf_content)
-      }
-    ]
+group :development do
+  gem "web-console"
+end
 
-    Array(extra_attachments).each do |file|
-      next if file.blank?
-      attachments << {
-        "@odata.type": "#microsoft.graph.fileAttachment",
-        name: file.original_filename,
-        contentType: file.content_type,
-        contentBytes: Base64.strict_encode64(file.read)
-      }
-    end
+group :test do
+  gem "capybara"
+  gem "selenium-webdriver"
+end
 
-    {
-      message: {
-        subject: "Orden de Compra Nalakalú - ##{purchase_order.id}",
-        body: {contentType: "HTML", content: body_content},
-        toRecipients: [{emailAddress: {address: recipient_email}}],
-        attachments: attachments
-      },
-      saveToSentItems: "true"
-    }
-  end
+group :production do
+  gem "pg"
 end

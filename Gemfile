@@ -52,6 +52,7 @@ group :development, :test do
   gem "sqlite3"                # base de datos para dev/test
   gem "standard", ">= 1.35.1" # linter Ruby (basado en RuboCop)
   gem "letter_opener"          # preview de emails en browser sin SMTP
+  gem "derailed_benchmarks"     # benchmarking de memoria y rendimiento
 end
 
 group :development do
