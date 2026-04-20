@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_15_155757) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_20_151336) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -238,6 +238,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_15_155757) do
     t.boolean "active", default: true, null: false
     t.integer "position", default: 0
     t.string "procurement_strategy", default: "individual", null: false
+    t.boolean "keep_position", default: false, null: false
   end
 
   create_table "variants", force: :cascade do |t|

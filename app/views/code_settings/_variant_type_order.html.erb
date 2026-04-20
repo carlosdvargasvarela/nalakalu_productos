@@ -2,10 +2,7 @@
   data-controller="variant-type-order"
   data-variant-type-order-update-url-value="<%= update_variant_type_order_code_setting_path %>"
   >
-  <ul
-    class="list-group"
-    data-variant-type-order-target="list"
-  >
+  <ul class="list-group" data-variant-type-order-target="list">
     <% variant_types.each do |vt| %>
       <li
         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
@@ -19,6 +16,12 @@
             <% if vt.description.present? %>
               <small class="text-muted ms-2"><%= vt.description %></small>
             <% end %>
+            <%# Badge que indica si este tipo reserva su posición en el código cuando no tiene valor %>
+            <% if vt.keep_position %>
+              <span class="badge bg-info-subtle text-info border border-info ms-2" style="font-size:0.7rem;">
+                <i class="bi bi-pin-angle"></i> Posición fija
+              </span>
+            <% end %>
           </div>
         </div>
         <div class="d-flex align-items-center gap-2">
@@ -31,6 +34,12 @@
           >
             #<%= vt.position %>
           </span>
+          <%# Botón para editar el VariantType (donde se configura keep_position) %>
+          <%= link_to edit_variant_type_path(vt),
+                class: "btn btn-sm btn-light border",
+                title: "Editar tipo de variante" do %>
+            <i class="bi bi-pencil"></i>
+          <% end %>
         </div>
       </li>
     <% end %>

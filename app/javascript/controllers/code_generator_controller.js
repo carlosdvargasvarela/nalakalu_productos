@@ -39,7 +39,6 @@ export default class extends Controller {
     this._outsideClick = (e) => {
       if (!this.searchWrapperTarget.contains(e.target)) this.closeDropdown();
 
-      // Cerrar dropdowns de variantes si se hace click fuera
       document.querySelectorAll(".variant-dropdown-wrapper").forEach((w) => {
         if (!w.contains(e.target)) {
           w.querySelector(".variant-dropdown")?.classList.add("d-none");
@@ -107,9 +106,7 @@ export default class extends Controller {
     try {
       const res = await fetch(
         `${this.searchUrlValue}?q=${encodeURIComponent(query)}`,
-        {
-          headers: { Accept: "application/json" },
-        },
+        { headers: { Accept: "application/json" } },
       );
       const products = await res.json();
       this.renderDropdown(products);
@@ -206,33 +203,55 @@ export default class extends Controller {
       wrapper.classList.add("mb-3");
       wrapper.dataset.ruleId = rule.rule_id;
 
+      // Badge visual que indica si este tipo reserva posición en el código
+      const keepPositionBadge = rule.keep_position
+        ? `<span class="badge bg-info-subtle text-info border border-info ms-2" style="font-size:0.65rem;" title="Si no se selecciona, se reserva el espacio en el código">
+             <i class="bi bi-pin-angle"></i> Posición fija
+           </span>`
+        : "";
+
       const optionsHtml = rule.variants
         .map(
           (v) => `
-        <button type="button" class="list-group-item list-group-item-action px-3 py-2 variant-option"
-                data-variant-id="${v.id}" data-display="${v.display_name}" data-compatible='${JSON.stringify(v.compatible_with)}'>
-          ${v.name}
-        </button>`,
+          <button type="button"
+                  class="list-group-item list-group-item-action px-3 py-2 variant-option"
+                  data-variant-id="${v.id}"
+                  data-display="${v.display_name}"
+                  data-compatible='${JSON.stringify(v.compatible_with)}'>
+            ${v.name}
+          </button>`,
         )
         .join("");
 
       wrapper.innerHTML = `
         <label class="form-label fw-semibold small text-secondary mb-1">
-          ${rule.variant_type_name}${rule.required ? '<span class="text-danger ms-1">*</span>' : ""}
+          ${rule.variant_type_name}
+          ${rule.required ? '<span class="text-danger ms-1">*</span>' : ""}
+          ${keepPositionBadge}
         </label>
         <div class="position-relative variant-dropdown-wrapper">
           <div class="input-group shadow-sm">
-            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted small"></i></span>
-            <input type="text" class="form-control border-start-0 variant-search-input bg-white" 
-                   placeholder="${rule.required ? "— Seleccione —" : "— Ninguno (Opcional) —"}" readonly>
-            <button type="button" class="btn btn-outline-secondary border-start-0 variant-clear-btn d-none"><i class="bi bi-x-lg small"></i></button>
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted small"></i>
+            </span>
+            <input type="text"
+                   class="form-control border-start-0 variant-search-input bg-white"
+                   placeholder="${rule.required ? "— Seleccione —" : "— Ninguno (Opcional) —"}"
+                   readonly>
+            <button type="button"
+                    class="btn btn-outline-secondary border-start-0 variant-clear-btn d-none">
+              <i class="bi bi-x-lg small"></i>
+            </button>
           </div>
           <div class="position-absolute w-100 z-3 d-none variant-dropdown" style="top: calc(100% + 4px);">
             <div class="card border-0 shadow rounded-3 overflow-hidden">
               <div class="p-2 border-bottom bg-light">
-                <input type="text" class="form-control form-control-sm variant-filter-input" placeholder="Filtrar opciones...">
+                <input type="text"
+                       class="form-control form-control-sm variant-filter-input"
+                       placeholder="Filtrar opciones...">
               </div>
-              <div class="list-group list-group-flush variant-options-list" style="max-height: 200px; overflow-y: auto;">
+              <div class="list-group list-group-flush variant-options-list"
+                   style="max-height: 200px; overflow-y: auto;">
                 ${optionsHtml}
               </div>
             </div>
@@ -327,37 +346,38 @@ export default class extends Controller {
     const prefixLen = parseInt(this.config.prefix_length) || 3;
 
     this.rules.forEach((rule) => {
-      const val = this.selections[rule.rule_id];
-      if (!val) return;
-
+      const val = this.selections[rule.rule_id]; // puede ser "" o undefined
       const glue = rule.separator || this.config.default_separator;
-      let segmentText = val.toUpperCase(); // Todo a mayúsculas por defecto
 
-      // Si se usan prefijos y la regla tiene una etiqueta (Label)
+      // Si no hay valor Y este tipo NO reserva posición → lo omitimos completamente
+      if (!val && !rule.keep_position) return;
+
+      // Si no hay valor pero SÍ reserva posición → el texto del segmento queda vacío
+      let segmentText = (val || "").toUpperCase();
+
       if (this.config.use_prefixes && rule.label && rule.label.trim() !== "") {
         const prefix = rule.label.substring(0, prefixLen).toUpperCase();
-        // Unimos Prefijo + Separador de la regla + Valor
-        segmentText = `${prefix}${glue}${val.toUpperCase()}`;
+        // Con valor:    "TE-SEDA"
+        // Sin valor:    "TE-"   (posición reservada, el proveedor/CRM sabe que falta)
+        segmentText = `${prefix}${glue}${segmentText}`;
       }
 
-      segments.push({
-        text: segmentText,
-        separator: glue,
-      });
+      segments.push({ text: segmentText, separator: glue });
     });
 
+    // Segmento opcional de Stock de Sala
     if (this.hasStockSalaTarget && this.stockSalaTarget.checked) {
       segments.push({
         text: this.config.stock_label.toUpperCase(),
         separator: this.config.default_separator,
       });
     }
+
     return segments;
   }
 
   wrapSegments(segments) {
     const lines = [];
-    // IMPORTANTE: Empezamos con el código base del producto en mayúsculas
     let currentLine = "";
 
     const maxChars = parseInt(this.config.max_chars);
@@ -365,7 +385,6 @@ export default class extends Controller {
 
     segments.forEach((seg) => {
       const glue = seg.separator;
-      // Si la línea actual ya tiene contenido, añadimos el separador antes del segmento
       const candidate =
         currentLine.length > 0 ? `${currentLine}${glue}${seg.text}` : seg.text;
 
@@ -383,6 +402,7 @@ export default class extends Controller {
   }
 
   updateResult() {
+    // Validar que todos los campos requeridos estén llenos
     let allRequiredFilled = true;
     this.rules.forEach((rule) => {
       if (rule.required && !this.selections[rule.rule_id])
@@ -426,7 +446,10 @@ export default class extends Controller {
     this.rules = [];
     this.selections = {};
     this.selections_ids = {};
-    this.variantsContainerTarget.innerHTML = `<div class="text-muted small p-3 border rounded-3 bg-light text-center">Seleccione un producto primero.</div>`;
+    this.variantsContainerTarget.innerHTML = `
+      <div class="text-muted small p-3 border rounded-3 bg-light text-center">
+        Seleccione un producto primero.
+      </div>`;
     this.resultTarget.value = "";
     this.copyButtonTarget.disabled = true;
     if (this.hasLineWarningTarget)

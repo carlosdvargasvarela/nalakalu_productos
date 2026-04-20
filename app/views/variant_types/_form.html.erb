@@ -1,3 +1,4 @@
+<%# app/views/variant_types/_form.html.erb %>
 <%= form_with(model: variant_type, data: { controller: "procurement-strategy" }) do |f| %>
   <% if variant_type.errors.any? %>
     <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
@@ -18,6 +19,7 @@
       </h5>
     </div>
     <div class="card-body p-4">
+      <%# ── Nombre ── %>
       <div class="mb-4">
         <%= f.label :name, "Nombre del Tipo de Variante",
             class: "form-label small fw-bold text-muted" %>
@@ -29,6 +31,30 @@
           Este nombre aparecerá como etiqueta en el generador de códigos.
         </div>
       </div>
+      <%# ── Posición fija en el código ── %>
+      <div class="mb-4 p-3 border rounded-3 bg-light">
+        <div class="form-check form-switch mb-1">
+          <%= f.check_box :keep_position,
+              class: "form-check-input",
+              role: "switch",
+              id: "keep_position_toggle" %>
+          <%= f.label :keep_position,
+              class: "form-check-label fw-bold",
+              for: "keep_position_toggle" do %>
+            <i class="bi bi-pin-angle me-1 text-info"></i>
+            Mantener posición en el código aunque no se seleccione valor
+          <% end %>
+        </div>
+        <p class="text-muted small mb-0 ms-4 ps-2">
+          Cuando está activo, si el usuario no selecciona una variante de este tipo,
+          el generador de códigos <strong>reserva su espacio</strong> en lugar de omitirlo.<br>
+          <span class="text-secondary">
+            Ej: con etiqueta "TE" y sin valor → aparece <code>TE-</code> en el código.
+            Útil para tipos obligatorios en posición fija como <strong>Tela Principal</strong>.
+          </span>
+        </p>
+      </div>
+      <%# ── Modo de Abastecimiento ── %>
       <div class="mb-0">
         <%= f.label :procurement_strategy, "Modo de Abastecimiento",
             class: "form-label small fw-bold text-muted" %>

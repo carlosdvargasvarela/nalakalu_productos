@@ -32,6 +32,7 @@ class SalesController < ApplicationController
           variant_type_name: rule.label.presence || rule.variant_type.name,
           label: rule.label,
           required: rule.required,
+          keep_position: rule.variant_type.keep_position,
           separator: rule.separator.presence || @settings.default_separator,
           variants: rule.allowed_variants.where(active: true).order(:name).map do |v|
             {
@@ -42,7 +43,7 @@ class SalesController < ApplicationController
             }
           end
         }
-    end
+      end
 
     render json: {
       base_code: @product.base_code,
