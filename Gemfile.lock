@@ -183,7 +183,6 @@ GEM
       pp (>= 0.6.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    iso8601 (0.13.0)
     jbuilder (2.14.1)
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
@@ -211,25 +210,6 @@ GEM
     marcel (1.1.0)
     matrix (0.4.3)
     memory_profiler (1.1.0)
-    microsoft_graph (0.19.0)
-      microsoft_graph_core (>= 0.1, < 0.3)
-    microsoft_graph_core (0.1.0)
-      microsoft_kiota_abstractions (~> 0.12.0)
-      microsoft_kiota_authentication_oauth (~> 0.5.0)
-      microsoft_kiota_faraday (~> 0.10.0)
-      microsoft_kiota_serialization_json (~> 0.7.0)
-    microsoft_kiota_abstractions (0.12.0)
-      addressable (~> 2.7, >= 2.7.0)
-      iso8601 (~> 0.13.0)
-    microsoft_kiota_authentication_oauth (0.5.0)
-      microsoft_kiota_abstractions (~> 0.12.0, >= 0.12.0)
-      oauth2 (~> 2.0)
-    microsoft_kiota_faraday (0.10.0)
-      faraday (~> 2.7, >= 2.7.2)
-      microsoft_kiota_abstractions (~> 0.12.0, >= 0.12.0)
-    microsoft_kiota_serialization_json (0.7.0)
-      microsoft_kiota_abstractions (~> 0.12.0, >= 0.12.0)
-      uuidtools
     mini_histogram (0.3.1)
     mini_mime (1.1.5)
     minitest (6.0.1)
@@ -466,7 +446,6 @@ GEM
     unicode-emoji (4.2.0)
     uri (1.1.1)
     useragent (0.16.11)
-    uuidtools (3.0.0)
     version_gem (1.1.9)
     warden (1.2.9)
       rack (>= 2.0.9)
@@ -517,7 +496,6 @@ DEPENDENCIES
   jbuilder
   letter_opener
   matrix
-  microsoft_graph
   omniauth-microsoft_graph
   omniauth-rails_csrf_protection
   pagy
