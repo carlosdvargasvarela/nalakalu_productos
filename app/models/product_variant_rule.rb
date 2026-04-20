@@ -2,7 +2,6 @@ class ProductVariantRule < ApplicationRecord
   belongs_to :product
   belongs_to :variant_type
 
-  # La regla es dueña de sus variantes permitidas
   has_many :compatibilities, as: :compatible, class_name: "Compatibility", dependent: :destroy
   has_many :allowed_variants, through: :compatibilities, source: :variant
 
@@ -12,7 +11,7 @@ class ProductVariantRule < ApplicationRecord
     message: "ya está asignado con esta etiqueta en este producto"
   }
 
-  after_create :auto_link_variants_to_rule
+  after_create_commit :auto_link_variants_to_rule
 
   def display_name
     label.present? ? "#{variant_type.name} (#{label})" : variant_type.name
@@ -21,12 +20,22 @@ class ProductVariantRule < ApplicationRecord
   private
 
   def auto_link_variants_to_rule
-    variant_type.variants.where(active: true).each do |variant|
-      Compatibility.find_or_create_by!(
-        variant_id: variant.id,
+    return if variant_type_id.blank?
+
+    v_ids = Variant.where(variant_type_id: variant_type_id, active: true).pluck(:id)
+    return if v_ids.empty?
+
+    now = Time.current
+    rows = v_ids.map do |v_id|
+      {
+        variant_id: v_id,
         compatible_type: "ProductVariantRule",
-        compatible_id: id
-      )
+        compatible_id: id,
+        created_at: now,
+        updated_at: now
+      }
     end
+
+    Compatibility.insert_all(rows)
   end
 end

@@ -155,6 +155,6 @@ class Product < ApplicationRecord
   end
 
   def bust_decoder_cache
-    ProductDecoder.bust_cache!
+    ProductDecoder.clear_cache! if defined?(ProductDecoder)
   end
 end

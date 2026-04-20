@@ -190,4 +190,8 @@ class VariantsController < ApplicationController
       compatible_variant_ids: []
     )
   end
+
+  def bust_decoder_cache
+    ProductDecoder.bust_cache!
+  end
 end

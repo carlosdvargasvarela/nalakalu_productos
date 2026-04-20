@@ -201,9 +201,10 @@ export default class extends Controller {
     this.rules.forEach((rule) => {
       const wrapper = document.createElement("div");
       wrapper.classList.add("mb-3");
+      // CLAVE: usamos rule_id (ID único del ProductVariantRule) como key,
+      // no el variant_type_id, para soportar múltiples reglas del mismo tipo.
       wrapper.dataset.ruleId = rule.rule_id;
 
-      // Badge visual que indica si este tipo reserva posición en el código
       const keepPositionBadge = rule.keep_position
         ? `<span class="badge bg-info-subtle text-info border border-info ms-2" style="font-size:0.65rem;" title="Si no se selecciona, se reserva el espacio en el código">
              <i class="bi bi-pin-angle"></i> Posición fija
@@ -216,8 +217,8 @@ export default class extends Controller {
           <button type="button"
                   class="list-group-item list-group-item-action px-3 py-2 variant-option"
                   data-variant-id="${v.id}"
-                  data-display="${v.display_name}"
-                  data-compatible='${JSON.stringify(v.compatible_with)}'>
+                  data-display="${v.display_name || v.name}"
+                  data-compatible='${JSON.stringify(v.compatible_with || [])}'>
             ${v.name}
           </button>`,
         )
@@ -283,6 +284,7 @@ export default class extends Controller {
           mainInput.dataset.selectedId = btn.dataset.variantId;
           clearBtn.classList.remove("d-none");
           dropdown.classList.add("d-none");
+          // Usamos rule.rule_id como clave → cada posición es independiente
           this.selections[rule.rule_id] = btn.dataset.display;
           this.selections_ids[rule.rule_id] = btn.dataset.variantId;
           this.filterOptions();
@@ -328,6 +330,7 @@ export default class extends Controller {
         btn.style.opacity = isComp ? "1" : "0.5";
 
         const mainInput = wrapper.querySelector(".variant-search-input");
+        // Si la opción seleccionada ya no es compatible, la limpiamos
         if (!isComp && mainInput.dataset.selectedId === btn.dataset.variantId) {
           mainInput.value = "";
           mainInput.dataset.selectedId = "";
@@ -346,23 +349,33 @@ export default class extends Controller {
     const prefixLen = parseInt(this.config.prefix_length) || 3;
 
     this.rules.forEach((rule) => {
-      const val = this.selections[rule.rule_id]; // puede ser "" o undefined
+      const val = this.selections[rule.rule_id];
       const glue = rule.separator || this.config.default_separator;
 
-      // Si no hay valor Y este tipo NO reserva posición → lo omitimos completamente
+      // Sin valor y sin posición fija → omitir completamente
       if (!val && !rule.keep_position) return;
 
-      // Si no hay valor pero SÍ reserva posición → el texto del segmento queda vacío
-      let segmentText = (val || "").toUpperCase();
+      let segmentValue = (val || "").toUpperCase();
+      let segmentCombined = "";
 
       if (this.config.use_prefixes && rule.label && rule.label.trim() !== "") {
         const prefix = rule.label.substring(0, prefixLen).toUpperCase();
-        // Con valor:    "TE-SEDA"
-        // Sin valor:    "TE-"   (posición reservada, el proveedor/CRM sabe que falta)
-        segmentText = `${prefix}${glue}${segmentText}`;
+        // Con valor:   "TE-SEDA"
+        // Sin valor:   "TE-"  (posición reservada)
+        segmentCombined =
+          segmentValue !== ""
+            ? `${prefix}${glue}${segmentValue}`
+            : `${prefix}${glue}`;
+      } else {
+        // Sin prefijo: solo el valor, o vacío si keep_position pero sin valor
+        segmentCombined = segmentValue;
       }
 
-      segments.push({ text: segmentText, separator: glue });
+      // Solo agregar si hay algo que mostrar
+      // (evita segmentos vacíos cuando no hay label ni valor)
+      if (segmentCombined !== "") {
+        segments.push({ text: segmentCombined, separator: glue });
+      }
     });
 
     // Segmento opcional de Stock de Sala
@@ -402,11 +415,15 @@ export default class extends Controller {
   }
 
   updateResult() {
-    // Validar que todos los campos requeridos estén llenos
     let allRequiredFilled = true;
     this.rules.forEach((rule) => {
-      if (rule.required && !this.selections[rule.rule_id])
+      // Requerido = debe tener valor, independientemente de keep_position
+      if (
+        rule.required &&
+        (!this.selections[rule.rule_id] || this.selections[rule.rule_id] === "")
+      ) {
         allRequiredFilled = false;
+      }
     });
 
     const segments = this.buildSegments();

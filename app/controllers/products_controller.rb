@@ -175,4 +175,8 @@ class ProductsController < ApplicationController
       ]
     )
   end
+
+  def bust_decoder_cache
+    ProductDecoder.bust_cache!
+  end
 end
