@@ -10,14 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_20_151336) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_28_151137) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
     t.integer "max_lines", default: 5
     t.string "default_separator", default: "-"
     t.boolean "show_stock_sala", default: true
-    t.string "stock_sala_label", default: "STOCK DE SALA"
+    t.text "stock_sala_options"
     t.boolean "use_prefixes", default: true
     t.integer "prefix_length", default: 3
     t.datetime "created_at", null: false

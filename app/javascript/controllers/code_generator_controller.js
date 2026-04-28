@@ -38,11 +38,9 @@ export default class extends Controller {
 
     this._outsideClick = (e) => {
       if (!this.searchWrapperTarget.contains(e.target)) this.closeDropdown();
-
       document.querySelectorAll(".variant-dropdown-wrapper").forEach((w) => {
-        if (!w.contains(e.target)) {
+        if (!w.contains(e.target))
           w.querySelector(".variant-dropdown")?.classList.add("d-none");
-        }
       });
     };
     document.addEventListener("click", this._outsideClick);
@@ -58,7 +56,7 @@ export default class extends Controller {
       max_lines: this.maxLinesValue,
       prefix_length: this.prefixLengthValue,
       use_prefixes: this.usePrefixesValue,
-      stock_label: this.stockLabelValue,
+      stock_options: ["STOCK DE SALA"], // ← array por defecto
       default_separator: this.defaultSeparatorValue,
       show_stock_sala: true,
     };
@@ -72,7 +70,9 @@ export default class extends Controller {
       max_lines: serverSettings.max_lines ?? defaults.max_lines,
       prefix_length: serverSettings.prefix_length ?? defaults.prefix_length,
       use_prefixes: serverSettings.use_prefixes ?? defaults.use_prefixes,
-      stock_label: serverSettings.stock_label ?? defaults.stock_label,
+      stock_options: serverSettings.stock_options?.length
+        ? serverSettings.stock_options
+        : defaults.stock_options,
       default_separator:
         serverSettings.default_separator ?? defaults.default_separator,
       show_stock_sala:
@@ -80,7 +80,7 @@ export default class extends Controller {
     };
   }
 
-  // ─── BÚSQUEDA DE PRODUCTO ──────────────────────────────────────────────────
+  // ─── BÚSQUEDA ──────────────────────────────────────────────────────────────
 
   onSearchInput() {
     const query = this.searchInputTarget.value.trim();
@@ -108,8 +108,7 @@ export default class extends Controller {
         `${this.searchUrlValue}?q=${encodeURIComponent(query)}`,
         { headers: { Accept: "application/json" } },
       );
-      const products = await res.json();
-      this.renderDropdown(products);
+      this.renderDropdown(await res.json());
     } catch (e) {
       console.error("Error buscando productos:", e);
     } finally {
@@ -120,7 +119,6 @@ export default class extends Controller {
   renderDropdown(products) {
     const list = this.searchResultsTarget;
     list.innerHTML = "";
-
     if (products.length === 0) {
       list.innerHTML = `<div class="list-group-item text-muted small text-center py-3">Sin resultados.</div>`;
     } else {
@@ -166,7 +164,7 @@ export default class extends Controller {
     this.searchDropdownTarget.classList.add("d-none");
   }
 
-  // ─── CARGA DE VARIANTES ──────────────────────────────────────────────────────
+  // ─── CARGA DE VARIANTES ────────────────────────────────────────────────────
 
   loadProduct(productId) {
     fetch(`${this.variantsUrlValue}?product_id=${productId}`)
@@ -194,19 +192,47 @@ export default class extends Controller {
     this.variantsContainerTarget.innerHTML = "";
 
     if (this.rules.length === 0) {
-      this.variantsContainerTarget.innerHTML = `<div class="alert alert-light border text-muted small"><i class="bi bi-info-circle me-2"></i>Sin variantes requeridas.</div>`;
+      this.variantsContainerTarget.innerHTML = `
+        <div class="alert alert-light border text-muted small">
+          <i class="bi bi-info-circle me-2"></i>Sin variantes requeridas.
+        </div>`;
       return;
     }
 
     this.rules.forEach((rule) => {
       const wrapper = document.createElement("div");
       wrapper.classList.add("mb-3");
-      // CLAVE: usamos rule_id (ID único del ProductVariantRule) como key,
-      // no el variant_type_id, para soportar múltiples reglas del mismo tipo.
       wrapper.dataset.ruleId = rule.rule_id;
 
+      // ── Regla fantasma: tipo global keep_position que el producto no tiene ──
+      if (rule.ghost) {
+        wrapper.innerHTML = `
+          <label class="form-label fw-semibold small text-secondary mb-1 opacity-50">
+            ${rule.variant_type_name}
+            <span class="badge bg-secondary-subtle text-secondary border ms-2"
+                  style="font-size:0.65rem;"
+                  title="Este producto no usa este tipo de variante, pero se reserva su posición en el código">
+              <i class="bi bi-pin-angle"></i> Posición reservada
+            </span>
+          </label>
+          <div class="input-group shadow-sm opacity-50">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-dash-circle text-muted small"></i>
+            </span>
+            <input type="text"
+                   class="form-control border-start-0 bg-light text-muted fst-italic"
+                   placeholder="— No aplica para este producto —"
+                   disabled>
+          </div>`;
+        this.variantsContainerTarget.appendChild(wrapper);
+        return; // sin event listeners
+      }
+
+      // ── Regla normal ───────────────────────────────────────────────────────
       const keepPositionBadge = rule.keep_position
-        ? `<span class="badge bg-info-subtle text-info border border-info ms-2" style="font-size:0.65rem;" title="Si no se selecciona, se reserva el espacio en el código">
+        ? `<span class="badge bg-info-subtle text-info border border-info ms-2"
+               style="font-size:0.65rem;"
+               title="Si no se selecciona, se reserva el espacio en el código">
              <i class="bi bi-pin-angle"></i> Posición fija
            </span>`
         : "";
@@ -214,13 +240,13 @@ export default class extends Controller {
       const optionsHtml = rule.variants
         .map(
           (v) => `
-          <button type="button"
-                  class="list-group-item list-group-item-action px-3 py-2 variant-option"
-                  data-variant-id="${v.id}"
-                  data-display="${v.display_name || v.name}"
-                  data-compatible='${JSON.stringify(v.compatible_with || [])}'>
-            ${v.name}
-          </button>`,
+        <button type="button"
+                class="list-group-item list-group-item-action px-3 py-2 variant-option"
+                data-variant-id="${v.id}"
+                data-display="${v.display_name || v.name}"
+                data-compatible='${JSON.stringify(v.compatible_with || [])}'>
+          ${v.name}
+        </button>`,
         )
         .join("");
 
@@ -244,7 +270,8 @@ export default class extends Controller {
               <i class="bi bi-x-lg small"></i>
             </button>
           </div>
-          <div class="position-absolute w-100 z-3 d-none variant-dropdown" style="top: calc(100% + 4px);">
+          <div class="position-absolute w-100 z-3 d-none variant-dropdown"
+               style="top: calc(100% + 4px);">
             <div class="card border-0 shadow rounded-3 overflow-hidden">
               <div class="p-2 border-bottom bg-light">
                 <input type="text"
@@ -284,8 +311,7 @@ export default class extends Controller {
           mainInput.dataset.selectedId = btn.dataset.variantId;
           clearBtn.classList.remove("d-none");
           dropdown.classList.add("d-none");
-          // Usamos rule.rule_id como clave → cada posición es independiente
-          this.selections[rule.rule_id] = btn.dataset.display;
+          this.selections[rule.rule_id] = btn.dataset.display.trim();
           this.selections_ids[rule.rule_id] = btn.dataset.variantId;
           this.filterOptions();
           this.updateResult();
@@ -309,10 +335,12 @@ export default class extends Controller {
 
   filterOptions() {
     const selectedIds = Object.values(this.selections_ids)
-      .filter((id) => id)
+      .filter(Boolean)
       .map((id) => parseInt(id));
 
     this.rules.forEach((rule) => {
+      if (rule.ghost) return; // las fantasmas no tienen opciones
+
       const wrapper = this.variantsContainerTarget.querySelector(
         `[data-rule-id="${rule.rule_id}"]`,
       );
@@ -330,7 +358,6 @@ export default class extends Controller {
         btn.style.opacity = isComp ? "1" : "0.5";
 
         const mainInput = wrapper.querySelector(".variant-search-input");
-        // Si la opción seleccionada ya no es compatible, la limpiamos
         if (!isComp && mainInput.dataset.selectedId === btn.dataset.variantId) {
           mainInput.value = "";
           mainInput.dataset.selectedId = "";
@@ -342,74 +369,83 @@ export default class extends Controller {
     });
   }
 
-  // ─── CONSTRUCCIÓN DEL CÓDIGO ─────────────────────────────────────────────────
+  // ─── CONSTRUCCIÓN DEL CÓDIGO ───────────────────────────────────────────────
 
-  buildSegments() {
-    const segments = [];
+  buildTokens() {
+    const sep = this.config.default_separator;
     const prefixLen = parseInt(this.config.prefix_length) || 3;
+    const tokens = [];
 
     this.rules.forEach((rule) => {
-      const val = this.selections[rule.rule_id];
-      const glue = rule.separator || this.config.default_separator;
+      // Fantasma: tipo global keep_position que el producto no tiene
+      // → reserva posición silenciosa (no genera texto visible)
+      if (rule.ghost) {
+        tokens.push("");
+        return;
+      }
 
-      // Sin valor y sin posición fija → omitir completamente
-      if (!val && !rule.keep_position) return;
+      const val = (this.selections[rule.rule_id] || "").trim().toUpperCase();
+      const glue = (rule.separator || sep).trim();
+      const hasValue = val !== "";
 
-      let segmentValue = (val || "").toUpperCase();
-      let segmentCombined = "";
+      // Opcional sin valor → omitir completamente (no reserva posición)
+      if (!hasValue && !rule.keep_position && !rule.required) {
+        tokens.push(null);
+        return;
+      }
+
+      let token = "";
 
       if (this.config.use_prefixes && rule.label && rule.label.trim() !== "") {
-        const prefix = rule.label.substring(0, prefixLen).toUpperCase();
-        // Con valor:   "TE-SEDA"
-        // Sin valor:   "TE-"  (posición reservada)
-        segmentCombined =
-          segmentValue !== ""
-            ? `${prefix}${glue}${segmentValue}`
-            : `${prefix}${glue}`;
+        const prefix = rule.label.trim().substring(0, prefixLen).toUpperCase();
+        // Con valor: "TE-SEDA" | Sin valor (posición reservada): "TE-"
+        token = hasValue ? `${prefix}${glue}${val}` : `${prefix}${glue}`;
       } else {
-        // Sin prefijo: solo el valor, o vacío si keep_position pero sin valor
-        segmentCombined = segmentValue;
+        // Sin prefijo: solo el valor, o vacío si es posición reservada sin label
+        token = val;
       }
 
-      // Solo agregar si hay algo que mostrar
-      // (evita segmentos vacíos cuando no hay label ni valor)
-      if (segmentCombined !== "") {
-        segments.push({ text: segmentCombined, separator: glue });
-      }
+      tokens.push(token);
     });
 
-    // Segmento opcional de Stock de Sala
-    if (this.hasStockSalaTarget && this.stockSalaTarget.checked) {
-      segments.push({
-        text: this.config.stock_label.toUpperCase(),
-        separator: this.config.default_separator,
-      });
+    // Stock de Sala al final
+    if (this.hasStockSalaTarget && this.stockSalaTarget.value) {
+      tokens.push(this.stockSalaTarget.value.toUpperCase());
     }
 
-    return segments;
+    return tokens;
   }
 
-  wrapSegments(segments) {
-    const lines = [];
-    let currentLine = "";
-
+  buildCode() {
+    const sep = this.config.default_separator;
     const maxChars = parseInt(this.config.max_chars);
     const maxLines = parseInt(this.config.max_lines);
 
-    segments.forEach((seg) => {
-      const glue = seg.separator;
-      const candidate =
-        currentLine.length > 0 ? `${currentLine}${glue}${seg.text}` : seg.text;
+    const activeTokens = this.buildTokens().filter((t) => t !== null);
+
+    const lines = [];
+    let current = "";
+
+    activeTokens.forEach((token) => {
+      // Token vacío = posición reservada → forzar línea vacía
+      if (token === "") {
+        if (current !== "") lines.push(current);
+        lines.push(""); // línea vacía reservada
+        current = "";
+        return;
+      }
+
+      const candidate = current === "" ? token : `${current}${sep}${token}`;
 
       if (candidate.length <= maxChars) {
-        currentLine = candidate;
+        current = candidate;
       } else {
-        lines.push(currentLine);
-        currentLine = seg.text;
+        if (current !== "") lines.push(current);
+        current = token;
       }
     });
 
-    if (currentLine) lines.push(currentLine);
+    if (current !== "") lines.push(current);
 
     return { lines, overflowed: lines.length > maxLines };
   }
@@ -417,32 +453,33 @@ export default class extends Controller {
   updateResult() {
     let allRequiredFilled = true;
     this.rules.forEach((rule) => {
-      // Requerido = debe tener valor, independientemente de keep_position
       if (
         rule.required &&
-        (!this.selections[rule.rule_id] || this.selections[rule.rule_id] === "")
+        !rule.ghost && // las fantasmas nunca bloquean
+        (!this.selections[rule.rule_id] ||
+          this.selections[rule.rule_id].trim() === "")
       ) {
         allRequiredFilled = false;
       }
     });
 
-    const segments = this.buildSegments();
-    const wrapped = this.wrapSegments(segments);
-
-    this.resultTarget.value = wrapped.lines.join("\n");
+    const { lines, overflowed } = this.buildCode();
+    this.resultTarget.value = lines.join("\n");
 
     if (this.hasLineWarningTarget) {
-      const isOverflow = wrapped.lines.length > this.config.max_lines;
-      this.lineWarningTarget.classList.toggle("d-none", !isOverflow);
-      if (isOverflow) {
-        this.lineWarningTarget.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>Excede las ${this.config.max_lines} líneas.`;
+      this.lineWarningTarget.classList.toggle("d-none", !overflowed);
+      if (overflowed) {
+        this.lineWarningTarget.innerHTML = `
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Excede las ${this.config.max_lines} líneas.`;
         this.copyButtonTarget.disabled = true;
         return;
       }
     }
 
-    this.copyButtonTarget.disabled =
-      !allRequiredFilled || segments.length === 0;
+    // Habilitar copiar solo si hay al menos un token real y todos los requeridos están llenos
+    const hasAnyToken = this.buildTokens().some((t) => t !== null && t !== "");
+    this.copyButtonTarget.disabled = !allRequiredFilled || !hasAnyToken;
   }
 
   copy() {

@@ -49,14 +49,37 @@
   <div class="col-12 mt-2">
     <h5 class="text-primary border-bottom pb-2 mb-3">Stock de Sala</h5>
   </div>
-  <div class="col-md-8">
-    <%= f.label :stock_sala_label, "Texto para Stock de Sala", class: "form-label fw-bold" %>
-    <div class="input-group">
-      <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
-      <%= f.text_field :stock_sala_label, class: "form-control" %>
+  <div class="col-12" data-controller="stock-options">
+    <label class="form-label fw-bold">Opciones de Stock de Sala</label>
+    <div class="form-text mb-3">
+      Cada opción aparecerá como alternativa en el generador de códigos.
     </div>
+    <div data-stock-options-target="list" class="d-flex flex-column gap-2 mb-3">
+      <% (@code_setting.stock_sala_options_array.presence || [""]).each do |opt| %>
+        <div class="input-group" data-stock-options-target="item">
+          <span class="input-group-text bg-white">
+            <i class="bi bi-box-seam text-muted"></i>
+          </span>
+          <input type="text"
+                 name="code_setting[stock_sala_options][]"
+                 value="<%= opt %>"
+          class="form-control"
+          placeholder="Ej: STOCK DE SALA">
+          <button type="button"
+                  class="btn btn-outline-danger"
+                  data-action="click->stock-options#remove">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      <% end %>
+    </div>
+    <button type="button"
+            class="btn btn-outline-secondary btn-sm"
+            data-action="click->stock-options#add">
+      <i class="bi bi-plus-circle me-1"></i>Agregar opción
+    </button>
   </div>
-  <div class="col-12">
+  <div class="col-12 mt-3">
     <div class="form-check form-switch">
       <%= f.check_box :show_stock_sala, class: "form-check-input", role: "switch" %>
       <%= f.label :show_stock_sala, "Mostrar opción Stock de Sala en el generador", class: "form-check-label fw-bold" %>

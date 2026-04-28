@@ -44,7 +44,6 @@
                  data-code-generator-target="searchDropdown"
                  style="top: calc(100% + 4px);">
               <div class="card border-0 shadow rounded-3 overflow-hidden">
-                <%# SCROLL AÑADIDO AQUÍ %>
                 <div class="list-group list-group-flush"
                      style="max-height: 300px; overflow-y: auto;"
                      data-code-generator-target="searchResults">
@@ -69,7 +68,7 @@
             </div>
           </div>
         </section>
-        <%# STEP 2: Variantes (Dropdowns Buscables Dinámicos) %>
+        <%# STEP 2: Variantes %>
         <section class="mb-5">
           <h5 class="fw-bold mb-1 text-secondary">
             <span class="badge bg-primary rounded-circle me-2" style="font-size:0.7rem;">2</span>
@@ -82,19 +81,22 @@
               Seleccione un producto primero.
             </div>
           </div>
-          <div class="mt-3 d-none" data-code-generator-target="stockSalaWrapper">
-            <div class="d-flex align-items-center gap-3 bg-warning-subtle border border-warning rounded-3 px-3 py-2">
-              <input class="form-check-input ms-0 fs-5 flex-shrink-0"
-                     type="checkbox"
-                     role="switch"
-                     id="stockSala"
-                     data-code-generator-target="stockSala"
-                     data-action="change->code-generator#updateResult">
-              <label class="form-check-label fw-semibold text-warning-emphasis mb-0" for="stockSala">
-                <i class="bi bi-shop me-1"></i><%= @settings.stock_sala_label %>
+          <%# Stock de Sala — select con opciones configurables %>
+          <% if @settings.show_stock_sala %>
+            <div class="mt-3 d-none" data-code-generator-target="stockSalaWrapper">
+              <label class="form-label fw-semibold small text-secondary mb-1">
+                <i class="bi bi-shop me-1"></i>Stock de Sala
               </label>
+              <select class="form-select shadow-sm border-warning"
+                      data-code-generator-target="stockSala"
+                      data-action="change->code-generator#updateResult">
+                <option value="">— Sin stock de sala —</option>
+                <% @settings.stock_sala_options_array.each do |opt| %>
+                  <option value="<%= opt %>"><%= opt %></option>
+                <% end %>
+              </select>
             </div>
-          </div>
+          <% end %>
         </section>
         <%# STEP 3: Código generado %>
         <section>
