@@ -4,17 +4,16 @@
       <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
       Nalakalú Productos
     <% end %>
-    <button class="navbar-toggler border-0" type="button" 
+    <button class="navbar-toggler border-0" type="button"
             data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto gap-1">
-        <% if user_signed_in? %>
-          <%= render "layouts/navbar_seller_links" %>
-          <% if current_user.role == "admin" %>
-            <%= render "layouts/navbar_admin_links" %>
-          <% end %>
+        <%# Generar Código es visible para todos %>
+        <%= render "layouts/navbar_seller_links" %>
+        <% if user_signed_in? && current_user.role == "admin" %>
+          <%= render "layouts/navbar_admin_links" %>
         <% end %>
       </ul>
       <div class="d-flex align-items-center gap-2">
@@ -22,8 +21,8 @@
           <%= link_to profile_path, class: "navbar-text text-white-50 small text-decoration-none" do %>
             <i class="bi bi-person-circle me-1"></i><%= current_user.email %>
             <% unless current_user.outlook_connected? %>
-              <i class="bi bi-exclamation-circle-fill text-warning ms-1" 
-                title="Outlook no conectado"></i>
+              <i class="bi bi-exclamation-circle-fill text-warning ms-1"
+                 title="Outlook no conectado"></i>
             <% end %>
           <% end %>
           <span class="badge bg-primary rounded-pill"><%= current_user.role %></span>

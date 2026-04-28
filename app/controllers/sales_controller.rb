@@ -1,5 +1,5 @@
 class SalesController < ApplicationController
-  before_action :authenticate_user!
+  # Público — sin authenticate_user!
 
   def new
     @settings = CodeSetting.current
@@ -24,14 +24,12 @@ class SalesController < ApplicationController
     @settings = CodeSetting.current
     sep = @settings.default_separator
 
-    # Reglas reales del producto, ordenadas por position del variant_type
     product_rules = @product.product_variant_rules
       .joins(:variant_type)
       .reorder("variant_types.position ASC, product_variant_rules.id ASC")
 
     product_vt_ids = product_rules.map(&:variant_type_id).to_set
 
-    # Reglas reales → incluyen sus variantes permitidas
     real_rules = product_rules.map do |pvr|
       {
         rule_id: pvr.id,
@@ -54,8 +52,6 @@ class SalesController < ApplicationController
       }
     end
 
-    # Tipos globales con keep_position: true que el producto NO tiene
-    # → se insertan como posiciones fantasma (sin variantes seleccionables)
     ghost_rules = VariantType.where(keep_position: true, active: true)
       .where.not(id: product_vt_ids)
       .order(:position)
@@ -74,7 +70,6 @@ class SalesController < ApplicationController
         }
       end
 
-    # Mezclar y ordenar por position global del variant_type
     all_rules = (real_rules + ghost_rules).sort_by { |r| r[:position] }
 
     render json: {
@@ -83,7 +78,7 @@ class SalesController < ApplicationController
       settings: {
         max_chars: @settings.max_chars_per_line,
         max_lines: @settings.max_lines,
-        stock_options: @settings.stock_sala_options_array,  # ← array ahora
+        stock_options: @settings.stock_sala_options_array,
         prefix_length: @settings.prefix_length,
         use_prefixes: @settings.use_prefixes,
         default_separator: @settings.default_separator,
