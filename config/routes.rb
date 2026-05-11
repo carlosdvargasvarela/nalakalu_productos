@@ -158,13 +158,21 @@ Rails.application.routes.draw do
   post "inventory/initial_stock", to: "inventories#create_initial_stock", as: :inventory_initial_stock
 
   resources :inventory_syncs, only: %i[show destroy] do
-    member { patch :confirm }
+    member do
+      patch :confirm
+      post :bulk_ignore
+    end
   end
 
   resources :inventory_movements, only: [:update]
 
+  get "inventory/product/:product_id/movements", to: "inventories#product_movements", as: :inventory_product_movements
+
   # --- RECOMENDACIONES ---
   resources :recommendations, only: %i[new create index] do
+    collection do
+      get :check_existing
+    end
     member do
       patch :approve
       patch :reject

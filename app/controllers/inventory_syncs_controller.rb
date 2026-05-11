@@ -1,7 +1,7 @@
 class InventorySyncsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_admin!
-  before_action :set_sync
+  before_action :set_sync, only: %i[show confirm destroy bulk_ignore]
 
   def show
     @unresolved = @sync.inventory_movements.unresolved
@@ -24,6 +24,16 @@ class InventorySyncsController < ApplicationController
   def destroy
     @sync.destroy
     redirect_to inventory_path, notice: "Sincronización eliminada."
+  end
+
+  def bulk_ignore
+    ids = params[:movement_ids].to_a.map(&:to_i).reject(&:zero?)
+    if ids.empty?
+      return redirect_to inventory_sync_path(@sync), alert: "No seleccionaste ningún ítem."
+    end
+    @sync.inventory_movements.where(id: ids, status: "unresolved").update_all(status: "ignored")
+    @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
+    redirect_to inventory_sync_path(@sync), notice: "#{ids.size} ítem(s) ignorados."
   end
 
   private

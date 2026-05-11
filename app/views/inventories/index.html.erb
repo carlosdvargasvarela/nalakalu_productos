@@ -18,7 +18,8 @@
 <div class="collapse mb-4" id="syncForm">
   <div class="card border-0 shadow-sm">
     <div class="card-body">
-      <%= form_with url: sync_inventory_path, method: :post, class: "row g-3 align-items-end" do |f| %>
+      <%= form_with url: sync_inventory_path, method: :post, class: "row g-3 align-items-end",
+            data: { controller: "loading-button" } do |f| %>
         <div class="col-md-4">
           <label class="form-label fw-semibold small">Desde</label>
           <input type="date" name="from" value="<%= @from %>" class="form-control shadow-sm">
@@ -29,7 +30,9 @@
         </div>
         <div class="col-md-4">
           <button type="submit" class="btn btn-primary w-100"
-                  data-turbo-confirm="¿Iniciar sincronización de inventario para este rango?">
+                  data-turbo-confirm="¿Iniciar sincronización de inventario para este rango?"
+                  data-loading-button-target="button"
+                  data-action="click->loading-button#submit">
             <i class="bi bi-cloud-download me-1"></i>Iniciar sincronización
           </button>
         </div>
@@ -84,7 +87,16 @@
           <tbody>
             <% @products.each_value do |product| %>
               <tr>
-                <td class="fw-semibold"><%= product.name %></td>
+                <td class="fw-semibold">
+                  <a href="#" class="text-decoration-none"
+                     data-bs-toggle="modal"
+                     data-bs-target="#productHistoryModal"
+                     data-product-id="<%= product.id %>"
+                     data-product-name="<%= product.name %>">
+                    <%= product.name %>
+                    <i class="bi bi-clock-history ms-1 text-muted small"></i>
+                  </a>
+                </td>
                 <% total = 0 %>
                 <% @salas.each do |sala| %>
                   <% qty = @stock[[ product.id, sala ]] || 0 %>
@@ -147,3 +159,29 @@
     </div>
   </div>
 <% end %>
+
+<%# Modal historial de movimientos %>
+<div class="modal fade" id="productHistoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div id="productHistoryContent">
+        <div class="modal-body text-center py-5 text-muted">
+          <span class="spinner-border spinner-border-sm me-2"></span>Cargando historial...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("productHistoryModal").addEventListener("show.bs.modal", function(event) {
+    const link = event.relatedTarget
+    const productId = link.dataset.productId
+    const content = document.getElementById("productHistoryContent")
+    content.innerHTML = '<div class="modal-body text-center py-5 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Cargando historial...</div>'
+    fetch(`/inventory/product/${productId}/movements`, { headers: { Accept: "text/html" } })
+      .then(r => r.text())
+      .then(html => content.innerHTML = html)
+      .catch(() => content.innerHTML = '<div class="modal-body text-danger">Error al cargar el historial.</div>')
+  })
+</script>

@@ -42,6 +42,18 @@ class InventoriesController < ApplicationController
     end
   end
 
+  def product_movements
+    @product = Product.find(params[:product_id])
+    @movements = InventoryMovement
+      .confirmed_only
+      .resolved
+      .where(product_id: @product.id)
+      .order(delivery_date: :desc, created_at: :desc)
+      .limit(50)
+    render partial: "inventories/product_movements_modal",
+           locals: { product: @product, movements: @movements }
+  end
+
   private
 
   # raw = { [product_id, sala, movement_type] => qty }

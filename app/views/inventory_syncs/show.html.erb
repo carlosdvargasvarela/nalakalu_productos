@@ -35,7 +35,7 @@
 
 <%# ── ÍTEMS SIN RESOLVER ──────────────────────────────────────────────────── %>
 <% if @unresolved.any? %>
-  <div class="card border-warning border-2 shadow-sm mb-5">
+  <div class="card border-warning border-2 shadow-sm mb-5" data-controller="bulk-check">
     <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center py-3">
       <h5 class="mb-0 fw-bold text-warning-emphasis">
         <i class="bi bi-exclamation-circle me-2"></i>Ítems sin resolver
@@ -44,10 +44,27 @@
       <small class="text-muted">Asigna un producto o ignora cada ítem para poder confirmar.</small>
     </div>
     <div class="card-body p-0">
+      <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light border-bottom"
+           data-bulk-check-target="bulkContainer">
+        <%= form_with url: bulk_ignore_inventory_sync_path(@sync), method: :post, id: "bulk-ignore-form" do |f| %>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">Selecciona ítems de la tabla para ignorarlos en lote</span>
+            <button type="submit"
+                    class="btn btn-sm btn-outline-secondary"
+                    disabled
+                    data-bulk-check-target="bulkButton"
+                    data-turbo-confirm="¿Ignorar los ítems seleccionados?"
+                    form="bulk-ignore-form">
+              <i class="bi bi-eye-slash me-1"></i>Ignorar seleccionados <span data-bulk-check-target="countBadge"></span>
+            </button>
+          </div>
+        <% end %>
+      </div>
       <div class="table-responsive">
         <table class="table align-middle mb-0">
           <thead class="table-light">
             <tr>
+              <th><input type="checkbox" data-bulk-check-target="selectAll" data-action="change->bulk-check#toggleAll" class="form-check-input"></th>
               <th>Nombre recibido del API</th>
               <th>Pedido</th>
               <th>Tipo / Sala</th>
@@ -59,6 +76,7 @@
           <tbody>
             <% @unresolved.each do |m| %>
               <tr>
+                <td><input type="checkbox" name="movement_ids[]" value="<%= m.id %>" data-bulk-check-target="checkbox" data-action="change->bulk-check#updateBulkButton" class="form-check-input" form="bulk-ignore-form"></td>
                 <td><code class="text-dark"><%= m.product_name_raw %></code></td>
                 <td class="text-muted small"><%= m.order_number %></td>
                 <td>

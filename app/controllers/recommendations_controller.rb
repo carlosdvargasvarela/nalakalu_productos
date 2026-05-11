@@ -4,8 +4,25 @@ class RecommendationsController < ApplicationController
   before_action :set_recommendation, only: %i[approve reject]
 
   def index
-    @pending = Recommendation.pending.includes(:variant_type, :product).ordered
-    @resolved = Recommendation.resolved.includes(:variant_type, :product).ordered
+    @pending  = Recommendation.pending.includes(:variant_type, :product).ordered
+    @approved = Recommendation.where(status: "approved").includes(:variant_type, :product).ordered
+    @rejected = Recommendation.where(status: "rejected").includes(:variant_type, :product).ordered
+  end
+
+  def check_existing
+    variant_type_id = params[:variant_type_id].to_i
+    name = params[:name].to_s.strip.downcase
+
+    variants = Variant.where(variant_type_id: variant_type_id, active: true).order(:name)
+
+    exact_match = name.present? && variants.any? { |v|
+      v.name.downcase == name || v.display_name.to_s.downcase == name
+    }
+
+    render json: {
+      variants: variants.map { |v| { id: v.id, name: v.display_name.presence || v.name } },
+      exact_match: exact_match
+    }
   end
 
   def new
