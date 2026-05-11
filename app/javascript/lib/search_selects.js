@@ -12,10 +12,7 @@ function applyTomSelect(scope = document) {
     new TomSelect(el, {
       allowEmptyOption: true,
       placeholder: "Buscar...",
-      plugins,
-      onInitialize() {
-        if (hasBlank) this.clear()
-      }
+      plugins
     })
   })
 }
