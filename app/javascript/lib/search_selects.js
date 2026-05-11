@@ -1,6 +1,7 @@
-import TomSelect from "tom-select"
+// TomSelect is loaded as a global script tag in the layout (not via importmap)
 
 function applyTomSelect(scope = document) {
+  if (typeof TomSelect === "undefined") return
   scope.querySelectorAll("select").forEach(el => {
     if (el.tomselect) return
     if (el.dataset.noTomselect !== undefined) return
