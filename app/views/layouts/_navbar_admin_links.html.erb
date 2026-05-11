@@ -100,6 +100,16 @@
       <% end %>
     </li>
     <li>
+      <%= link_to recommendations_path,
+          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'recommendations'}" do %>
+        <span><i class="bi bi-lightbulb me-2"></i>Recomendaciones</span>
+        <% pending_rec_count = Recommendation.pending.count %>
+        <% if pending_rec_count > 0 %>
+          <span class="badge bg-warning text-dark small"><%= pending_rec_count %></span>
+        <% end %>
+      <% end %>
+    </li>
+    <li>
       <%= link_to edit_code_setting_path,
           class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'code_settings'}" do %>
         <i class="bi bi-gear me-2 text-muted"></i>Configuración CRM

@@ -151,6 +151,14 @@ Rails.application.routes.draw do
   get "profile", to: "profiles#show", as: :profile
   patch "profile", to: "profiles#update"
 
+  # --- RECOMENDACIONES ---
+  resources :recommendations, only: %i[new create index] do
+    member do
+      patch :approve
+      patch :reject
+    end
+  end
+
   # --- VENTAS ---
   # Solo new + helpers de búsqueda de productos y variantes (para el formulario de venta)
   resources :sales, only: [:new] do

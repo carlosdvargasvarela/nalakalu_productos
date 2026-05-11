@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_28_151137) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_11_030622) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -159,6 +159,22 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_28_151137) do
     t.index ["provider_id"], name: "index_purchase_orders_on_provider_id"
   end
 
+  create_table "recommendations", force: :cascade do |t|
+    t.string "recommendation_type", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "variant_type_id", null: false
+    t.integer "product_id"
+    t.string "suggested_variant_name"
+    t.string "suggested_variant_code"
+    t.string "requester_name"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_recommendations_on_product_id"
+    t.index ["status"], name: "index_recommendations_on_status"
+    t.index ["variant_type_id"], name: "index_recommendations_on_variant_type_id"
+  end
+
   create_table "supplier_item_properties", force: :cascade do |t|
     t.integer "supplier_item_id", null: false
     t.integer "property_value_id"
@@ -265,6 +281,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_28_151137) do
   add_foreign_key "purchase_order_items", "purchase_orders"
   add_foreign_key "purchase_order_items", "supplier_items"
   add_foreign_key "purchase_orders", "providers"
+  add_foreign_key "recommendations", "products"
+  add_foreign_key "recommendations", "variant_types"
   add_foreign_key "supplier_item_properties", "property_values"
   add_foreign_key "supplier_item_properties", "supplier_items"
   add_foreign_key "supplier_items", "providers"

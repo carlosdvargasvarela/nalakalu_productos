@@ -1,0 +1,106 @@
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="p-4 text-white" style="background: linear-gradient(145deg, #198754, #0f5132);">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-white text-success rounded-3 shadow-sm d-flex justify-content-center align-items-center"
+               style="width:50px;height:50px;">
+            <i class="bi bi-lightbulb fs-3"></i>
+          </div>
+          <div>
+            <h2 class="fw-bold mb-1">Recomendar una combinación</h2>
+            <p class="mb-0 small opacity-75">¿Falta una variante o una asociación? Cuéntanos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body p-4" data-controller="recommendation-form">
+
+        <%= form_with model: @recommendation, url: recommendations_path do |f| %>
+
+          <% if @recommendation.errors.any? %>
+            <div class="alert alert-danger mb-4">
+              <ul class="mb-0 ps-3">
+                <% @recommendation.errors.full_messages.each do |msg| %>
+                  <li><%= msg %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Tipo de recomendación <span class="text-danger">*</span></label>
+            <%= f.select :recommendation_type,
+                  [["— Selecciona una opción —", ""],
+                   ["Nueva variante (ej: un color o textil nuevo)", "new_variant"],
+                   ["Asociar tipo de variante a un producto", "new_product_variant_rule"]],
+                  {},
+                  class: "form-select shadow-sm",
+                  data: { recommendation_form_target: "typeSelect",
+                          action: "change->recommendation-form#toggle" } %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Tipo de variante <span class="text-danger">*</span></label>
+            <%= f.select :variant_type_id,
+                  @variant_types.map { |vt| [vt.name, vt.id] },
+                  { include_blank: "— Selecciona un tipo —" },
+                  class: "form-select shadow-sm" %>
+            <div class="form-text">Por ejemplo: Textiles, Color, Material.</div>
+          </div>
+
+          <div data-recommendation-form-target="variantFields" class="d-none">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Nombre de la variante <span class="text-danger">*</span></label>
+              <%= f.text_field :suggested_variant_name,
+                    class: "form-control shadow-sm",
+                    placeholder: "Ej: Verde Musgo" %>
+              <div class="form-text">El nombre exacto tal como debería aparecer.</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Código sugerido <span class="text-muted fw-normal">(opcional)</span></label>
+              <%= f.text_field :suggested_variant_code,
+                    class: "form-control shadow-sm",
+                    placeholder: "Ej: VM" %>
+              <div class="form-text">Código corto para el generador. Si no lo sabes, déjalo en blanco.</div>
+            </div>
+          </div>
+
+          <div data-recommendation-form-target="productFields" class="d-none">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Producto <span class="text-danger">*</span></label>
+              <%= f.select :product_id,
+                    @products.map { |p| [p.name, p.id] },
+                    { include_blank: "— Selecciona un producto —" },
+                    class: "form-select shadow-sm" %>
+              <div class="form-text">El producto al que le falta este tipo de variante.</div>
+            </div>
+          </div>
+
+          <hr class="my-4 opacity-25">
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Tu nombre <span class="text-muted fw-normal">(opcional)</span></label>
+            <%= f.text_field :requester_name,
+                  class: "form-control shadow-sm",
+                  placeholder: "Ej: María López" %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Notas adicionales <span class="text-muted fw-normal">(opcional)</span></label>
+            <%= f.text_area :notes,
+                  class: "form-control shadow-sm",
+                  rows: 3,
+                  placeholder: "Cualquier contexto adicional que nos ayude a entender la recomendación..." %>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <%= link_to "Cancelar", new_sale_path, class: "btn btn-outline-secondary" %>
+            <%= f.submit "Enviar recomendación", class: "btn btn-success px-4 fw-bold" %>
+          </div>
+
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
