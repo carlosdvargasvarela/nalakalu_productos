@@ -1,0 +1,73 @@
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-5">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="p-4 text-white" style="background: linear-gradient(145deg, #0d6efd, #0a4fb4);">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-white text-primary rounded-3 shadow-sm d-flex justify-content-center align-items-center"
+               style="width:50px;height:50px;">
+            <i class="bi bi-box-arrow-in-down fs-3"></i>
+          </div>
+          <div>
+            <h2 class="fw-bold mb-1">Cargar Stock Inicial</h2>
+            <p class="mb-0 small opacity-75">Registra el inventario de partida para una sala.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <%= form_with model: @movement, url: inventory_initial_stock_path do |f| %>
+
+          <% if @movement.errors.any? %>
+            <div class="alert alert-danger mb-4">
+              <ul class="mb-0 ps-3">
+                <% @movement.errors.full_messages.each do |msg| %>
+                  <li><%= msg %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Producto <span class="text-danger">*</span></label>
+            <%= f.select :product_id,
+                  @products.map { |p| [p.name, p.id] },
+                  { include_blank: "— Selecciona un producto —" },
+                  class: "form-select shadow-sm" %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Sala <span class="text-danger">*</span></label>
+            <%= f.select :sala,
+                  @salas.map { |s| [InventoryMovement::SALA_LABELS[s], s] },
+                  { include_blank: "— Selecciona una sala —" },
+                  class: "form-select shadow-sm" %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
+            <%= f.number_field :quantity, min: 0.01, step: 0.01,
+                  class: "form-control shadow-sm", placeholder: "Ej: 3" %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Fecha de referencia</label>
+            <%= f.date_field :delivery_date, class: "form-control shadow-sm" %>
+            <div class="form-text">Fecha del conteo o toma de inventario.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Notas <span class="text-muted fw-normal">(opcional)</span></label>
+            <%= f.text_area :notes, rows: 2, class: "form-control shadow-sm",
+                  placeholder: "Ej: Inventario inicial cargado el día de apertura" %>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <%= link_to "Cancelar", inventory_path, class: "btn btn-outline-secondary" %>
+            <%= f.submit "Guardar stock inicial", class: "btn btn-primary px-4 fw-bold" %>
+          </div>
+
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -151,6 +151,18 @@ Rails.application.routes.draw do
   get "profile", to: "profiles#show", as: :profile
   patch "profile", to: "profiles#update"
 
+  # --- INVENTARIO DE SALAS ---
+  get "inventory", to: "inventories#index", as: :inventory
+  post "inventory/sync", to: "inventories#sync", as: :sync_inventory
+  get "inventory/initial_stock/new", to: "inventories#new_initial_stock", as: :new_inventory_initial_stock
+  post "inventory/initial_stock", to: "inventories#create_initial_stock", as: :inventory_initial_stock
+
+  resources :inventory_syncs, only: %i[show destroy] do
+    member { patch :confirm }
+  end
+
+  resources :inventory_movements, only: [:update]
+
   # --- RECOMENDACIONES ---
   resources :recommendations, only: %i[new create index] do
     member do

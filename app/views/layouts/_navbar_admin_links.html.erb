@@ -56,6 +56,16 @@
     <!-- ───────── PROVEEDURÍA ───────── -->
     <li><span class="dropdown-header small text-uppercase opacity-50">Proveeduría</span></li>
     <li>
+      <%= link_to inventory_path,
+          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'inventories' || controller_name == 'inventory_syncs'}" do %>
+        <span><i class="bi bi-boxes me-2"></i>Inventario de Salas</span>
+        <% pending_inv = InventorySync.pending.count %>
+        <% if pending_inv > 0 %>
+          <span class="badge bg-warning text-dark small"><%= pending_inv %></span>
+        <% end %>
+      <% end %>
+    </li>
+    <li>
       <%= link_to supply_managements_path,
           class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'supply_managements'}" do %>
         <span><i class="bi bi-cart-check me-2"></i>Gestión de Abastecimiento</span>

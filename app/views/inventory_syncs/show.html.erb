@@ -1,0 +1,161 @@
+<%# ── HEADER ──────────────────────────────────────────────────────────────── %>
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+  <div>
+    <h1 class="fw-bold mb-1">
+      <i class="bi bi-arrow-repeat me-2 text-primary"></i>Revisión de Sincronización
+    </h1>
+    <p class="text-muted mb-0">
+      Rango: <strong><%= @sync.from_date.strftime("%d/%m/%Y") %></strong> –
+      <strong><%= @sync.to_date.strftime("%d/%m/%Y") %></strong>
+      &nbsp;·&nbsp; <%= @sync.deliveries_processed %> entregas procesadas
+      &nbsp;·&nbsp; <%= @sync.movements_count %> movimientos detectados
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to inventory_path, class: "btn btn-outline-secondary btn-sm" do %>
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    <% end %>
+    <% if @sync.confirmable? %>
+      <%= button_to "Confirmar y aplicar al inventario", confirm_inventory_sync_path(@sync),
+            method: :patch,
+            class: "btn btn-success",
+            data: { turbo_confirm: "¿Confirmar esta sincronización? Los movimientos afectarán el stock en tiempo real." } %>
+    <% else %>
+      <button class="btn btn-success" disabled title="Resuelve todos los ítems pendientes primero">
+        <i class="bi bi-check-circle me-1"></i>Confirmar
+      </button>
+    <% end %>
+    <%= button_to inventory_sync_path(@sync), method: :delete,
+          class: "btn btn-outline-danger btn-sm",
+          data: { turbo_confirm: "¿Eliminar esta sincronización? Se perderán todos los movimientos del lote." } do %>
+      <i class="bi bi-trash me-1"></i>Eliminar
+    <% end %>
+  </div>
+</div>
+
+<%# ── ÍTEMS SIN RESOLVER ──────────────────────────────────────────────────── %>
+<% if @unresolved.any? %>
+  <div class="card border-warning border-2 shadow-sm mb-5">
+    <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center py-3">
+      <h5 class="mb-0 fw-bold text-warning-emphasis">
+        <i class="bi bi-exclamation-circle me-2"></i>Ítems sin resolver
+        <span class="badge bg-warning text-dark ms-2"><%= @unresolved.size %></span>
+      </h5>
+      <small class="text-muted">Asigna un producto o ignora cada ítem para poder confirmar.</small>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Nombre recibido del API</th>
+              <th>Pedido</th>
+              <th>Tipo / Sala</th>
+              <th>Cant.</th>
+              <th>Asignar producto</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @unresolved.each do |m| %>
+              <tr>
+                <td><code class="text-dark"><%= m.product_name_raw %></code></td>
+                <td class="text-muted small"><%= m.order_number %></td>
+                <td>
+                  <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %> me-1">
+                    <%= m.type_label %>
+                  </span>
+                  <span class="badge bg-secondary"><%= m.sala_label %></span>
+                </td>
+                <td class="fw-semibold"><%= m.quantity %></td>
+                <td>
+                  <%= form_with url: inventory_movement_path(m), method: :patch,
+                        class: "d-flex gap-2 align-items-center" do |f| %>
+                    <%= select_tag "inventory_movement[product_id]",
+                          options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
+                          include_blank: "— Seleccionar —",
+                          class: "form-select form-select-sm shadow-sm" %>
+                    <button type="submit" class="btn btn-sm btn-success text-nowrap">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                  <% end %>
+                </td>
+                <td>
+                  <%= button_to inventory_movement_path(m),
+                        method: :patch,
+                        params: { ignore: true },
+                        class: "btn btn-sm btn-outline-secondary",
+                        title: "Ignorar este ítem",
+                        data: { turbo_confirm: "¿Ignorar este ítem? No afectará el inventario." } do %>
+                    <i class="bi bi-eye-slash"></i>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="alert alert-success mb-4">
+    <i class="bi bi-check-circle me-2"></i>
+    Todos los ítems están resueltos. Puedes confirmar la sincronización.
+  </div>
+<% end %>
+
+<%# ── MOVIMIENTOS RESUELTOS ───────────────────────────────────────────────── %>
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+    <h5 class="mb-0 fw-bold">
+      <i class="bi bi-list-check me-2 text-success"></i>Movimientos resueltos / ignorados
+    </h5>
+    <span class="badge bg-secondary"><%= @resolved.size %></span>
+  </div>
+  <div class="card-body p-0">
+    <% if @resolved.empty? %>
+      <div class="text-center text-muted py-4 small">Sin movimientos resueltos aún.</div>
+    <% else %>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Producto</th>
+              <th>Nombre original</th>
+              <th>Tipo</th>
+              <th>Sala</th>
+              <th class="text-center">Cant.</th>
+              <th>Pedido</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @resolved.each do |m| %>
+              <tr class="<%= 'table-secondary opacity-50' if m.status == 'ignored' %>">
+                <td class="fw-semibold"><%= m.product&.name || "—" %></td>
+                <td class="text-muted small"><%= m.product_name_raw %></td>
+                <td>
+                  <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %>">
+                    <%= m.type_label %>
+                  </span>
+                </td>
+                <td><span class="badge bg-secondary"><%= m.sala_label %></span></td>
+                <td class="text-center"><%= m.quantity %></td>
+                <td class="text-muted small"><%= m.order_number %></td>
+                <td class="text-muted small"><%= m.delivery_date&.strftime("%d/%m/%Y") %></td>
+                <td>
+                  <% if m.status == "ignored" %>
+                    <span class="badge bg-light text-muted border">Ignorado</span>
+                  <% else %>
+                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Resuelto</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+</div>

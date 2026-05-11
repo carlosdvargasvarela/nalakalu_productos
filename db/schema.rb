@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_11_030622) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_11_035322) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -55,6 +55,43 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_11_030622) do
     t.datetime "updated_at", null: false
     t.index ["family_id"], name: "index_family_variant_rules_on_family_id"
     t.index ["variant_type_id"], name: "index_family_variant_rules_on_variant_type_id"
+  end
+
+  create_table "inventory_movements", force: :cascade do |t|
+    t.integer "inventory_sync_id"
+    t.integer "product_id"
+    t.integer "delivery_id"
+    t.integer "delivery_item_id"
+    t.date "delivery_date"
+    t.string "order_number"
+    t.string "client_name"
+    t.string "product_name_raw"
+    t.string "movement_type", null: false
+    t.string "sala", null: false
+    t.decimal "quantity", precision: 10, scale: 4, default: "1.0", null: false
+    t.string "status", default: "resolved", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_id"], name: "index_inventory_movements_on_delivery_id"
+    t.index ["delivery_item_id", "movement_type", "sala"], name: "index_inventory_movements_unique_item", unique: true, where: "delivery_item_id IS NOT NULL"
+    t.index ["inventory_sync_id"], name: "index_inventory_movements_on_inventory_sync_id"
+    t.index ["movement_type"], name: "index_inventory_movements_on_movement_type"
+    t.index ["product_id"], name: "index_inventory_movements_on_product_id"
+    t.index ["status"], name: "index_inventory_movements_on_status"
+  end
+
+  create_table "inventory_syncs", force: :cascade do |t|
+    t.date "from_date", null: false
+    t.date "to_date", null: false
+    t.string "status", default: "pending_review", null: false
+    t.integer "deliveries_processed", default: 0
+    t.integer "movements_count", default: 0
+    t.integer "unresolved_count", default: 0
+    t.datetime "synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_inventory_syncs_on_status"
   end
 
   create_table "procurement_requirements", force: :cascade do |t|
@@ -272,6 +309,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_11_030622) do
   add_foreign_key "compatibilities", "variants"
   add_foreign_key "family_variant_rules", "families"
   add_foreign_key "family_variant_rules", "variant_types"
+  add_foreign_key "inventory_movements", "inventory_syncs"
+  add_foreign_key "inventory_movements", "products"
   add_foreign_key "procurement_requirements", "purchase_order_items"
   add_foreign_key "procurement_requirements", "supplier_items"
   add_foreign_key "product_variant_rules", "products"
