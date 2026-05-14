@@ -3,6 +3,8 @@ class VariantsController < ApplicationController
   before_action :authorize_admin!
   before_action :set_variant, only: %i[show edit update destroy move_to_type]
 
+  helper_method :compatible_products_for
+
   def index
     scope = Variant
       .includes(:variant_type, :compatibilities)
