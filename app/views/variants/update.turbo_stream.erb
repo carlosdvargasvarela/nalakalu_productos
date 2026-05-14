@@ -8,7 +8,11 @@
       variant: @variant,
       compatible_products: compatible_products_for(@variant) %>
 <% end %>
-<%# 3. Señal para cerrar modal si aplica %>
+<%# 3. Actualizar fila en tabla del panel de tipo de variante si está abierta %>
+<%= turbo_stream.replace dom_id(@variant) do %>
+  <%= render "variant_types/variant_row", variant: @variant %>
+<% end %>
+<%# 4. Señal para cerrar modal si aplica %>
 <%= turbo_stream.replace "variant-modal-signal" do %>
   <div id="variant-modal-signal" data-variant-modal-target="signal"></div>
 <% end %>

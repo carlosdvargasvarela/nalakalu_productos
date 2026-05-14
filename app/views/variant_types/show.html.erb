@@ -2,8 +2,3 @@
 <%= turbo_frame_tag "vt_workspace" do %>
   <%= render "variant_types/detail_panel", variant_type: @variant_type %>
 <% end %>
-<%# Modales fuera del frame para que Bootstrap los gestione globalmente %>
-<div data-controller="variant-modal bulk-select">
-  <%= render "variant_types/bulk_move_modal", variant_type: @variant_type %>
-  <%= render "variant_types/variant_modal" %>
-</div>

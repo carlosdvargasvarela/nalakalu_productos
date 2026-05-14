@@ -4,11 +4,13 @@ export default class extends Controller {
   static targets = ["modal", "formContainer"];
 
   connect() {
-    // Inicializar el modal de Bootstrap
-    this.modal = new bootstrap.Modal(this.modalTarget);
+    if (!this.hasModalTarget) return;
 
-    // Escuchar la señal de cierre que viene desde Turbo Stream
-    this.observer = new MutationObserver((mutations) => {
+    this.modal = bootstrap.Modal.getOrCreateInstance(this.modalTarget);
+
+    this.modalTarget.addEventListener("hidden.bs.modal", () => this._cleanup());
+
+    this.observer = new MutationObserver(() => {
       const signal = document.getElementById("variant-modal-signal");
       if (signal && signal.hasAttribute("data-variant-modal-target")) {
         this.close();
@@ -21,6 +23,7 @@ export default class extends Controller {
 
   disconnect() {
     this.observer?.disconnect();
+    this._cleanup();
   }
 
   async openNew(event) {
@@ -52,6 +55,7 @@ export default class extends Controller {
   }
 
   resetForm() {
+    if (!this.hasFormContainerTarget) return;
     this.formContainerTarget.innerHTML = `
       <div class="text-center py-5">
         <div class="spinner-border text-info" role="status"></div>
@@ -59,12 +63,13 @@ export default class extends Controller {
   }
 
   close() {
-    this.modal.hide();
-    // Limpiar el backdrop de bootstrap si se queda pegado
-    const backdrop = document.querySelector(".modal-backdrop");
-    if (backdrop) backdrop.remove();
+    this.modal?.hide();
+  }
+
+  _cleanup() {
+    document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
     document.body.classList.remove("modal-open");
-    document.body.style.overflow = "";
-    document.body.style.paddingRight = "";
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("padding-right");
   }
 }
