@@ -45,4 +45,5 @@
 /.swarm/
 /ruvector.db
 /CLAUDE.md
-/graphify-out/*
+/graphify-out/
+
