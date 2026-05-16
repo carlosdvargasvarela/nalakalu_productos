@@ -61,12 +61,13 @@
                 <code class="small text-muted bg-transparent p-0">[<%= req.supplier_item.sku %>]</code>
               <% end %>
             </div>
-            <% if req.specifications.present? %>
+            <% specs = Array(req.specifications) %>
+            <% if specs.any? %>
               <div class="d-flex flex-wrap gap-1 mb-2 ps-4">
-                <% req.specifications.each do |k, v| %>
+                <% specs.each do |spec| %>
                   <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal"
                         style="font-size: 0.65rem;">
-                    <%= k %>: <strong><%= v %></strong>
+                    <%= spec["label"] || spec[:label] %>: <strong><%= spec["value"] || spec[:value] %></strong>
                   </span>
                 <% end %>
               </div>

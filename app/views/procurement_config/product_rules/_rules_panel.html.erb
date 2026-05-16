@@ -70,6 +70,7 @@
                   pvr: pvr,
                   variant_type: vt,
                   rule: consolidated_rules[vt.id],
+                  global_rule: global_consolidated_rules[vt.id],
                   supplier_items: supplier_items %>
             <% else %>
               <%= render "procurement_config/product_rules/individual_section",

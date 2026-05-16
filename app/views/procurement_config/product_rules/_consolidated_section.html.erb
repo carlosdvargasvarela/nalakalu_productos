@@ -1,8 +1,22 @@
 <%
-  variants      = variant_type.variants.where(active: true).order(:name)
-  pvr_label     = pvr.label.presence || variant_type.name
+  variants  = variant_type.variants.where(active: true).order(:name)
+  pvr_label = pvr.label.presence || variant_type.name
 %>
 <div class="p-4">
+  <%# ── Alerta de fallback global ── %>
+  <% if rule.nil? && global_rule.present? %>
+    <div class="alert alert-info border-0 rounded-3 small py-2 px-3 mb-3 d-flex align-items-center gap-2">
+      <i class="bi bi-globe text-info flex-shrink-0"></i>
+      <div>
+        Usando regla global:
+        <strong><%= global_rule.supplier_item.name %></strong>
+        (<%= global_rule.supplier_item.provider.name %>) —
+        <%= global_rule.quantity_needed %> <%= global_rule.supplier_item.unit %>.
+        Podés sobreescribirla seleccionando una pieza abajo.
+      </div>
+    </div>
+  <% end %>
+
   <%# ── Selector de pieza ── %>
   <div class="row g-3 mb-4">
     <div class="col-md-8">
@@ -12,17 +26,18 @@
               supplier_items.map { |i| ["#{i.name} (#{i.provider.name})", i.id] },
               rule&.supplier_item_id
             ),
-            include_blank: "— Seleccionar pieza —",
+            include_blank: global_rule ? "— Usar regla global —" : "— No comprar —",
             class: "form-select border-2 shadow-none" %>
     </div>
     <div class="col-md-4">
       <label class="form-label small fw-bold text-muted">Cantidad</label>
       <%= number_field_tag "consolidated_rules[#{variant_type.id}][quantity_needed]",
-            rule&.quantity_needed || 1.0,
+            rule&.quantity_needed || global_rule&.quantity_needed || 1.0,
             step: 0.01, min: 0.01,
             class: "form-control border-2 shadow-none" %>
     </div>
   </div>
+
   <%# ── Info de variantes que se consolidan ── %>
   <div class="alert alert-info border-0 rounded-3 small mb-0">
     <div class="d-flex align-items-start gap-2">
@@ -43,12 +58,20 @@
             </span>
           <% end %>
         </div>
-        <% if rule %>
+        <% active_rule = rule || global_rule %>
+        <% if active_rule %>
           <div class="mt-2 pt-2 border-top border-info border-opacity-25">
-            <i class="bi bi-check-circle-fill text-success me-1"></i>
-            Regla activa: <strong><%= rule.supplier_item.name %></strong>
-            (<%= rule.supplier_item.provider.name %>) —
-            <%= rule.quantity_needed %> <%= rule.supplier_item.unit %>
+            <% if rule %>
+              <i class="bi bi-check-circle-fill text-success me-1"></i>
+              Regla específica: <strong><%= rule.supplier_item.name %></strong>
+              (<%= rule.supplier_item.provider.name %>) —
+              <%= rule.quantity_needed %> <%= rule.supplier_item.unit %>
+            <% else %>
+              <i class="bi bi-globe text-info me-1"></i>
+              Global activa: <strong><%= global_rule.supplier_item.name %></strong>
+              (<%= global_rule.supplier_item.provider.name %>) —
+              <%= global_rule.quantity_needed %> <%= global_rule.supplier_item.unit %>
+            <% end %>
           </div>
         <% end %>
       </div>

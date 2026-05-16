@@ -97,7 +97,13 @@ module ProcurementConfig
         .where(product: @product, rule_type: "consolidated")
         .index_by(&:variant_type_id)
 
-      # Variantes globales (fallback) por variant_type
+      # Reglas consolidadas globales (fallback): key = variant_type_id
+      @global_consolidated_rules = SupplyRule
+        .where(product_id: nil, rule_type: "consolidated")
+        .includes(:supplier_item)
+        .index_by(&:variant_type_id)
+
+      # Variantes globales individuales (fallback) por variant_type
       @global_rules = SupplyRule
         .where(product_id: nil, rule_type: "individual")
         .where.not(variant_id: nil)

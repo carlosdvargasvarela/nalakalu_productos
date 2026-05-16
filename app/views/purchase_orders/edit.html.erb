@@ -45,6 +45,7 @@
           <%# Cabecera de columnas %>
           <div class="d-flex px-4 py-2 bg-light border-bottom small text-muted text-uppercase fw-bold">
             <div style="flex: 3;">Material / Pieza</div>
+            <div style="flex: 1.2;">Pedido origen</div>
             <div style="flex: 1; text-align: center;">Cantidad</div>
             <div style="flex: 0.7; text-align: center;">U/M</div>
             <div style="flex: 1.2; text-align: right;">Costo Unit.</div>
@@ -55,6 +56,7 @@
           <div data-po-editor-target="itemsContainer">
             <%= f.fields_for :purchase_order_items, @items do |item_f| %>
               <% item = item_f.object %>
+              <% origin_order = item.procurement_requirements.first&.origin_order_number %>
               <div class="d-flex px-4 py-3 border-bottom align-items-center gap-2"
                    data-po-editor-target="itemRow">
                 <%= item_f.hidden_field :id %>
@@ -72,12 +74,13 @@
                       <%= item.supplier_item.sku %>
                     </code>
                   <% end %>
-                  <% if item.specifications.present? %>
+                  <% specs = Array(item.specifications) %>
+                  <% if specs.any? %>
                     <div class="d-flex flex-wrap gap-1 mt-1">
-                      <% item.specifications.each do |k, v| %>
+                      <% specs.each do |spec| %>
                         <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal"
                               style="font-size: 0.65rem;">
-                          <%= k %>: <strong><%= v %></strong>
+                          <%= spec["label"] || spec[:label] %>: <strong><%= spec["value"] || spec[:value] %></strong>
                         </span>
                       <% end %>
                     </div>
@@ -87,6 +90,17 @@
                           class: "form-control form-control-sm text-muted border-0 bg-light px-2",
                           placeholder: "Descripción personalizada (opcional)" %>
                   </div>
+                </div>
+                <%# Pedido origen %>
+                <div style="flex: 1.2;">
+                  <% if origin_order.present? %>
+                    <span class="badge border fw-bold"
+                          style="font-size:0.75rem; background:#fff8e1; color:#b45309; border-color:#fcd34d !important;">
+                      <i class="bi bi-receipt me-1"></i><%= origin_order %>
+                    </span>
+                  <% else %>
+                    <span class="text-muted small">—</span>
+                  <% end %>
                 </div>
                 <%# Cantidad %>
                 <div style="flex: 1; text-align: center;">

@@ -6,10 +6,13 @@ module ProcurementConfig
         .order(:name)
       @supplier_items = active_supplier_items
 
-      if params[:product_id].present? && params[:variant_type_id].present?
-        @product = Product.find(params[:product_id])
-        @variant_type = VariantType.find(params[:variant_type_id])
+      variant_type_id = params[:variant_type_id].presence
+      product_id = params[:product_id].presence
+
+      if variant_type_id.present?
+        @variant_type = VariantType.find(variant_type_id)
         @variants = @variant_type.variants.where(active: true).order(:name)
+        @product = Product.find(product_id) if product_id
 
         @rule = SupplyRule.find_by(
           product: @product,
@@ -22,8 +25,8 @@ module ProcurementConfig
     end
 
     def save
-      product = Product.find(params[:product_id])
       variant_type = VariantType.find(params[:variant_type_id])
+      product = params[:product_id].present? ? Product.find(params[:product_id]) : nil
       data = params[:rule] || {}
 
       if data[:supplier_item_id].blank?
@@ -34,7 +37,7 @@ module ProcurementConfig
         ).destroy_all
 
         redirect_to procurement_config_consolidated_path(
-          product_id: product.id, variant_type_id: variant_type.id
+          product_id: product&.id, variant_type_id: variant_type.id
         ), notice: "Regla consolidada eliminada."
         return
       end
@@ -53,11 +56,11 @@ module ProcurementConfig
 
       if rule.save
         redirect_to procurement_config_consolidated_path(
-          product_id: product.id, variant_type_id: variant_type.id
+          product_id: product&.id, variant_type_id: variant_type.id
         ), notice: "Regla consolidada guardada."
       else
         redirect_to procurement_config_consolidated_path(
-          product_id: product.id, variant_type_id: variant_type.id
+          product_id: product&.id, variant_type_id: variant_type.id
         ), alert: "Error: #{rule.errors.full_messages.join(", ")}"
       end
     end

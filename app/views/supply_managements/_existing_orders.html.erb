@@ -4,94 +4,125 @@
     <h6 class="text-muted fw-bold text-uppercase small mb-3">
       <i class="bi bi-receipt me-1"></i> Órdenes generadas en este período
     </h6>
-    <div class="row g-3">
+    <div class="d-flex flex-column gap-3">
       <% orders.each do |po| %>
-        <div class="col-12">
-          <div class="card border-0 shadow-sm overflow-hidden">
-            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <%
+          status_cfg = {
+            "borrador"   => {style: "bg-secondary-subtle text-secondary border-secondary-subtle",   icon: "bi-pencil-square"},
+            "enviado"    => {style: "bg-warning-subtle text-warning-emphasis border-warning-subtle", icon: "bi-send"},
+            "confirmado" => {style: "bg-info-subtle text-info-emphasis border-info-subtle",          icon: "bi-check-circle"},
+            "recibido"   => {style: "bg-success-subtle text-success-emphasis border-success-subtle", icon: "bi-check2-all"},
+            "cancelado"  => {style: "bg-danger-subtle text-danger-emphasis border-danger-subtle",    icon: "bi-x-circle"}
+          }
+          cfg = status_cfg[po.status] || {style: "bg-light text-muted", icon: "bi-dash"}
+        %>
+        <div class="card border-0 shadow-sm overflow-hidden">
+          <%# ── Header OC ── %>
+          <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div class="d-flex align-items-center gap-3">
                 <div>
-                  <span class="fw-bold text-dark"><%= po.number %></span>
+                  <span class="fw-bold text-dark fs-6"><%= po.number %></span>
                   <span class="text-muted small ms-2">
                     <i class="bi bi-building me-1"></i><%= po.provider.name %>
                   </span>
                 </div>
-                <%
-                  status_styles = {
-                    "borrador"   => "bg-secondary-subtle text-secondary border-secondary-subtle",
-                    "enviado"    => "bg-warning-subtle text-warning-emphasis border-warning-subtle",
-                    "confirmado" => "bg-info-subtle text-info-emphasis border-info-subtle",
-                    "recibido"   => "bg-success-subtle text-success-emphasis border-success-subtle",
-                    "cancelado"  => "bg-danger-subtle text-danger-emphasis border-danger-subtle"
-                  }
-                  style = status_styles[po.status] || "bg-light text-muted"
-                %>
-                <span class="badge border rounded-pill px-3 py-1 <%= style %>">
-                  <%= po.status.capitalize %>
+                <span class="badge border rounded-pill px-3 py-1 <%= cfg[:style] %>">
+                  <i class="bi <%= cfg[:icon] %> me-1"></i><%= po.status.capitalize %>
                 </span>
               </div>
-              <div class="d-flex align-items-center gap-2">
+              <div class="d-flex align-items-center gap-3">
                 <span class="text-muted small">
                   <i class="bi bi-calendar3 me-1"></i><%= po.issued_date&.strftime("%d/%m/%Y") %>
+                </span>
+                <span class="fw-bold text-dark small">
+                  <%= number_to_currency(po.total_amount, unit: "₡", delimiter: ".", separator: ",") %>
                 </span>
                 <%= link_to edit_purchase_order_path(po), class: "btn btn-outline-secondary btn-sm" do %>
                   <i class="bi bi-pencil me-1"></i> Ver / Editar
                 <% end %>
               </div>
             </div>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead class="bg-light">
-                  <tr>
-                    <th class="ps-4 py-2 fw-medium small text-muted">Material</th>
-                    <th class="py-2 fw-medium small text-muted">Especificaciones</th>
-                    <th class="py-2 fw-medium small text-muted text-center">Cantidad</th>
-                    <th class="py-2 fw-medium small text-muted text-end pe-4">Costo unitario</th>
-                    <th class="py-2 fw-medium small text-muted text-end pe-4">Total línea</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% po.purchase_order_items.each do |poi| %>
-                    <tr class="border-bottom">
-                      <td class="ps-4 py-2">
-                        <div class="fw-semibold text-dark small"><%= poi.line_description.split("|").first.strip %></div>
-                        <code class="text-muted" style="font-size: 0.7rem;">SKU: <%= poi.supplier_item&.sku %></code>
-                      </td>
-                      <td class="py-2">
-                        <% specs = Array(poi.specifications) %>
-                        <% if specs.any? %>
+          </div>
+
+          <%# ── Líneas de la OC ── %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead style="background:#f8f9fa; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; color:#6c757d;">
+                <tr>
+                  <th class="ps-4 py-2">Pedido origen</th>
+                  <th class="py-2">Material</th>
+                  <th class="py-2">Especificaciones</th>
+                  <th class="text-center py-2">Cantidad</th>
+                  <th class="text-end py-2">Costo unit.</th>
+                  <th class="text-end pe-4 py-2">Total línea</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% po.purchase_order_items.each do |poi| %>
+                  <% origin_order = poi.procurement_requirements.first&.origin_order_number %>
+                  <tr class="border-bottom">
+                    <%# Pedido origen — protagonista %>
+                    <td class="ps-4 py-2">
+                      <% if origin_order.present? %>
+                        <span class="badge border px-2 py-1 fw-bold"
+                              style="font-size:0.78rem; background:#fff8e1; color:#b45309; border-color:#fcd34d !important;">
+                          <i class="bi bi-receipt me-1"></i><%= origin_order %>
+                        </span>
+                      <% else %>
+                        <span class="text-muted small">—</span>
+                      <% end %>
+                    </td>
+                    <%# Material %>
+                    <td class="py-2">
+                      <div class="fw-semibold text-dark small"><%= poi.supplier_item&.name %></div>
+                      <% if poi.supplier_item&.sku.present? %>
+                        <code class="text-muted" style="font-size:0.68rem;">
+                          <%= poi.supplier_item.sku %>
+                        </code>
+                      <% end %>
+                    </td>
+                    <%# Specs %>
+                    <td class="py-2">
+                      <% specs = Array(poi.specifications) %>
+                      <% if specs.any? %>
+                        <div class="d-flex flex-wrap gap-1">
                           <% specs.each do |spec| %>
-                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill me-1">
+                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill"
+                                  style="font-size:0.62rem;">
                               <%= spec["label"] %>: <%= spec["value"] %>
                             </span>
                           <% end %>
-                        <% else %>
-                          <span class="text-muted small">—</span>
-                        <% end %>
-                      </td>
-                      <td class="text-center py-2">
-                        <span class="fw-bold text-primary"><%= poi.quantity %></span>
-                        <small class="text-muted d-block"><%= poi.unit %></small>
-                      </td>
-                      <td class="text-end pe-4 py-2 small text-muted">
-                        <%= number_to_currency(poi.unit_cost, unit: "₡", delimiter: ".", separator: ",") %>
-                      </td>
-                      <td class="text-end pe-4 py-2 fw-semibold text-dark">
-                        <%= number_to_currency(poi.total, unit: "₡", delimiter: ".", separator: ",") %>
-                      </td>
-                    </tr>
-                  <% end %>
-                </tbody>
-                <tfoot class="bg-light">
-                  <tr>
-                    <td colspan="4" class="text-end pe-4 py-2 fw-bold small text-muted">Total OC</td>
-                    <td class="text-end pe-4 py-2 fw-bold text-dark">
-                      <%= number_to_currency(po.total_amount, unit: "₡", delimiter: ".", separator: ",") %>
+                        </div>
+                      <% else %>
+                        <span class="text-muted small">—</span>
+                      <% end %>
+                    </td>
+                    <%# Cantidad %>
+                    <td class="text-center py-2">
+                      <span class="fw-bold text-primary"><%= poi.quantity %></span>
+                      <small class="text-muted d-block"><%= poi.unit %></small>
+                    </td>
+                    <%# Costo unit %>
+                    <td class="text-end py-2 small text-muted">
+                      <%= number_to_currency(poi.unit_cost, unit: "₡", delimiter: ".", separator: ",") %>
+                    </td>
+                    <%# Total %>
+                    <td class="text-end pe-4 py-2 fw-semibold text-dark">
+                      <%= number_to_currency(poi.total, unit: "₡", delimiter: ".", separator: ",") %>
                     </td>
                   </tr>
-                </tfoot>
-              </table>
-            </div>
+                <% end %>
+              </tbody>
+              <tfoot style="background:#f8f9fa;">
+                <tr>
+                  <td colspan="5" class="text-end pe-4 py-2 fw-bold small text-muted">Total OC</td>
+                  <td class="text-end pe-4 py-2 fw-bold text-dark">
+                    <%= number_to_currency(po.total_amount, unit: "₡", delimiter: ".", separator: ",") %>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
       <% end %>

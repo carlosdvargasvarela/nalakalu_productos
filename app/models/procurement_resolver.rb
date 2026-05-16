@@ -76,7 +76,7 @@ class ProcurementResolver
         supplier_item_id: sid
       )
 
-      next if req.persisted? && req.status.in?(%w[ordered confirmed received])
+      next if req.persisted? && req.status.in?(%w[ordered received])
 
       req.assign_attributes(
         origin_delivery_id: delivery["id"].to_s,
@@ -214,7 +214,4 @@ class ProcurementResolver
     ProductDecoder.clear_cache!
   end
 
-  def self.bust_cache!
-    clear_cache!
-  end
 end

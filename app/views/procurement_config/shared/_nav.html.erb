@@ -9,6 +9,10 @@
             class: "btn #{controller_name == 'by_variant_type' ? 'btn-primary' : 'btn-outline-secondary'} rounded-pill px-4 fw-bold" do %>
         <i class="bi bi-palette me-2"></i>Por Tipo de Variante
       <% end %>
+      <%= link_to procurement_config_consolidated_path,
+            class: "btn #{controller_name == 'consolidated' ? 'btn-info' : 'btn-outline-secondary'} rounded-pill px-4 fw-bold" do %>
+        <i class="bi bi-layers me-2"></i>Consolidadas
+      <% end %>
     </div>
   </div>
 </div>

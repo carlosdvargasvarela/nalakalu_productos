@@ -11,6 +11,10 @@ class SupplyRule < ApplicationRecord
   validates :rule_type, inclusion: {in: RULE_TYPES}
   validates :quantity_needed, numericality: {greater_than: 0}
   validates :variant_id, presence: true, if: -> { rule_type == "individual" && product_id.nil? }
+  validates :variant_type_id, uniqueness: {
+    scope: [:product_id, :rule_type],
+    message: "ya existe una regla consolidada para este tipo de variante y producto"
+  }, if: -> { rule_type == "consolidated" }
 
   scope :for_product, ->(product) { where(product_id: [product.id, nil]) }
   scope :consolidated, -> { where(rule_type: "consolidated") }

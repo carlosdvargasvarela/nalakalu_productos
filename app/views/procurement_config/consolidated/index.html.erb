@@ -1,0 +1,210 @@
+<div class="container-fluid py-4">
+  <%= render "procurement_config/shared/nav" %>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold mb-0 text-dark">
+        <i class="bi bi-layers me-2 text-info"></i>Reglas Consolidadas
+      </h4>
+      <p class="text-muted mb-0 small">
+        Configura qué pieza comprar cuando varias variantes se consolidan en un solo ítem de proveedor.
+        Las reglas globales aplican a todos los productos; las específicas tienen prioridad.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <%# ── PANEL IZQUIERDO: Selector ── %>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-bottom py-3">
+          <h6 class="fw-bold mb-0 small text-uppercase text-muted">
+            <i class="bi bi-funnel me-1"></i>Seleccionar Tipo
+          </h6>
+        </div>
+        <div class="card-body p-3">
+          <%= form_with url: procurement_config_consolidated_path, method: :get,
+                data: {turbo_frame: "consolidated_workspace"} do |f| %>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Tipo de Variante Consolidada</label>
+              <%= f.select :variant_type_id,
+                    options_for_select(
+                      @variant_types.map { |vt| [vt.name, vt.id] },
+                      params[:variant_type_id]
+                    ),
+                    {include_blank: "— Seleccionar —"},
+                    class: "form-select border-2 shadow-none" %>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">
+                Producto
+                <span class="text-muted fw-normal">(opcional — vacío = global)</span>
+              </label>
+              <%= f.select :product_id,
+                    options_for_select(
+                      [["— Global (todos los productos) —", ""]] +
+                        @products.map { |p| [p.name, p.id] },
+                      params[:product_id]
+                    ),
+                    {},
+                    class: "form-select border-2 shadow-none" %>
+            </div>
+            <%= f.submit "Ver Regla",
+                  class: "btn btn-primary w-100 fw-bold rounded-pill shadow-sm" %>
+          <% end %>
+        </div>
+      </div>
+
+      <%# ── Resumen de reglas globales activas ── %>
+      <% global_rules = SupplyRule.where(product_id: nil, rule_type: "consolidated")
+                                   .includes(:variant_type, supplier_item: :provider) %>
+      <% if global_rules.any? %>
+        <div class="card border-0 shadow-sm rounded-4 mt-3">
+          <div class="card-header bg-white border-bottom py-3">
+            <h6 class="fw-bold mb-0 small text-uppercase text-muted">
+              <i class="bi bi-globe me-1"></i>Reglas Globales Activas
+            </h6>
+          </div>
+          <div class="list-group list-group-flush rounded-4">
+            <% global_rules.each do |r| %>
+              <div class="list-group-item border-0 py-2 px-3">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="fw-bold small"><%= r.variant_type.name %></div>
+                    <div class="text-muted" style="font-size:0.75rem;">
+                      <%= r.supplier_item.name %>
+                      <span class="text-secondary">· <%= r.supplier_item.provider.name %></span>
+                    </div>
+                  </div>
+                  <span class="badge bg-info-subtle text-info border border-info-subtle ms-2"
+                        style="font-size:0.6rem; white-space:nowrap;">
+                    <%= r.quantity_needed %> <%= r.supplier_item.unit %>
+                  </span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <%# ── PANEL DERECHO: Formulario ── %>
+    <div class="col-lg-8">
+      <%= turbo_frame_tag "consolidated_workspace" do %>
+        <% if @variant_type %>
+          <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+              <span class="rounded-circle bg-info d-inline-flex align-items-center
+                           justify-content-center flex-shrink-0"
+                    style="width:32px;height:32px;">
+                <i class="bi bi-layers text-white" style="font-size:0.8rem;"></i>
+              </span>
+              <div>
+                <h6 class="fw-bold mb-0"><%= @variant_type.name %></h6>
+                <small class="text-muted">
+                  <% if @product %>
+                    <i class="bi bi-box me-1"></i><%= @product.name %>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-1"
+                          style="font-size:0.6rem;">Específica</span>
+                  <% else %>
+                    <i class="bi bi-globe me-1"></i>Global — aplica a todos los productos
+                    <span class="badge bg-info-subtle text-info border border-info-subtle ms-1"
+                          style="font-size:0.6rem;">Global</span>
+                  <% end %>
+                </small>
+              </div>
+            </div>
+            <div class="card-body p-4">
+              <%# Mostrar regla global como referencia si estamos editando una específica %>
+              <% if @product %>
+                <% global_fallback = SupplyRule.find_by(
+                     product_id: nil,
+                     variant_type: @variant_type,
+                     rule_type: "consolidated"
+                   ) %>
+                <% if global_fallback %>
+                  <div class="alert alert-info border-0 rounded-3 small py-2 px-3 mb-4">
+                    <i class="bi bi-globe me-1"></i>
+                    Regla global activa:
+                    <strong><%= global_fallback.supplier_item.name %></strong>
+                    (<%= global_fallback.supplier_item.provider.name %>) —
+                    <%= global_fallback.quantity_needed %> <%= global_fallback.supplier_item.unit %>.
+                    Si guardás una regla específica aquí, tomará prioridad.
+                  </div>
+                <% end %>
+              <% end %>
+
+              <%= form_tag procurement_config_save_consolidated_path, method: :post do %>
+                <%= hidden_field_tag :variant_type_id, @variant_type.id %>
+                <%= hidden_field_tag :product_id, @product&.id %>
+
+                <div class="row g-3 mb-4">
+                  <div class="col-md-8">
+                    <label class="form-label small fw-bold text-muted">Pieza de Proveedor</label>
+                    <%= select_tag "rule[supplier_item_id]",
+                          options_for_select(
+                            @supplier_items.map { |i| ["#{i.name} (#{i.provider.name})", i.id] },
+                            @rule&.supplier_item_id
+                          ),
+                          include_blank: "— Sin regla (dejar vacío para eliminar) —",
+                          class: "form-select border-2 shadow-none" %>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Cantidad por unidad</label>
+                    <%= number_field_tag "rule[quantity_needed]",
+                          @rule&.quantity_needed || 1.0,
+                          step: 0.01, min: 0.01,
+                          class: "form-control border-2 shadow-none" %>
+                  </div>
+                </div>
+
+                <%# Info de variantes del tipo ── %>
+                <% if @variants.any? %>
+                  <div class="alert alert-light border rounded-3 small mb-4">
+                    <div class="fw-bold text-muted mb-2">
+                      <i class="bi bi-tags me-1"></i>
+                      Variantes de <%= @variant_type.name %> que se consolidarán:
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                      <% @variants.each do |v| %>
+                        <span class="badge bg-white text-dark border fw-normal">
+                          <%= v.display_name.presence || v.name %>
+                          <% if v.code.present? %>
+                            <code class="ms-1" style="font-size:0.65rem;"><%= v.code %></code>
+                          <% end %>
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+
+                <div class="d-flex gap-2">
+                  <%= submit_tag @rule ? "Actualizar Regla" : "Guardar Regla",
+                        class: "btn btn-primary fw-bold px-4 rounded-pill shadow-sm" %>
+                  <% if @rule %>
+                    <%= button_tag type: "submit", name: "rule[supplier_item_id]", value: "",
+                          class: "btn btn-outline-danger rounded-pill",
+                          data: {confirm: "¿Eliminar esta regla consolidada?"} do %>
+                      <i class="bi bi-trash me-1"></i>Eliminar
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% else %>
+          <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body text-center py-5 text-muted">
+              <i class="bi bi-layers d-block fs-1 mb-3 opacity-25"></i>
+              <p class="fw-bold mb-1">Seleccioná un tipo de variante</p>
+              <p class="small mb-0">
+                Elegí el tipo consolidado y (opcionalmente) un producto específico
+                para configurar la regla.
+              </p>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -41,7 +41,9 @@ class ProcurementRequirement < ApplicationRecord
 
   def specs_summary
     return "" if specifications.blank?
-    specifications.map { |k, v| "#{k}: #{v}" }.join(" | ")
+    Array(specifications).map { |s|
+      "#{s["label"] || s[:label]}: #{s["value"] || s[:value]}"
+    }.join(" | ")
   end
 
   def mark_as_ordered!
@@ -52,9 +54,17 @@ class ProcurementRequirement < ApplicationRecord
     update!(status: "pending", purchase_order_item_id: nil)
   end
 
-  def add_quantity!(extra_qty, new_specs = {})
+  def add_quantity!(extra_qty, new_specs = [])
     self.quantity += extra_qty.to_f
-    self.specifications = (specifications || {}).merge(new_specs) if new_specs.present?
+    if new_specs.present?
+      existing = Array(specifications).map { |s|
+        {"label" => (s["label"] || s[:label]).to_s, "value" => (s["value"] || s[:value]).to_s}
+      }
+      incoming = Array(new_specs).map { |s|
+        {"label" => (s["label"] || s[:label]).to_s, "value" => (s["value"] || s[:value]).to_s}
+      }
+      self.specifications = (existing + incoming).uniq { |s| "#{s["label"]}-#{s["value"]}" }
+    end
     save!
   end
 end

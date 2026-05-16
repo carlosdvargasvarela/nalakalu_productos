@@ -33,7 +33,7 @@ class SupplyManagementsController < ApplicationController
     @existing_orders = PurchaseOrder
       .joins(:purchase_order_items)
       .where(purchase_order_items: {id: linked_po_item_ids})
-      .includes(:provider, purchase_order_items: :supplier_item)
+      .includes(:provider, purchase_order_items: [:supplier_item, :procurement_requirements])
       .distinct
       .order(created_at: :desc)
 
@@ -116,26 +116,20 @@ class SupplyManagementsController < ApplicationController
         issued_date: Date.current
       )
 
-      requirements
-        .group_by { |r| ProcurementConsolidator.grouping_key(r) }
-        .each do |_key, reqs|
-          first_req = reqs.first
-          normalized_specs = ProcurementConsolidator.normalize_specs(first_req.specifications)
+      requirements.each do |req|
+        resolved_cost = parse_cost(unit_costs[req.id.to_s].presence)
+        resolved_cost = req.supplier_item.default_cost&.to_f || 0 if resolved_cost.nil? || resolved_cost.zero?
 
-          entered_cost = reqs.map { |r| unit_costs[r.id.to_s].presence }.compact.first
-          resolved_cost = parse_cost(entered_cost)
-          resolved_cost = first_req.supplier_item.default_cost&.to_f || 0 if resolved_cost.nil? || resolved_cost.zero?
+        po_item = purchase_order.purchase_order_items.create!(
+          supplier_item_id: req.supplier_item_id,
+          quantity: req.quantity,
+          unit_cost: resolved_cost,
+          specifications: ProcurementConsolidator.normalize_specs(req.specifications),
+          description_override: req.supplier_item.name
+        )
 
-          po_item = purchase_order.purchase_order_items.create!(
-            supplier_item_id: first_req.supplier_item_id,
-            quantity: reqs.sum(&:quantity),
-            unit_cost: resolved_cost,
-            specifications: normalized_specs,
-            description_override: first_req.supplier_item.name
-          )
-
-          reqs.each { |r| r.update!(purchase_order_item_id: po_item.id, status: "in_draft") }
-        end
+        req.update!(purchase_order_item_id: po_item.id, status: "in_draft")
+      end
     end
 
     redirect_to edit_purchase_order_path(purchase_order),

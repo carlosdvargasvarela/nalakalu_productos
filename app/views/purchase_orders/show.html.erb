@@ -86,16 +86,18 @@
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr class="border-bottom border-dark">
-              <th class="pb-2 fw-bold small text-uppercase text-muted" style="width: 11%;">Código</th>
+              <th class="pb-2 fw-bold small text-uppercase text-muted" style="width: 10%;">Código</th>
               <th class="pb-2 fw-bold small text-uppercase text-muted">Descripción</th>
-              <th class="pb-2 fw-bold small text-uppercase text-muted text-center" style="width: 8%;">Cant.</th>
+              <th class="pb-2 fw-bold small text-uppercase text-muted" style="width: 13%;">Pedido</th>
+              <th class="pb-2 fw-bold small text-uppercase text-muted text-center" style="width: 7%;">Cant.</th>
               <th class="pb-2 fw-bold small text-uppercase text-muted text-center" style="width: 7%;">U/M</th>
-              <th class="pb-2 fw-bold small text-uppercase text-muted text-end" style="width: 13%;">Precio Unit.</th>
-              <th class="pb-2 fw-bold small text-uppercase text-muted text-end" style="width: 13%;">Total</th>
+              <th class="pb-2 fw-bold small text-uppercase text-muted text-end" style="width: 12%;">Precio Unit.</th>
+              <th class="pb-2 fw-bold small text-uppercase text-muted text-end" style="width: 12%;">Total</th>
             </tr>
           </thead>
           <tbody>
             <% @items.each do |item| %>
+              <% origin_order = item.procurement_requirements.first&.origin_order_number %>
               <tr class="border-bottom border-light">
                 <td class="py-3 small text-muted">
                   <code class="bg-transparent p-0"><%= item.supplier_item&.sku || "—" %></code>
@@ -104,15 +106,27 @@
                   <div class="fw-bold text-dark small">
                     <%= item.description_override.presence || item.supplier_item&.name %>
                   </div>
-                  <% if item.specifications.present? %>
+                  <% specs = Array(item.specifications) %>
+                  <% if specs.any? %>
                     <div class="mt-1 d-flex flex-wrap gap-1">
-                      <% item.specifications.each do |k, v| %>
+                      <% specs.each do |spec| %>
                         <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal"
                               style="font-size: 0.65rem;">
-                          <%= k %>: <strong><%= v %></strong>
+                          <%= spec["label"] || spec[:label] %>: <strong><%= spec["value"] || spec[:value] %></strong>
                         </span>
                       <% end %>
                     </div>
+                  <% end %>
+                </td>
+                <%# Pedido origen %>
+                <td class="py-3">
+                  <% if origin_order.present? %>
+                    <span class="badge border fw-bold"
+                          style="font-size:0.72rem; background:#fff8e1; color:#b45309; border-color:#fcd34d !important;">
+                      <i class="bi bi-receipt me-1"></i><%= origin_order %>
+                    </span>
+                  <% else %>
+                    <span class="text-muted small">—</span>
                   <% end %>
                 </td>
                 <td class="py-3 text-center fw-bold"><%= item.quantity.to_f.round(2) %></td>
@@ -132,7 +146,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="4"></td>
+              <td colspan="5"></td>
               <td class="pt-3 text-end small fw-bold text-muted text-uppercase">Total Estimado</td>
               <td class="pt-3 text-end fw-bold text-dark fs-6">
                 <%= number_to_currency(@purchase_order.total_amount, unit: "₡", delimiter: ".", separator: ",") %>

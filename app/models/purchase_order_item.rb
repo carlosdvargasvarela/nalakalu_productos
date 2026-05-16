@@ -18,7 +18,9 @@ class PurchaseOrderItem < ApplicationRecord
 
   def specs_summary
     return "" if specifications.blank?
-    specifications.map { |k, v| "#{k}: #{v}" }.join(" | ")
+    Array(specifications).map { |s|
+      "#{s["label"] || s[:label]}: #{s["value"] || s[:value]}"
+    }.join(" | ")
   end
 
   def line_description
