@@ -2,4 +2,4 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 import * as bootstrap from "bootstrap"
-import "./lib/search_selects"
+import "lib/search_selects"
