@@ -62,13 +62,27 @@ class LogisticsApiClient
       filters[:to],
       filters[:order_number],
       filters[:seller_code],
-      filters[:status]
+      filters[:status],
+      filters[:archived],
+      filters[:updated_since],
+      filters[:page],
+      filters[:per_page]
     ].map(&:to_s)
     parts.join("/")
   end
 
+  FILTER_KEYS = %i[from to status order_number seller_code archived updated_since page per_page].freeze
+
   def clean_filters(filters)
-    filters.slice(:from, :to, :status, :order_number, :seller_code)
-      .reject { |_, v| v.blank? }
+    filters.slice(*FILTER_KEYS).each_with_object({}) do |(key, value), cleaned|
+      next if value.nil?
+      next if value == ""
+
+      cleaned[key] = key == :updated_since ? format_timestamp(value) : value
+    end
+  end
+
+  def format_timestamp(value)
+    value.respond_to?(:iso8601) ? value.iso8601 : value.to_s
   end
 end
