@@ -172,6 +172,10 @@ Rails.application.routes.draw do
   get  "inventory/exits/new", to: "inventory_exits#new",    as: :new_inventory_exit
   post "inventory/exits",     to: "inventory_exits#create", as: :inventory_exits
 
+  resources :inventory_alerts, only: [:index] do
+    member { patch :resolve }
+  end
+
   get "inventory/product/:product_id/movements", to: "inventories#product_movements", as: :inventory_product_movements
 
   # --- RECOMENDACIONES ---
