@@ -37,8 +37,8 @@
 
           <div class="mb-4">
             <label class="form-label fw-semibold">Sala <span class="text-danger">*</span></label>
-            <%= f.select :sala,
-                  @salas.map { |s| [InventoryMovement::SALA_LABELS[s], s] },
+            <%= f.select :showroom_id,
+                  @showrooms.map { |s| [s.name, s.id] },
                   { include_blank: "— Selecciona una sala —" },
                   class: "form-select shadow-sm" %>
           </div>

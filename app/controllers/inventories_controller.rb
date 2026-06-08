@@ -6,10 +6,11 @@ class InventoriesController < ApplicationController
     @pending_syncs = InventorySync.pending.ordered
     @recent_syncs  = InventorySync.confirmed.ordered.limit(5)
 
-    raw = InventoryMovement.stock_by_product_and_sala
+    raw = InventoryMovement.stock_by_product_and_showroom
     @stock, @product_ids = build_stock_table(raw)
-    @products = Product.where(id: @product_ids).order(:name).index_by(&:id)
-    @salas = InventoryMovement::SALAS
+    @products  = Product.where(id: @product_ids).order(:name).index_by(&:id)
+    @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
+    @flagged_count = InventoryMovement.flagged.count
 
     @from = params[:from] || Date.current.beginning_of_week.to_s
     @to   = params[:to]   || Date.current.end_of_week.to_s
@@ -24,20 +25,20 @@ class InventoriesController < ApplicationController
   end
 
   def new_initial_stock
-    @movement = InventoryMovement.new(movement_type: "initial", delivery_date: Date.current)
-    @products = Product.where(active: true).order(:name)
-    @salas    = InventoryMovement::SALAS
+    @movement  = InventoryMovement.new(movement_type: "initial", source: "manual", delivery_date: Date.current)
+    @products  = Product.where(active: true).order(:name)
+    @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
   end
 
   def create_initial_stock
     @movement = InventoryMovement.new(
-      initial_stock_params.merge(movement_type: "initial", status: "resolved")
+      initial_stock_params.merge(movement_type: "initial", source: "manual", status: "resolved")
     )
     if @movement.save
       redirect_to inventory_path, notice: "Stock inicial cargado correctamente."
     else
-      @products = Product.where(active: true).order(:name)
-      @salas    = InventoryMovement::SALAS
+      @products  = Product.where(active: true).order(:name)
+      @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
       render :new_initial_stock, status: :unprocessable_entity
     end
   end
@@ -56,20 +57,20 @@ class InventoriesController < ApplicationController
 
   private
 
-  # raw = { [product_id, sala, movement_type] => qty }
+  # raw = { [product_id, showroom_id, movement_type] => qty }
   # Returns [stock_hash, product_ids]
-  # stock_hash = { [product_id, sala] => net_quantity }
+  # stock_hash = { [product_id, showroom_id] => net_quantity }
   def build_stock_table(raw)
     stock = Hash.new(0)
-    raw.each do |(product_id, sala, movement_type), qty|
+    raw.each do |(product_id, showroom_id, movement_type), qty|
       factor = movement_type.in?(%w[entry initial]) ? 1 : -1
-      stock[[product_id, sala]] += factor * qty
+      stock[[product_id, showroom_id]] += factor * qty
     end
     product_ids = stock.keys.map(&:first).uniq
     [stock, product_ids]
   end
 
   def initial_stock_params
-    params.require(:inventory_movement).permit(:product_id, :sala, :quantity, :delivery_date, :notes)
+    params.require(:inventory_movement).permit(:product_id, :showroom_id, :quantity, :delivery_date, :notes)
   end
 end

@@ -15,6 +15,7 @@
             <th>Fecha</th>
             <th>Tipo</th>
             <th>Sala</th>
+            <th>Origen</th>
             <th class="text-center">Cant.</th>
             <th>Pedido</th>
           </tr>
@@ -28,7 +29,12 @@
                   <%= m.type_label %>
                 </span>
               </td>
-              <td><span class="badge bg-secondary"><%= m.sala_label %></span></td>
+              <td><span class="badge bg-secondary"><%= m.showroom&.name || "—" %></span></td>
+              <td>
+                <span class="badge <%= m.source == 'manual' ? 'bg-info-subtle text-info-emphasis border border-info-subtle' : 'bg-light text-muted border' %>">
+                  <%= m.source_label %>
+                </span>
+              </td>
               <td class="text-center fw-semibold"><%= m.quantity %></td>
               <td class="text-muted small"><%= m.order_number.presence || "—" %></td>
             </tr>

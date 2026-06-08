@@ -8,6 +8,15 @@
     <%= link_to new_inventory_initial_stock_path, class: "btn btn-outline-secondary" do %>
       <i class="bi bi-plus-circle me-1"></i>Stock Inicial
     <% end %>
+    <%= link_to new_inventory_exit_path, class: "btn btn-outline-danger" do %>
+      <i class="bi bi-box-arrow-up me-1"></i>Registrar salida
+    <% end %>
+    <%= link_to inventory_alerts_path, class: "btn btn-outline-warning" do %>
+      <i class="bi bi-exclamation-triangle me-1"></i>Alertas de inventario
+      <% if @flagged_count > 0 %>
+        <span class="badge rounded-pill bg-danger ms-1"><%= @flagged_count %></span>
+      <% end %>
+    <% end %>
     <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#syncForm">
       <i class="bi bi-arrow-repeat me-1"></i>Sincronizar
     </button>
@@ -78,8 +87,8 @@
           <thead class="table-light">
             <tr>
               <th>Producto</th>
-              <% @salas.each do |sala| %>
-                <th class="text-center"><%= InventoryMovement::SALA_LABELS[sala] %></th>
+              <% @showrooms.each do |showroom| %>
+                <th class="text-center"><%= showroom.name %></th>
               <% end %>
               <th class="text-center fw-bold">Total</th>
             </tr>
@@ -98,8 +107,8 @@
                   </a>
                 </td>
                 <% total = 0 %>
-                <% @salas.each do |sala| %>
-                  <% qty = @stock[[ product.id, sala ]] || 0 %>
+                <% @showrooms.each do |showroom| %>
+                  <% qty = @stock[[ product.id, showroom.id ]] || 0 %>
                   <% total += qty %>
                   <td class="text-center">
                     <% if qty > 0 %>
