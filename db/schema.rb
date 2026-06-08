@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_14_000001) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_08_120000) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -92,6 +92,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_14_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["status"], name: "index_inventory_syncs_on_status"
+  end
+
+  create_table "logistics_sync_cursors", force: :cascade do |t|
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "procurement_requirements", force: :cascade do |t|
