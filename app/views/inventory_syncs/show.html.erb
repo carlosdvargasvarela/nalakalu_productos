@@ -83,7 +83,7 @@
                   <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %> me-1">
                     <%= m.type_label %>
                   </span>
-                  <span class="badge bg-secondary"><%= m.sala_label %></span>
+                  <span class="badge bg-secondary"><%= m.showroom&.name || "—" %></span>
                 </td>
                 <td class="fw-semibold"><%= m.quantity %></td>
                 <td>
@@ -158,7 +158,7 @@
                     <%= m.type_label %>
                   </span>
                 </td>
-                <td><span class="badge bg-secondary"><%= m.sala_label %></span></td>
+                <td><span class="badge bg-secondary"><%= m.showroom&.name || "—" %></span></td>
                 <td class="text-center"><%= m.quantity %></td>
                 <td class="text-muted small"><%= m.order_number %></td>
                 <td class="text-muted small"><%= m.delivery_date&.strftime("%d/%m/%Y") %></td>
