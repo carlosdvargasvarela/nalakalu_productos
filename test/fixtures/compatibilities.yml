@@ -2,8 +2,10 @@
 
 one:
   variant: one
-  compatible_variant: one
+  compatible_id: 2
+  compatible_type: Variant
 
 two:
   variant: two
-  compatible_variant: two
+  compatible_id: 1
+  compatible_type: Variant

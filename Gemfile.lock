@@ -212,8 +212,7 @@ GEM
     memory_profiler (1.1.0)
     mini_histogram (0.3.1)
     mini_mime (1.1.5)
-    minitest (6.0.1)
-      prism (~> 1.5)
+    minitest (5.27.0)
     msgpack (1.8.0)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
@@ -496,6 +495,7 @@ DEPENDENCIES
   jbuilder
   letter_opener
   matrix
+  minitest (~> 5.25)
   omniauth-microsoft_graph
   omniauth-rails_csrf_protection
   pagy

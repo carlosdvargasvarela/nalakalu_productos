@@ -2,18 +2,12 @@
 
 one:
   variant_type: one
-  provider: one
   name: MyString
   code: MyString
-  provider_sku: MyString
-  cost: 9.99
   active: false
 
 two:
   variant_type: two
-  provider: two
   name: MyString
   code: MyString
-  provider_sku: MyString
-  cost: 9.99
   active: false
