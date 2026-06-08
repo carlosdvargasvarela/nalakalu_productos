@@ -24,20 +24,12 @@ class InventoryClassifier
   end
 
   def classify
-    results     = []
-    source_salas = {}
+    results      = []
+    destination  = entry_destination
+    source_salas = exit_salas
 
     items = Array(@delivery["items"])
 
-    # First pass: identify exit-indicator lines and source salas
-    items.each do |item|
-      sala = exit_sala_from(item["product_name"].to_s)
-      source_salas[sala] = true if sala
-    end
-
-    destination = entry_destination
-
-    # Second pass: generate movements for real product lines
     items.each do |item|
       next if exit_sala_from(item["product_name"].to_s)  # skip indicator lines
       next if item["quantity_delivered"].to_f <= 0
@@ -54,13 +46,46 @@ class InventoryClassifier
 
   private
 
+  # Sala de entrada: prioriza el dato estructurado de la API de Rutas
+  # (destination_showroom). Si no viene o su código no corresponde a una
+  # sala que rastreamos en inventario, conserva la heurística por regex.
   def entry_destination
+    showroom_sala(@delivery["destination_showroom"]) || regex_entry_destination
+  end
+
+  def regex_entry_destination
     # PED- orders are customer deliveries — no inventory entry
     return nil if customer_order?
     # Mandado orders don't affect sala inventory
     return nil if mandado_order?
 
     detect_destination
+  end
+
+  # Salas de salida: prioriza source_showroom (single sala estructurada);
+  # si no viene o no es una sala rastreada, conserva la detección por regex
+  # sobre las líneas indicadoras de los ítems ("tomar de SE", etc.).
+  def exit_salas
+    sala = showroom_sala(@delivery["source_showroom"])
+    return { sala => true } if sala
+
+    salas = {}
+    Array(@delivery["items"]).each do |item|
+      detected = exit_sala_from(item["product_name"].to_s)
+      salas[detected] = true if detected
+    end
+    salas
+  end
+
+  # Mapea un showroom estructurado ({"id" => .., "name" => .., "code" => ..})
+  # a la sala interna (SP/SE/SG). El `code` de la API de Rutas coincide con
+  # los códigos internos; si no es uno de los que rastreamos, devuelve nil
+  # para que el llamador caiga al respaldo por regex.
+  def showroom_sala(showroom)
+    return nil unless showroom.is_a?(Hash)
+
+    code = showroom["code"].to_s
+    InventoryMovement::SALAS.include?(code) ? code : nil
   end
 
   def detect_destination
