@@ -33,4 +33,24 @@ class LogisticsSyncCursorTest < ActiveSupport::TestCase
     cursor.advance_to!(nil)
     assert_nil cursor.reload.last_synced_at
   end
+
+  test "advance_to! parsea y guarda un timestamp recibido como string ISO8601" do
+    cursor = LogisticsSyncCursor.current
+
+    cursor.advance_to!("2026-06-07T00:00:00Z")
+
+    assert_equal Time.zone.parse("2026-06-07T00:00:00Z"), cursor.reload.last_synced_at
+  end
+
+  test "advance_to! ignora strings con formato inválido sin lanzar error" do
+    cursor = LogisticsSyncCursor.current
+    newer = Time.zone.parse("2026-06-07T00:00:00Z")
+    cursor.advance_to!(newer)
+
+    assert_nothing_raised do
+      cursor.advance_to!("no-es-una-fecha-valida")
+    end
+
+    assert_equal newer, cursor.reload.last_synced_at, "el cursor no debe cambiar ante un string inválido"
+  end
 end

@@ -9,7 +9,14 @@ class LogisticsSyncCursor < ApplicationRecord
   def advance_to!(timestamp)
     return if timestamp.blank?
 
-    timestamp = timestamp.is_a?(String) ? Time.zone.parse(timestamp) : timestamp
+    if timestamp.is_a?(String)
+      timestamp = begin
+        Time.zone.parse(timestamp)
+      rescue ArgumentError, TypeError
+        nil
+      end
+    end
+    return if timestamp.nil?
     return if last_synced_at.present? && timestamp <= last_synced_at
 
     update!(last_synced_at: timestamp)
