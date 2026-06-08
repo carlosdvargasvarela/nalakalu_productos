@@ -11,3 +11,8 @@ one:
 two:
   email: two@example.com
   encrypted_password: x
+
+admin:
+  email: admin_test@example.com
+  encrypted_password: x
+  role: admin

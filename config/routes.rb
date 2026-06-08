@@ -55,6 +55,9 @@ Rails.application.routes.draw do
     collection { post :bulk_unassign } # POST /families/bulk_unassign
   end
 
+  # Salas de exhibición (showrooms): catálogo y reglas de clasificación de inventario
+  resources :showrooms
+
   # Propiedades y sus valores (shallow: valores accesibles sin el prefijo /properties/:id)
   resources :properties do
     resources :property_values, shallow: true

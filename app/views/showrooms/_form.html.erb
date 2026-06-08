@@ -1,0 +1,145 @@
+<%# app/views/showrooms/_form.html.erb %>
+<%= form_with(model: showroom) do |f| %>
+  <% if showroom.errors.any? %>
+    <div class="alert alert-danger mb-4">
+      <ul class="mb-0 ps-3">
+        <% showroom.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <%= f.label :name, "Nombre", class: "form-label fw-bold" %>
+      <%= f.text_field :name, class: "form-control", placeholder: "Ej: Sala Palmares" %>
+    </div>
+    <div class="col-md-6">
+      <%= f.label :code, "Código", class: "form-label fw-bold" %>
+      <%= f.text_field :code, class: "form-control text-uppercase", placeholder: "Ej: SP" %>
+      <div class="form-text">Debe coincidir con el código de showroom de la API de Rutas Nalakalu.</div>
+    </div>
+    <div class="col-md-6">
+      <div class="form-check form-switch">
+        <%= f.check_box :is_main, class: "form-check-input", role: "switch" %>
+        <%= f.label :is_main, "Es la sala principal", class: "form-check-label fw-bold" %>
+      </div>
+      <div class="form-text">Solo una sala puede ser principal. Activar esta marcará automáticamente las demás como no principales.</div>
+    </div>
+    <div class="col-md-6">
+      <div class="form-check form-switch">
+        <%= f.check_box :active, class: "form-check-input", role: "switch" %>
+        <%= f.label :active, "Sala activa", class: "form-check-label fw-bold" %>
+      </div>
+    </div>
+
+    <div class="col-12 mt-2">
+      <h5 class="text-primary border-bottom pb-2 mb-3">Reglas activas</h5>
+    </div>
+    <div class="col-12"
+         data-controller="tag-list"
+         data-tag-list-name-value="showroom[order_number_prefixes][]"
+         data-tag-list-placeholder-value="Ej: 2">
+      <label class="form-label fw-bold">Prefijos de pedido para reabastecimiento</label>
+      <div class="form-text mb-3">
+        Cuando esta sala es la <strong>principal</strong>, los pedidos cuyo número empiece con
+        alguno de estos prefijos generan automáticamente una entrada de inventario hacia ella.
+      </div>
+      <div data-tag-list-target="list" class="d-flex flex-column gap-2 mb-3">
+        <% (showroom.order_number_prefixes_array.presence || [""]).each do |prefix| %>
+          <div class="input-group" data-tag-list-target="item">
+            <input type="text" name="showroom[order_number_prefixes][]" value="<%= prefix %>"
+                   class="form-control" placeholder="Ej: 2">
+            <button type="button" class="btn btn-outline-danger" data-action="click->tag-list#remove">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-action="click->tag-list#add">
+        <i class="bi bi-plus-circle me-1"></i>Agregar prefijo
+      </button>
+    </div>
+
+    <div class="col-12 mt-3">
+      <button class="btn btn-link text-decoration-none p-0" type="button"
+              data-bs-toggle="collapse" data-bs-target="#advancedRules">
+        <i class="bi bi-chevron-down me-1"></i>Reglas avanzadas (próximamente)
+      </button>
+      <div class="collapse mt-3" id="advancedRules">
+        <div class="alert alert-secondary small mb-3">
+          Estos catálogos se almacenan y quedan disponibles para futuras reglas de
+          clasificación, pero el clasificador actual <strong>no los utiliza todavía</strong>.
+        </div>
+        <div class="row g-4">
+          <div class="col-md-4"
+               data-controller="tag-list"
+               data-tag-list-name-value="showroom[order_number_keywords][]"
+               data-tag-list-placeholder-value="Ej: ESCAZU">
+            <label class="form-label fw-bold small">Palabras clave de pedido</label>
+            <div data-tag-list-target="list" class="d-flex flex-column gap-2 mb-2">
+              <% (showroom.order_number_keywords_array.presence || [""]).each do |kw| %>
+                <div class="input-group input-group-sm" data-tag-list-target="item">
+                  <input type="text" name="showroom[order_number_keywords][]" value="<%= kw %>"
+                         class="form-control" placeholder="Ej: ESCAZU">
+                  <button type="button" class="btn btn-outline-danger" data-action="click->tag-list#remove">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              <% end %>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="click->tag-list#add">
+              <i class="bi bi-plus-circle me-1"></i>Agregar
+            </button>
+          </div>
+          <div class="col-md-4"
+               data-controller="tag-list"
+               data-tag-list-name-value="showroom[inter_sala_keywords][]"
+               data-tag-list-placeholder-value="Ej: ENTRE SALA">
+            <label class="form-label fw-bold small">Palabras clave entre-sala</label>
+            <div data-tag-list-target="list" class="d-flex flex-column gap-2 mb-2">
+              <% (showroom.inter_sala_keywords_array.presence || [""]).each do |kw| %>
+                <div class="input-group input-group-sm" data-tag-list-target="item">
+                  <input type="text" name="showroom[inter_sala_keywords][]" value="<%= kw %>"
+                         class="form-control" placeholder="Ej: ENTRE SALA">
+                  <button type="button" class="btn btn-outline-danger" data-action="click->tag-list#remove">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              <% end %>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="click->tag-list#add">
+              <i class="bi bi-plus-circle me-1"></i>Agregar
+            </button>
+          </div>
+          <div class="col-md-4"
+               data-controller="tag-list"
+               data-tag-list-name-value="showroom[product_keywords][]"
+               data-tag-list-placeholder-value="Ej: SOFA">
+            <label class="form-label fw-bold small">Palabras clave de producto</label>
+            <div data-tag-list-target="list" class="d-flex flex-column gap-2 mb-2">
+              <% (showroom.product_keywords_array.presence || [""]).each do |kw| %>
+                <div class="input-group input-group-sm" data-tag-list-target="item">
+                  <input type="text" name="showroom[product_keywords][]" value="<%= kw %>"
+                         class="form-control" placeholder="Ej: SOFA">
+                  <button type="button" class="btn btn-outline-danger" data-action="click->tag-list#remove">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              <% end %>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="click->tag-list#add">
+              <i class="bi bi-plus-circle me-1"></i>Agregar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <%= link_to "Cancelar", showrooms_path, class: "btn btn-outline-secondary" %>
+    <%= f.submit(showroom.persisted? ? "Guardar cambios" : "Crear sala", class: "btn btn-primary px-4 fw-bold") %>
+  </div>
+<% end %>
