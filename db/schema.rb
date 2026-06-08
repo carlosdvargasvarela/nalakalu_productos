@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_08_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_08_130000) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -216,6 +216,22 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_08_120000) do
     t.index ["product_id"], name: "index_recommendations_on_product_id"
     t.index ["status"], name: "index_recommendations_on_status"
     t.index ["variant_type_id"], name: "index_recommendations_on_variant_type_id"
+  end
+
+  create_table "showrooms", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "code", null: false
+    t.boolean "is_main", default: false, null: false
+    t.text "order_number_prefixes"
+    t.text "order_number_keywords"
+    t.text "inter_sala_keywords"
+    t.text "product_keywords"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_showrooms_on_active"
+    t.index ["code"], name: "index_showrooms_on_code", unique: true
+    t.index ["is_main"], name: "index_showrooms_on_is_main"
   end
 
   create_table "supplier_item_properties", force: :cascade do |t|
