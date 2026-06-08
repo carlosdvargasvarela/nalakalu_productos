@@ -7,8 +7,8 @@ class InventorySyncsController < ApplicationController
     @unresolved = @sync.inventory_movements.unresolved
       .order(:delivery_date, :product_name_raw)
     @resolved = @sync.inventory_movements.where(status: %w[resolved ignored])
-      .includes(:product)
-      .order(:sala, :movement_type, :product_name_raw)
+      .includes(:product, :showroom)
+      .order("showrooms.name", :movement_type, :product_name_raw)
     @products_for_select = Product.where(active: true).order(:name)
   end
 
