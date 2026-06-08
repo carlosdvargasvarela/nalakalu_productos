@@ -1,0 +1,29 @@
+palmares:
+  name: Sala Palmares
+  code: SP
+  is_main: true
+  active: true
+  order_number_prefixes: '["2","3"]'
+  order_number_keywords: '[]'
+  inter_sala_keywords: '[]'
+  product_keywords: '[]'
+
+escazu:
+  name: Sala Escazú
+  code: SE
+  is_main: false
+  active: true
+  order_number_prefixes: '["2","3"]'
+  order_number_keywords: '[]'
+  inter_sala_keywords: '[]'
+  product_keywords: '[]'
+
+guanacaste:
+  name: Sala Guanacaste
+  code: SG
+  is_main: false
+  active: true
+  order_number_prefixes: '["2","3"]'
+  order_number_keywords: '[]'
+  inter_sala_keywords: '[]'
+  product_keywords: '[]'
