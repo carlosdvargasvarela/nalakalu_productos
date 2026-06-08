@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_08_130000) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_08_130001) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -67,17 +67,22 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_08_130000) do
     t.string "client_name"
     t.string "product_name_raw"
     t.string "movement_type", null: false
-    t.string "sala", null: false
     t.decimal "quantity", precision: 10, scale: 4, default: "1.0", null: false
     t.string "status", default: "resolved", null: false
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "showroom_id"
+    t.string "source", default: "synced", null: false
+    t.string "flag"
     t.index ["delivery_id"], name: "index_inventory_movements_on_delivery_id"
-    t.index ["delivery_item_id", "movement_type", "sala"], name: "index_inventory_movements_unique_item", unique: true, where: "delivery_item_id IS NOT NULL"
+    t.index ["delivery_item_id", "movement_type", "showroom_id"], name: "index_inventory_movements_unique_item", unique: true, where: "delivery_item_id IS NOT NULL"
+    t.index ["flag"], name: "index_inventory_movements_on_flag"
     t.index ["inventory_sync_id"], name: "index_inventory_movements_on_inventory_sync_id"
     t.index ["movement_type"], name: "index_inventory_movements_on_movement_type"
     t.index ["product_id"], name: "index_inventory_movements_on_product_id"
+    t.index ["showroom_id"], name: "index_inventory_movements_on_showroom_id"
+    t.index ["source"], name: "index_inventory_movements_on_source"
     t.index ["status"], name: "index_inventory_movements_on_status"
   end
 
@@ -334,6 +339,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_08_130000) do
   add_foreign_key "family_variant_rules", "variant_types"
   add_foreign_key "inventory_movements", "inventory_syncs"
   add_foreign_key "inventory_movements", "products"
+  add_foreign_key "inventory_movements", "showrooms"
   add_foreign_key "procurement_requirements", "purchase_order_items"
   add_foreign_key "procurement_requirements", "supplier_items"
   add_foreign_key "product_variant_rules", "products"
