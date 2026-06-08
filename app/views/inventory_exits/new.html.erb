@@ -1,0 +1,105 @@
+<%# app/views/inventory_exits/new.html.erb %>
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="p-4 text-white" style="background: linear-gradient(145deg, #dc3545, #a02530);">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-white text-danger rounded-3 shadow-sm d-flex justify-content-center align-items-center" style="width:50px;height:50px;">
+            <i class="bi bi-box-arrow-up fs-3"></i>
+          </div>
+          <div>
+            <h2 class="fw-bold mb-1">Registrar salida de inventario</h2>
+            <p class="mb-0 small opacity-75">Verifica el pedido y el stock antes de confirmar.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <%= form_with model: @movement, url: inventory_exits_path do |f| %>
+
+          <% if @movement.errors.any? %>
+            <div class="alert alert-danger mb-4">
+              <ul class="mb-0 ps-3">
+                <% @movement.errors.full_messages.each do |msg| %>
+                  <li><%= msg %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Sala de origen <span class="text-danger">*</span></label>
+            <%= f.select :showroom_id, @showrooms.map { |s| [s.name, s.id] },
+                  { include_blank: "— Selecciona una sala —" }, class: "form-select shadow-sm" %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              Número de pedido <span class="text-muted fw-normal">(opcional, para corroborar)</span>
+            </label>
+            <div class="input-group">
+              <%= f.text_field :order_number, class: "form-control shadow-sm", placeholder: "Ej: 2-00123" %>
+              <button type="submit" class="btn btn-outline-primary"
+                      formmethod="get" formaction="<%= new_inventory_exit_path %>">
+                <i class="bi bi-search me-1"></i>Consultar
+              </button>
+            </div>
+            <% if @movement.order_number.present? && (@delivery_preview || @delivery_preview_error) %>
+              <% if @delivery_preview %>
+                <div class="alert alert-info mt-2 mb-0 small">
+                  <strong>Pedido encontrado</strong> —
+                  Cliente: <%= @delivery_preview.dig("client", "name") || "—" %>
+                  · Fecha: <%= @delivery_preview["delivery_date"] %>
+                  <ul class="mb-0 mt-2">
+                    <% Array(@delivery_preview["items"]).each do |item| %>
+                      <li><%= item["product_name"] %> — cantidad entregada: <%= item["quantity_delivered"] %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% else %>
+                <div class="alert alert-warning mt-2 mb-0 small"><%= @delivery_preview_error %></div>
+              <% end %>
+            <% end %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Producto <span class="text-danger">*</span></label>
+            <%= f.select :product_id, @products.map { |p| [p.name, p.id] },
+                  { include_blank: "— Selecciona un producto —" }, class: "form-select shadow-sm" %>
+            <button type="submit" class="btn btn-outline-secondary btn-sm mt-2"
+                    formmethod="get" formaction="<%= new_inventory_exit_path %>">
+              <i class="bi bi-eye me-1"></i>Ver stock actual en la sala seleccionada
+            </button>
+            <% if @current_stock %>
+              <div class="alert <%= @current_stock.to_f <= 0 ? "alert-danger" : "alert-secondary" %> mt-2 mb-0 small">
+                Stock actual calculado en esta sala: <strong><%= @current_stock %></strong>
+                <% if @current_stock.to_f <= 0 %>
+                  — si registras esta salida, quedará marcada con una alerta de stock faltante.
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Cantidad que sale <span class="text-danger">*</span></label>
+            <%= f.number_field :quantity, min: 0.01, step: 0.01, class: "form-control shadow-sm", placeholder: "Ej: 1" %>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Notas <span class="text-muted fw-normal">(opcional)</span></label>
+            <%= f.text_area :notes, rows: 2, class: "form-control shadow-sm",
+                  placeholder: "Contexto adicional sobre esta salida" %>
+          </div>
+
+          <%= f.hidden_field :delivery_date, value: Date.current %>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <%= link_to "Cancelar", inventory_path, class: "btn btn-outline-secondary" %>
+            <%= f.submit "Registrar salida", class: "btn btn-danger px-4 fw-bold" %>
+          </div>
+
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
