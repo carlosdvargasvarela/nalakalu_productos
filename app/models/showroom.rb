@@ -5,6 +5,8 @@ class Showroom < ApplicationRecord
 
   ARRAY_ATTRIBUTES.each { |attr| serialize attr, coder: JSON }
 
+  has_many :inventory_movements, dependent: :restrict_with_error
+
   validates :name, presence: true
   validates :code, presence: true, uniqueness: { case_sensitive: false }
 
