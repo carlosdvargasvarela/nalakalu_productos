@@ -14,9 +14,7 @@ class SyncInventoryJob < ApplicationJob
       since: cursor.last_synced_at, from: from, to: to
     )
 
-    movements = deliveries.flat_map do |delivery|
-      InventoryResolver.resolve_delivery(delivery, sync)
-    end
+    movements = InventoryResolver.resolve_deliveries(deliveries, sync)
 
     sync.update!(
       deliveries_processed: deliveries.size,

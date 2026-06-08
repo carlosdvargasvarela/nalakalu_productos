@@ -1,44 +1,53 @@
 class InventoryResolver
-  def self.resolve_delivery(delivery, sync)
-    new(delivery, sync).resolve
+  def self.resolve_deliveries(deliveries, sync)
+    new(sync).resolve(deliveries)
   end
 
-  def initialize(delivery, sync)
-    @delivery = delivery
-    @sync     = sync
+  def initialize(sync)
+    @sync = sync
+    # Each unique product_name is decoded exactly once per sync run, regardless of
+    # how many deliveries/items repeat it — reduces ProductDecoder O(n×products) calls.
+    @decoded_by_name = Hash.new { |h, name| h[name] = ProductDecoder.decode(name) }
   end
 
-  def resolve
-    classified = InventoryClassifier.classify(@delivery)
+  def resolve(deliveries)
+    deliveries.flat_map { |delivery| resolve_delivery(delivery) }
+  end
+
+  private
+
+  def resolve_delivery(delivery)
+    classified = InventoryClassifier.classify(delivery)
     return [] if classified.empty?
 
     results = []
 
     classified.each do |c|
-      item = c.item
+      item     = c.item
+      showroom = c.showroom
 
-      # Skip if already recorded in a confirmed sync (idempotency)
-      next if confirmed_duplicate?(item["id"], c.type, c.sala)
+      next if confirmed_duplicate?(item["id"], c.type, showroom.id)
 
-      decoding   = ProductDecoder.decode(item["product_name"].to_s)
+      decoding   = @decoded_by_name[item["product_name"].to_s]
       product_id = decoding.base_product&.id
       status     = product_id.present? ? "resolved" : "unresolved"
 
       movement = InventoryMovement.find_or_initialize_by(
         delivery_item_id: item["id"],
         movement_type:    c.type,
-        sala:             c.sala
+        showroom_id:      showroom.id
       )
 
       movement.assign_attributes(
         inventory_sync:   @sync,
         product_id:       product_id,
-        delivery_id:      @delivery["id"],
-        delivery_date:    @delivery["delivery_date"],
-        order_number:     @delivery["order_number"],
-        client_name:      @delivery.dig("client", "name"),
+        delivery_id:      delivery["id"],
+        delivery_date:    delivery["delivery_date"],
+        order_number:     delivery["order_number"],
+        client_name:      delivery.dig("client", "name"),
         product_name_raw: item["product_name"],
         quantity:         item["quantity_delivered"].to_f,
+        source:           "synced",
         status:           movement.persisted? ? movement.status : status
       )
 
@@ -52,14 +61,12 @@ class InventoryResolver
     results
   end
 
-  private
-
-  def confirmed_duplicate?(item_id, movement_type, sala)
+  def confirmed_duplicate?(item_id, movement_type, showroom_id)
     return false if item_id.nil?
 
     InventoryMovement
       .confirmed_only
-      .where(delivery_item_id: item_id, movement_type: movement_type, sala: sala)
+      .where(delivery_item_id: item_id, movement_type: movement_type, showroom_id: showroom_id)
       .exists?
   end
 end
