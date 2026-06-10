@@ -30,7 +30,7 @@ class InventoryResolver
 
       decoding   = @decoded_by_name[item["product_name"].to_s]
       product_id = decoding.base_product&.id
-      status     = product_id.present? ? "resolved" : "unresolved"
+      status     = "unresolved"
 
       movement = InventoryMovement.find_or_initialize_by(
         delivery_item_id: item["id"],

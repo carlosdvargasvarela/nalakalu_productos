@@ -1,6 +1,6 @@
 class InventoryMovementsController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_sala_admin!
   before_action :set_movement
 
   def update

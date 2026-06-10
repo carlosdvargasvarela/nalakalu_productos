@@ -1,15 +1,29 @@
 class InventorySyncsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_sala_admin!
-  before_action :set_sync, only: %i[show confirm destroy bulk_ignore]
+  before_action :set_sync, only: %i[show confirm destroy bulk_ignore confirm_matched]
 
   def show
-    @unresolved = @sync.inventory_movements.unresolved
-      .order(:delivery_date, :product_name_raw)
-    @resolved = @sync.inventory_movements.where(status: %w[resolved ignored])
+    all_movements = @sync.inventory_movements
       .includes(:product, :showroom)
-      .order("showrooms.name", :movement_type, :product_name_raw)
+      .order(:order_number, :movement_type, :product_name_raw)
+
+    @movement_groups  = all_movements.group_by(&:order_number)
+    @stat_confirmed   = all_movements.count { |m| m.status == "resolved" }
+    @stat_suggested   = all_movements.count { |m| m.status == "unresolved" && m.product_id.present? }
+    @stat_unassigned  = all_movements.count { |m| m.status == "unresolved" && m.product_id.nil? }
+    @stat_ignored     = all_movements.count { |m| m.status == "ignored" }
     @products_for_select = Product.where(active: true).order(:name)
+  end
+
+  def confirm_matched
+    count = @sync.inventory_movements
+      .where(status: "unresolved")
+      .where.not(product_id: nil)
+      .update_all(status: "resolved")
+    @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
+    redirect_to inventory_sync_path(@sync),
+      notice: "#{count} movimiento(s) con producto detectado fueron confirmados."
   end
 
   def confirm

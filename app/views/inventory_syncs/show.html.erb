@@ -8,18 +8,19 @@
       Rango: <strong><%= @sync.from_date.strftime("%d/%m/%Y") %></strong> –
       <strong><%= @sync.to_date.strftime("%d/%m/%Y") %></strong>
       &nbsp;·&nbsp; <%= @sync.deliveries_processed %> entregas procesadas
-      &nbsp;·&nbsp; <%= @sync.movements_count %> movimientos detectados
+      &nbsp;·&nbsp; <strong><%= @sync.movements_count %></strong> movimientos detectados
     </p>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex gap-2 flex-wrap">
     <%= link_to inventory_path, class: "btn btn-outline-secondary btn-sm" do %>
       <i class="bi bi-arrow-left me-1"></i>Volver
     <% end %>
     <% if @sync.confirmable? %>
-      <%= button_to "Confirmar y aplicar al inventario", confirm_inventory_sync_path(@sync),
-            method: :patch,
+      <%= button_to confirm_inventory_sync_path(@sync), method: :patch,
             class: "btn btn-success",
-            data: { turbo_confirm: "¿Confirmar esta sincronización? Los movimientos afectarán el stock en tiempo real." } %>
+            data: { turbo_confirm: "¿Confirmar esta sincronización? Los movimientos afectarán el stock en tiempo real." } do %>
+        <i class="bi bi-check-circle me-1"></i>Confirmar y aplicar al inventario
+      <% end %>
     <% else %>
       <button class="btn btn-success" disabled title="Resuelve todos los ítems pendientes primero">
         <i class="bi bi-check-circle me-1"></i>Confirmar
@@ -33,147 +34,201 @@
   </div>
 </div>
 
-<%# ── ÍTEMS SIN RESOLVER ──────────────────────────────────────────────────── %>
-<% if @unresolved.any? %>
-  <div class="card border-warning border-2 shadow-sm mb-5" data-controller="bulk-check">
-    <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center py-3">
-      <h5 class="mb-0 fw-bold text-warning-emphasis">
-        <i class="bi bi-exclamation-circle me-2"></i>Ítems sin resolver
-        <span class="badge bg-warning text-dark ms-2"><%= @unresolved.size %></span>
-      </h5>
-      <small class="text-muted">Asigna un producto o ignora cada ítem para poder confirmar.</small>
-    </div>
-    <div class="card-body p-0">
-      <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light border-bottom"
-           data-bulk-check-target="bulkContainer">
-        <%= form_with url: bulk_ignore_inventory_sync_path(@sync), method: :post, id: "bulk-ignore-form" do |f| %>
-          <div class="d-flex align-items-center gap-2">
-            <span class="text-muted small">Selecciona ítems de la tabla para ignorarlos en lote</span>
-            <button type="submit"
-                    class="btn btn-sm btn-outline-secondary"
-                    disabled
-                    data-bulk-check-target="bulkButton"
-                    data-turbo-confirm="¿Ignorar los ítems seleccionados?"
-                    form="bulk-ignore-form">
-              <i class="bi bi-eye-slash me-1"></i>Ignorar seleccionados <span data-bulk-check-target="countBadge"></span>
-            </button>
-          </div>
-        <% end %>
+<%# ── RESUMEN DE ESTADOS ──────────────────────────────────────────────────── %>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 text-center shadow-sm h-100 <%= @stat_confirmed > 0 ? 'bg-success-subtle' : 'bg-light' %>">
+      <div class="card-body py-3">
+        <div class="fs-2 fw-bold <%= @stat_confirmed > 0 ? 'text-success' : 'text-muted' %>"><%= @stat_confirmed %></div>
+        <div class="small fw-semibold <%= @stat_confirmed > 0 ? 'text-success-emphasis' : 'text-muted' %>">
+          <i class="bi bi-check-circle me-1"></i>Confirmados
+        </div>
       </div>
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th><input type="checkbox" data-bulk-check-target="selectAll" data-action="change->bulk-check#toggleAll" class="form-check-input"></th>
-              <th>Nombre recibido del API</th>
-              <th>Pedido</th>
-              <th>Tipo / Sala</th>
-              <th>Cant.</th>
-              <th>Asignar producto</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @unresolved.each do |m| %>
-              <tr>
-                <td><input type="checkbox" name="movement_ids[]" value="<%= m.id %>" data-bulk-check-target="checkbox" data-action="change->bulk-check#updateBulkButton" class="form-check-input" form="bulk-ignore-form"></td>
-                <td><code class="text-dark"><%= m.product_name_raw %></code></td>
-                <td class="text-muted small"><%= m.order_number %></td>
-                <td>
-                  <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %> me-1">
-                    <%= m.type_label %>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 text-center shadow-sm h-100 <%= @stat_suggested > 0 ? 'bg-info-subtle' : 'bg-light' %>">
+      <div class="card-body py-3">
+        <div class="fs-2 fw-bold <%= @stat_suggested > 0 ? 'text-info-emphasis' : 'text-muted' %>"><%= @stat_suggested %></div>
+        <div class="small fw-semibold <%= @stat_suggested > 0 ? 'text-info-emphasis' : 'text-muted' %>">
+          <i class="bi bi-lightbulb me-1"></i>Sugeridos
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 text-center shadow-sm h-100 <%= @stat_unassigned > 0 ? 'bg-warning-subtle' : 'bg-light' %>">
+      <div class="card-body py-3">
+        <div class="fs-2 fw-bold <%= @stat_unassigned > 0 ? 'text-warning-emphasis' : 'text-muted' %>"><%= @stat_unassigned %></div>
+        <div class="small fw-semibold <%= @stat_unassigned > 0 ? 'text-warning-emphasis' : 'text-muted' %>">
+          <i class="bi bi-question-circle me-1"></i>Sin asignar
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 text-center shadow-sm h-100 bg-light">
+      <div class="card-body py-3">
+        <div class="fs-2 fw-bold text-muted"><%= @stat_ignored %></div>
+        <div class="small fw-semibold text-muted">
+          <i class="bi bi-eye-slash me-1"></i>Ignorados
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%# ── ALERTA: CONFIRMAR SUGERIDOS EN LOTE ────────────────────────────────── %>
+<% if @stat_suggested > 0 %>
+  <div class="alert alert-info d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <i class="bi bi-lightbulb-fill me-2"></i>
+      <strong><%= @stat_suggested %> movimiento(s)</strong> tienen producto detectado automáticamente.
+      Revisa y confirma individualmente o usa el botón para aprobarlos todos.
+    </div>
+    <%= button_to confirm_matched_inventory_sync_path(@sync), method: :patch,
+          class: "btn btn-info btn-sm text-white",
+          data: { turbo_confirm: "¿Confirmar todos los movimientos con producto detectado?" } do %>
+      <i class="bi bi-check-all me-1"></i>Confirmar todos los sugeridos (<%= @stat_suggested %>)
+    <% end %>
+  </div>
+<% end %>
+
+<%# ── ALERTA: TODO LISTO ───────────────────────────────────────────────────── %>
+<% if @sync.confirmable? %>
+  <div class="alert alert-success mb-4">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    Todos los movimientos están revisados. Puedes confirmar la sincronización y aplicarla al inventario.
+  </div>
+<% end %>
+
+<%# ── GRUPOS DE MOVIMIENTOS ───────────────────────────────────────────────── %>
+<% @movement_groups.each do |order_number, movements| %>
+  <% exits   = movements.select { |m| m.movement_type == "exit" } %>
+  <% entries = movements.select { |m| m.movement_type == "entry" } %>
+  <% is_transfer = exits.any? && entries.any? %>
+  <% group_date = movements.first&.delivery_date %>
+  <% pending_count = movements.count { |m| m.status == "unresolved" } %>
+
+  <div class="card border-0 shadow-sm mb-3">
+    <%# ── Cabecera del grupo ──────────────────────────────────────── %>
+    <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2
+                <%= is_transfer ? 'bg-primary-subtle' : (entries.any? ? 'bg-success-subtle' : 'bg-danger-subtle') %>">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <% if is_transfer %>
+          <i class="bi bi-arrow-left-right fs-5 text-primary"></i>
+          <strong class="text-primary-emphasis">Transferencia entre salas</strong>
+          <span class="badge bg-primary"><%= exits.first&.showroom&.name || "?" %></span>
+          <i class="bi bi-arrow-right text-primary"></i>
+          <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+            <%= entries.first&.showroom&.name || "?" %>
+          </span>
+        <% elsif entries.any? %>
+          <i class="bi bi-arrow-down-circle fs-5 text-success"></i>
+          <strong class="text-success-emphasis">Entrada</strong>
+          <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+            <%= entries.first&.showroom&.name || "?" %>
+          </span>
+        <% else %>
+          <i class="bi bi-arrow-up-circle fs-5 text-danger"></i>
+          <strong class="text-danger-emphasis">Salida</strong>
+          <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">
+            <%= exits.first&.showroom&.name || "?" %>
+          </span>
+        <% end %>
+        <span class="text-muted small">
+          <%= group_date&.strftime("%d/%m/%Y") %>
+          &middot; <code class="small"><%= order_number %></code>
+        </span>
+      </div>
+      <% if pending_count > 0 %>
+        <span class="badge bg-warning text-dark">
+          <i class="bi bi-clock me-1"></i><%= pending_count %> pendiente(s)
+        </span>
+      <% else %>
+        <span class="badge bg-success">
+          <i class="bi bi-check-lg me-1"></i>Completo
+        </span>
+      <% end %>
+    </div>
+
+    <%# ── Tabla de movimientos del grupo ────────────────────────── %>
+    <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Nombre recibido</th>
+            <th>Tipo</th>
+            <% if is_transfer %><th>Sala</th><% end %>
+            <th class="text-center">Cant.</th>
+            <th style="min-width: 260px">Producto a confirmar</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% movements.each do |m| %>
+            <%
+              row_class = case m.status
+                when "resolved" then "table-success"
+                when "ignored"  then "table-secondary opacity-75"
+                else m.product_id.present? ? "table-info" : "table-warning"
+              end
+            %>
+            <tr class="<%= row_class %>">
+              <td><code class="small text-dark"><%= m.product_name_raw %></code></td>
+              <td>
+                <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %>">
+                  <%= m.type_label %>
+                </span>
+              </td>
+              <% if is_transfer %>
+                <td><small class="text-muted"><%= m.showroom&.name %></small></td>
+              <% end %>
+              <td class="text-center fw-semibold"><%= m.quantity %></td>
+              <td>
+                <% if m.status == "resolved" %>
+                  <span class="text-success-emphasis fw-semibold">
+                    <i class="bi bi-check-circle-fill me-1"></i><%= m.product&.name || "—" %>
                   </span>
-                  <span class="badge bg-secondary"><%= m.showroom&.name || "—" %></span>
-                </td>
-                <td class="fw-semibold"><%= m.quantity %></td>
-                <td>
+                <% elsif m.status == "ignored" %>
+                  <span class="text-muted fst-italic small">
+                    <i class="bi bi-eye-slash me-1"></i>Ignorado — no afectará el stock
+                  </span>
+                <% else %>
                   <%= form_with url: inventory_movement_path(m), method: :patch,
                         class: "d-flex gap-2 align-items-center" do |f| %>
                     <%= select_tag "inventory_movement[product_id]",
                           options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
-                          include_blank: "— Seleccionar —",
-                          class: "form-select form-select-sm shadow-sm" %>
-                    <button type="submit" class="btn btn-sm btn-success text-nowrap">
+                          include_blank: "— Seleccionar producto —",
+                          class: "form-select form-select-sm" %>
+                    <button type="submit"
+                            class="btn btn-sm <%= m.product_id.present? ? 'btn-primary' : 'btn-success' %> text-nowrap">
                       <i class="bi bi-check-lg"></i>
+                      <%= m.product_id.present? ? "Confirmar" : "Asignar" %>
                     </button>
                   <% end %>
-                </td>
-                <td>
-                  <%= button_to inventory_movement_path(m),
-                        method: :patch,
+                <% end %>
+              </td>
+              <td class="text-end">
+                <% if m.status == "unresolved" %>
+                  <%= button_to inventory_movement_path(m), method: :patch,
                         params: { ignore: true },
                         class: "btn btn-sm btn-outline-secondary",
-                        title: "Ignorar este ítem",
+                        title: "Ignorar este movimiento",
                         data: { turbo_confirm: "¿Ignorar este ítem? No afectará el inventario." } do %>
                     <i class="bi bi-eye-slash"></i>
                   <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-<% else %>
-  <div class="alert alert-success mb-4">
-    <i class="bi bi-check-circle me-2"></i>
-    Todos los ítems están resueltos. Puedes confirmar la sincronización.
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
   </div>
 <% end %>
 
-<%# ── MOVIMIENTOS RESUELTOS ───────────────────────────────────────────────── %>
-<div class="card border-0 shadow-sm">
-  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-    <h5 class="mb-0 fw-bold">
-      <i class="bi bi-list-check me-2 text-success"></i>Movimientos resueltos / ignorados
-    </h5>
-    <span class="badge bg-secondary"><%= @resolved.size %></span>
+<% if @movement_groups.empty? %>
+  <div class="text-center text-muted py-5">
+    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+    Esta sincronización no tiene movimientos registrados.
   </div>
-  <div class="card-body p-0">
-    <% if @resolved.empty? %>
-      <div class="text-center text-muted py-4 small">Sin movimientos resueltos aún.</div>
-    <% else %>
-      <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Producto</th>
-              <th>Nombre original</th>
-              <th>Tipo</th>
-              <th>Sala</th>
-              <th class="text-center">Cant.</th>
-              <th>Pedido</th>
-              <th>Fecha</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @resolved.each do |m| %>
-              <tr class="<%= 'table-secondary opacity-50' if m.status == 'ignored' %>">
-                <td class="fw-semibold"><%= m.product&.name || "—" %></td>
-                <td class="text-muted small"><%= m.product_name_raw %></td>
-                <td>
-                  <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %>">
-                    <%= m.type_label %>
-                  </span>
-                </td>
-                <td><span class="badge bg-secondary"><%= m.showroom&.name || "—" %></span></td>
-                <td class="text-center"><%= m.quantity %></td>
-                <td class="text-muted small"><%= m.order_number %></td>
-                <td class="text-muted small"><%= m.delivery_date&.strftime("%d/%m/%Y") %></td>
-                <td>
-                  <% if m.status == "ignored" %>
-                    <span class="badge bg-light text-muted border">Ignorado</span>
-                  <% else %>
-                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Resuelto</span>
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% end %>
-  </div>
-</div>
+<% end %>

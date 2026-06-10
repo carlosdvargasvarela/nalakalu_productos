@@ -164,6 +164,7 @@ Rails.application.routes.draw do
     member do
       patch :confirm
       post :bulk_ignore
+      patch :confirm_matched
     end
   end
 
