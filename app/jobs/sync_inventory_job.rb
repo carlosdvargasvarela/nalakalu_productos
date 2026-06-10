@@ -1,7 +1,11 @@
 class SyncInventoryJob < ApplicationJob
   queue_as :inventory
 
-  def perform(from:, to:, user_id: nil)
+  def perform(from: nil, to: nil, user_id: nil)
+    config = InventorySyncConfig.current
+    from ||= (Date.current - config.schedule_days_back.days).to_s
+    to   ||= Date.current.to_s
+
     sync = InventorySync.create!(
       from_date: from,
       to_date:   to,

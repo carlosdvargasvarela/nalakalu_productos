@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_08_130001) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_10_000001) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -84,6 +84,16 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_08_130001) do
     t.index ["showroom_id"], name: "index_inventory_movements_on_showroom_id"
     t.index ["source"], name: "index_inventory_movements_on_source"
     t.index ["status"], name: "index_inventory_movements_on_status"
+  end
+
+  create_table "inventory_sync_configs", force: :cascade do |t|
+    t.integer "default_days_back", default: 7, null: false
+    t.integer "default_days_forward", default: 0, null: false
+    t.boolean "schedule_enabled", default: false, null: false
+    t.string "schedule_cron", default: "0 6 * * *"
+    t.integer "schedule_days_back", default: 14, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "inventory_syncs", force: :cascade do |t|

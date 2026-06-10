@@ -72,6 +72,12 @@
       <% end %>
     </li>
     <li>
+      <%= link_to inventory_sync_config_path,
+          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'inventory_sync_configs'}" do %>
+        <span><i class="bi bi-sliders me-2"></i>Config. de Sincronización</span>
+      <% end %>
+    </li>
+    <li>
       <%= link_to supply_managements_path,
           class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'supply_managements'}" do %>
         <span><i class="bi bi-cart-check me-2"></i>Gestión de Abastecimiento</span>

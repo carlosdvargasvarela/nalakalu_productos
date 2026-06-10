@@ -1,0 +1,264 @@
+<div data-controller="sync-config"
+     data-sync-config-test-url-value="<%= inventory_sync_config_test_classify_path %>">
+
+<%# ── HEADER ──────────────────────────────────────────────────────────────── %>
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+  <div>
+    <h1 class="fw-bold mb-1">
+      <i class="bi bi-sliders me-2 text-primary"></i>Configuración de Sincronización
+    </h1>
+    <p class="text-muted mb-0">Controla cómo y cuándo se importan movimientos desde la API de logística.</p>
+  </div>
+  <%= link_to inventory_path, class: "btn btn-outline-secondary btn-sm align-self-start" do %>
+    <i class="bi bi-arrow-left me-1"></i>Volver al inventario
+  <% end %>
+</div>
+
+<%# ══ 1. PREFIJOS POR SALA ═══════════════════════════════════════════════════ %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white py-3">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-tags me-2 text-primary"></i>Reglas de prefijos por sala</h5>
+    <p class="text-muted small mb-0 mt-1">
+      Si el número de pedido empieza con alguno de estos prefijos, se generará una
+      <strong>Entrada</strong> para esa sala (Regla 2 del clasificador).
+    </p>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-sm align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Sala</th>
+          <th>Código API</th>
+          <th style="width: 50px;" class="text-center">Principal</th>
+          <th>Prefijos <span class="text-muted fw-normal small">(separados por coma)</span></th>
+          <th style="width: 100px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @showrooms.each do |showroom| %>
+          <tr>
+            <td class="fw-semibold"><%= showroom.name %></td>
+            <td><code><%= showroom.code %></code></td>
+            <td class="text-center">
+              <% if showroom.is_main? %>
+                <span class="badge bg-primary">Sí</span>
+              <% else %>
+                <span class="text-muted">—</span>
+              <% end %>
+            </td>
+            <td>
+              <%= form_with url: inventory_sync_config_prefixes_path(showroom), method: :patch,
+                    class: "d-flex gap-2 align-items-center" do %>
+                <input type="text"
+                       name="prefixes"
+                       value="<%= showroom.order_number_prefixes_array.join(', ') %>"
+                       class="form-control form-control-sm font-monospace"
+                       placeholder="Ej: 2-, 3-">
+                <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                  <i class="bi bi-check-lg"></i> Guardar
+                </button>
+              <% end %>
+            </td>
+            <td class="text-muted small">
+              <% if showroom.order_number_prefixes_array.empty? %>
+                <span class="badge bg-light text-muted border">Sin prefijos</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer bg-white border-top-0 text-muted small">
+    <i class="bi bi-info-circle me-1"></i>
+    Los pedidos con campo <code>source_showroom</code> / <code>destination_showroom</code> de la API
+    son detectados automáticamente (Regla 1) sin necesidad de prefijos.
+  </div>
+</div>
+
+<%# ══ 2. PROBAR CLASIFICACIÓN ════════════════════════════════════════════════ %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white py-3">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-flask me-2 text-success"></i>Probar clasificación</h5>
+    <p class="text-muted small mb-0 mt-1">
+      Simula cómo clasificaría el sistema un número de pedido dado, sin ejecutar nada real.
+    </p>
+  </div>
+  <div class="card-body">
+    <form data-action="submit->sync-config#runTest">
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Número de pedido <span class="text-danger">*</span></label>
+          <input type="text" name="order_number"
+                 class="form-control font-monospace"
+                 placeholder="Ej: 2-00123 o entre_sala_SP_SG">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">
+            Sala de origen
+            <span class="text-muted fw-normal small">(Regla 1)</span>
+          </label>
+          <select name="source_showroom" class="form-select">
+            <option value="">— Ninguna —</option>
+            <% @showrooms.each do |s| %>
+              <option value="<%= s.code %>"><%= s.name %> (<%= s.code %>)</option>
+            <% end %>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">
+            Sala de destino
+            <span class="text-muted fw-normal small">(Regla 1)</span>
+          </label>
+          <select name="destination_showroom" class="form-select">
+            <option value="">— Ninguna —</option>
+            <% @showrooms.each do |s| %>
+              <option value="<%= s.code %>"><%= s.name %> (<%= s.code %>)</option>
+            <% end %>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-success w-100">
+            <i class="bi bi-play-fill me-1"></i>Simular
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div class="spinner-border spinner-border-sm text-secondary d-none"
+         data-sync-config-target="testSpinner"></div>
+
+    <div data-sync-config-target="testResults"></div>
+  </div>
+</div>
+
+<%# ══ 3. DEFAULTS DE FECHA ═══════════════════════════════════════════════════ %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white py-3">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-range me-2 text-warning"></i>Defaults del rango de fechas</h5>
+    <p class="text-muted small mb-0 mt-1">
+      Valores precompletados en el formulario de sync manual (el usuario puede cambiarlos).
+    </p>
+  </div>
+  <div class="card-body">
+    <%= form_with url: inventory_sync_config_defaults_path, method: :patch do |f| %>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Días hacia atrás</label>
+          <%= number_field :inventory_sync_config, :default_days_back,
+                value: @config.default_days_back, min: 0, max: 365,
+                class: "form-control",
+                data: { "sync-config-target": "daysBack",
+                        action: "input->sync-config#updateDatePreview" } %>
+          <div class="form-text">Cuántos días antes de hoy es la fecha "desde".</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Días hacia adelante</label>
+          <%= number_field :inventory_sync_config, :default_days_forward,
+                value: @config.default_days_forward, min: 0, max: 30,
+                class: "form-control",
+                data: { "sync-config-target": "daysForward",
+                        action: "input->sync-config#updateDatePreview" } %>
+          <div class="form-text">Cuántos días después de hoy es la fecha "hasta" (0 = hoy).</div>
+        </div>
+        <div class="col-md-4">
+          <p class="text-muted small mb-2" data-sync-config-target="datePreview">
+            Con estos valores: <%= @config.default_from_date.strftime("%d/%m/%Y") %> – <%= @config.default_to_date.strftime("%d/%m/%Y") %>
+          </p>
+          <button type="submit" class="btn btn-warning fw-semibold">
+            <i class="bi bi-save me-1"></i>Guardar defaults
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# ══ 4. SYNC AUTOMÁTICO ══════════════════════════════════════════════════════ %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-info"></i>Sync automático programado</h5>
+      <p class="text-muted small mb-0 mt-1">
+        Ejecuta la sincronización automáticamente según el horario configurado.
+        Requiere que Sidekiq esté corriendo con <code>sidekiq-cron</code>.
+      </p>
+    </div>
+    <% if @config.schedule_enabled? %>
+      <span class="badge bg-success fs-6"><i class="bi bi-circle-fill me-1 small"></i>Activo</span>
+    <% else %>
+      <span class="badge bg-secondary fs-6">Inactivo</span>
+    <% end %>
+  </div>
+  <div class="card-body">
+    <%= form_with url: inventory_sync_config_schedule_path, method: :patch do |f| %>
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch"
+                   name="inventory_sync_config[schedule_enabled]"
+                   id="scheduleEnabled" value="1"
+                   <%= @config.schedule_enabled? ? "checked" : "" %>>
+            <label class="form-check-label fw-semibold" for="scheduleEnabled">
+              Activar sync automático
+            </label>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Frecuencia</label>
+          <% current_preset = InventorySyncConfig::CRON_PRESETS.key(@config.schedule_cron) || "custom" %>
+          <select class="form-select"
+                  data-sync-config-target="cronPreset"
+                  data-action="change->sync-config#updatePreset">
+            <option value="daily_6am"      <%= "selected" if current_preset == "daily_6am" %>>Diario a las 6am</option>
+            <option value="daily_midnight" <%= "selected" if current_preset == "daily_midnight" %>>Diario a medianoche</option>
+            <option value="weekly_monday"  <%= "selected" if current_preset == "weekly_monday" %>>Cada lunes a las 6am</option>
+            <option value="hourly"         <%= "selected" if current_preset == "hourly" %>>Cada hora</option>
+            <option value="custom"         <%= "selected" if current_preset == "custom" %>>Personalizado</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Expresión cron</label>
+          <input type="text"
+                 name="inventory_sync_config[schedule_cron]"
+                 value="<%= @config.schedule_cron %>"
+                 class="form-control font-monospace"
+                 placeholder="0 6 * * *"
+                 <%= current_preset != "custom" ? "readonly" : "" %>
+                 data-sync-config-target="cronInput"
+                 data-action="input->sync-config#updateCron">
+          <div class="form-text" data-sync-config-target="cronPreview">
+            Expresión activa: <%= @config.schedule_cron %>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Días a sincronizar</label>
+          <input type="number"
+                 name="inventory_sync_config[schedule_days_back]"
+                 value="<%= @config.schedule_days_back %>"
+                 min="1" max="90"
+                 class="form-control">
+          <div class="form-text">Días hacia atrás desde hoy al ejecutar automáticamente.</div>
+        </div>
+
+        <div class="col-12">
+          <button type="submit" class="btn btn-info text-white fw-semibold">
+            <i class="bi bi-save me-1"></i>Guardar configuración de schedule
+          </button>
+          <% unless defined?(Sidekiq::Cron::Job) %>
+            <span class="text-muted small ms-3">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              <code>sidekiq-cron</code> no está instalado — agrega <code>gem "sidekiq-cron"</code>
+              al Gemfile y ejecuta <code>bundle install</code> para activar esta función.
+            </span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+</div><%# cierre data-controller %>

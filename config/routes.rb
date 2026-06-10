@@ -155,6 +155,13 @@ Rails.application.routes.draw do
   patch "profile", to: "profiles#update"
 
   # --- INVENTARIO DE SALAS ---
+  # ── Configuración de sincronización ──────────────────────────────────────
+  get   "inventory/sync_config",                          to: "inventory_sync_configs#show",            as: :inventory_sync_config
+  patch "inventory/sync_config/prefixes/:showroom_id",    to: "inventory_sync_configs#update_prefixes", as: :inventory_sync_config_prefixes
+  post  "inventory/sync_config/test_classify",            to: "inventory_sync_configs#test_classify",   as: :inventory_sync_config_test_classify, defaults: { format: :json }
+  patch "inventory/sync_config/defaults",                 to: "inventory_sync_configs#update_defaults", as: :inventory_sync_config_defaults
+  patch "inventory/sync_config/schedule",                 to: "inventory_sync_configs#update_schedule", as: :inventory_sync_config_schedule
+
   get "inventory",                    to: "inventories#index",          as: :inventory
   post "inventory/sync",             to: "inventories#sync",           as: :sync_inventory
   get  "inventory/movements",        to: "inventories#movements_log",  as: :inventory_movements_log

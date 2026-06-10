@@ -12,8 +12,9 @@ class InventoriesController < ApplicationController
     @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
     @flagged_count = InventoryMovement.flagged.count
 
-    @from = params[:from] || Date.current.beginning_of_week.to_s
-    @to   = params[:to]   || Date.current.end_of_week.to_s
+    sync_config = InventorySyncConfig.current
+    @from = params[:from] || sync_config.default_from_date.to_s
+    @to   = params[:to]   || sync_config.default_to_date.to_s
   end
 
   def sync
