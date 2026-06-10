@@ -15,6 +15,7 @@ class InventoryExitsController < ApplicationController
   def create
     @showrooms    = Showroom.active.order(is_main: :desc, name: :asc)
     @products     = Product.where(active: true).order(:name)
+    @families     = Family.order(:name)
     @showroom_id  = params[:showroom_id]
     @order_number = params[:order_number]
 
