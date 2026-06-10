@@ -28,7 +28,10 @@
   <div class="card border-0 shadow-sm">
     <div class="card-body">
       <%= form_with url: sync_inventory_path, method: :post, class: "row g-3 align-items-end",
-            data: { controller: "loading-button" } do |f| %>
+            data: {
+              controller: "loading-button",
+              action: "turbo:submit-start->loading-button#submit"
+            } do |f| %>
         <div class="col-md-4">
           <label class="form-label fw-semibold small">Desde</label>
           <input type="date" name="from" value="<%= @from %>" class="form-control shadow-sm">
@@ -40,8 +43,7 @@
         <div class="col-md-4">
           <button type="submit" class="btn btn-primary w-100"
                   data-turbo-confirm="¿Iniciar sincronización de inventario para este rango?"
-                  data-loading-button-target="button"
-                  data-action="click->loading-button#submit">
+                  data-loading-button-target="button">
             <i class="bi bi-cloud-download me-1"></i>Iniciar sincronización
           </button>
         </div>
