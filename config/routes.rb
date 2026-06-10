@@ -155,10 +155,14 @@ Rails.application.routes.draw do
   patch "profile", to: "profiles#update"
 
   # --- INVENTARIO DE SALAS ---
-  get "inventory", to: "inventories#index", as: :inventory
-  post "inventory/sync", to: "inventories#sync", as: :sync_inventory
-  get "inventory/initial_stock/new", to: "inventories#new_initial_stock", as: :new_inventory_initial_stock
-  post "inventory/initial_stock", to: "inventories#create_initial_stock", as: :inventory_initial_stock
+  get "inventory",                    to: "inventories#index",          as: :inventory
+  post "inventory/sync",             to: "inventories#sync",           as: :sync_inventory
+  get  "inventory/movements",        to: "inventories#movements_log",  as: :inventory_movements_log
+  get  "inventory/sala/:showroom_id", to: "inventories#showroom_stock", as: :inventory_showroom_stock
+  get  "inventory/initial_stock/new",          to: "inventories#new_initial_stock",      as: :new_inventory_initial_stock
+  post "inventory/initial_stock/quick_product", to: "inventories#quick_create_product",  as: :inventory_quick_create_product,
+       defaults: { format: :json }
+  post "inventory/initial_stock",               to: "inventories#create_initial_stock",  as: :inventory_initial_stock
 
   resources :inventory_syncs, only: %i[show destroy] do
     member do

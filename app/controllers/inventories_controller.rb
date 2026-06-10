@@ -25,21 +25,108 @@ class InventoriesController < ApplicationController
   end
 
   def new_initial_stock
-    @movement  = InventoryMovement.new(movement_type: "initial", source: "manual", delivery_date: Date.current)
     @products  = Product.where(active: true).order(:name)
     @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
+    @families  = Family.order(:name)
   end
 
   def create_initial_stock
-    @movement = InventoryMovement.new(
-      initial_stock_params.merge(movement_type: "initial", source: "manual", status: "resolved")
-    )
-    if @movement.save
-      redirect_to inventory_path, notice: "Stock inicial cargado correctamente."
+    showroom_id    = params[:showroom_id].presence
+    reference_date = params[:delivery_date].presence || Date.current.to_s
+    notes          = params[:notes].presence
+    items          = parse_initial_stock_items
+
+    unless showroom_id
+      return redirect_to new_inventory_initial_stock_path, alert: "Debes seleccionar una sala."
+    end
+    if items.empty?
+      return redirect_to new_inventory_initial_stock_path, alert: "Agrega al menos un producto con cantidad."
+    end
+
+    saved  = []
+    errors = []
+
+    items.each do |item|
+      m = InventoryMovement.new(
+        movement_type: "initial",
+        source:        "manual",
+        status:        "resolved",
+        showroom_id:   showroom_id,
+        product_id:    item[:product_id],
+        quantity:      item[:quantity],
+        delivery_date: reference_date,
+        notes:         notes
+      )
+      if m.save
+        saved << m
+      else
+        label = Product.find_by(id: item[:product_id])&.name || "ítem"
+        errors << "#{label}: #{m.errors.full_messages.join(', ')}"
+      end
+    end
+
+    flash[:alert] = "Algunos ítems no se guardaron: #{errors.join('; ')}" if errors.any?
+
+    if saved.any?
+      redirect_to inventory_path, notice: "#{saved.size} producto(s) de stock inicial cargados."
     else
-      @products  = Product.where(active: true).order(:name)
-      @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
-      render :new_initial_stock, status: :unprocessable_entity
+      redirect_to new_inventory_initial_stock_path, alert: "No se guardó ningún ítem."
+    end
+  end
+
+  def showroom_stock
+    @showroom  = Showroom.find(params[:showroom_id])
+    @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
+
+    raw = InventoryMovement
+      .confirmed_only
+      .resolved
+      .where.not(product_id: nil)
+      .where(showroom_id: @showroom.id)
+      .group(:product_id, :movement_type)
+      .sum(:quantity)
+
+    @stock = Hash.new(0)
+    raw.each do |(product_id, movement_type), qty|
+      @stock[product_id] += movement_type.in?(%w[entry initial]) ? qty : -qty
+    end
+    @stock.reject! { |_, qty| qty.zero? }
+
+    @products = Product.where(id: @stock.keys).order(:name).index_by(&:id)
+  end
+
+  def movements_log
+    scope = InventoryMovement
+      .confirmed_only
+      .resolved
+      .includes(:product, :showroom, :inventory_sync)
+      .order(delivery_date: :desc, created_at: :desc)
+
+    scope = scope.where(showroom_id: params[:showroom_id])   if params[:showroom_id].present?
+    scope = scope.where(product_id: params[:product_id])     if params[:product_id].present?
+    scope = scope.where(movement_type: params[:movement_type]) if params[:movement_type].present?
+    scope = scope.where("delivery_date >= ?", params[:from]) if params[:from].present?
+    scope = scope.where("delivery_date <= ?", params[:to])   if params[:to].present?
+
+    @movements = scope.limit(300)
+    @showrooms = Showroom.active.order(:name)
+    @products  = Product.where(active: true).order(:name)
+
+    @filter = {
+      showroom_id:   params[:showroom_id],
+      product_id:    params[:product_id],
+      movement_type: params[:movement_type],
+      from:          params[:from],
+      to:            params[:to]
+    }
+  end
+
+  def quick_create_product
+    product = Product.new(quick_product_params.merge(active: true))
+    if product.save
+      render json: { id: product.id, name: product.name }
+    else
+      render json: { error: product.errors.full_messages.first }, status: :unprocessable_entity
     end
   end
 
@@ -70,7 +157,14 @@ class InventoriesController < ApplicationController
     [stock, product_ids]
   end
 
-  def initial_stock_params
-    params.require(:inventory_movement).permit(:product_id, :showroom_id, :quantity, :delivery_date, :notes)
+  def parse_initial_stock_items
+    return [] unless params[:items].is_a?(ActionController::Parameters)
+    params[:items].values
+      .map { |i| i.permit(:product_id, :quantity).to_h.symbolize_keys }
+      .reject { |i| i[:product_id].blank? || i[:quantity].blank? }
+  end
+
+  def quick_product_params
+    params.require(:product).permit(:name, :base_code, :family_id)
   end
 end

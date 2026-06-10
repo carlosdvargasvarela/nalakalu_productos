@@ -2,10 +2,10 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "body", "row", "orderInput", "showroomSelect",
-    "productSelect", "newProductName", "newProductCode", "newProductFamily", "quickCreateError"
+    "body", "row", "productSelect",
+    "newProductName", "newProductCode", "newProductFamily", "quickCreateError"
   ]
-  static values = { newUrl: String, quickCreateUrl: String }
+  static values = { quickCreateUrl: String }
 
   connect() {
     this.#updateRemoveButtons()
@@ -19,11 +19,8 @@ export default class extends Controller {
 
     template.querySelectorAll("input, select, textarea").forEach(el => {
       el.name = el.name.replace(/items\[\d+\]/, `items[${index}]`)
-      if (el.tagName === "SELECT") {
-        el.selectedIndex = 0
-      } else {
-        el.value = ""
-      }
+      if (el.tagName === "SELECT") el.selectedIndex = 0
+      else el.value = ""
     })
 
     this.bodyTarget.appendChild(template)
@@ -33,24 +30,14 @@ export default class extends Controller {
   removeRow(event) {
     event.preventDefault()
     if (this.rowTargets.length <= 1) return
-    event.target.closest("[data-inventory-exit-form-target='row']").remove()
+    event.target.closest("[data-initial-stock-form-target='row']").remove()
     this.#reindex()
     this.#updateRemoveButtons()
   }
 
-  consultOrder(event) {
-    event.preventDefault()
-    const orderNumber = this.hasOrderInputTarget ? this.orderInputTarget.value : ""
-    const showroomId  = this.hasShowroomSelectTarget ? this.showroomSelectTarget.value : ""
-    const base        = new URL(this.newUrlValue, window.location.origin)
-    if (orderNumber) base.searchParams.set("order_number", orderNumber)
-    if (showroomId)  base.searchParams.set("showroom_id", showroomId)
-    window.location.href = base.toString()
-  }
-
   openQuickCreate(event) {
     event.preventDefault()
-    const row = event.target.closest("[data-inventory-exit-form-target='row']")
+    const row = event.target.closest("[data-initial-stock-form-target='row']")
     this._targetRowIndex = row ? this.rowTargets.indexOf(row) : null
 
     this.newProductNameTarget.value = ""
@@ -92,12 +79,14 @@ export default class extends Controller {
       const data = await resp.json()
 
       if (resp.ok) {
+        // Add new option to every product select in the table
         this.productSelectTargets.forEach(sel => {
           sel.appendChild(new Option(data.name, data.id))
         })
+        // Auto-select in the row that triggered the modal
         if (this._targetRowIndex !== null) {
           const sel = this.rowTargets[this._targetRowIndex]
-            ?.querySelector("[data-inventory-exit-form-target='productSelect']")
+            ?.querySelector("[data-initial-stock-form-target='productSelect']")
           if (sel) sel.value = data.id
         }
         bootstrap.Modal.getInstance(

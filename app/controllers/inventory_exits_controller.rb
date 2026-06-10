@@ -7,6 +7,7 @@ class InventoryExitsController < ApplicationController
     @order_number = params[:order_number]
     @showrooms    = Showroom.active.order(is_main: :desc, name: :asc)
     @products     = Product.where(active: true).order(:name)
+    @families     = Family.order(:name)
     @items        = [{ product_id: nil, quantity: nil, notes: nil }]
     load_delivery_preview
   end
