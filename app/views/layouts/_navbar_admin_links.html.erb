@@ -57,12 +57,18 @@
     <li><span class="dropdown-header small text-uppercase opacity-50">Proveeduría</span></li>
     <li>
       <%= link_to inventory_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'inventories' || controller_name == 'inventory_syncs'}" do %>
+          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name.in?(%w[inventories inventory_syncs inventory_exits inventory_alerts])}" do %>
         <span><i class="bi bi-boxes me-2"></i>Inventario de Salas</span>
         <% pending_inv = InventorySync.pending.count %>
         <% if pending_inv > 0 %>
           <span class="badge bg-warning text-dark small"><%= pending_inv %></span>
         <% end %>
+      <% end %>
+    </li>
+    <li>
+      <%= link_to showrooms_path,
+          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'showrooms'}" do %>
+        <span><i class="bi bi-shop me-2"></i>Administración de Salas</span>
       <% end %>
     </li>
     <li>

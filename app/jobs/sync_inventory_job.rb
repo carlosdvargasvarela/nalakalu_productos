@@ -9,9 +9,8 @@ class SyncInventoryJob < ApplicationJob
       synced_at: Time.current
     )
 
-    cursor = LogisticsSyncCursor.current
     deliveries = LogisticsApiClient.new.fetch_updated_deliveries(
-      since: cursor.last_synced_at, from: from, to: to
+      since: nil, from: from, to: to
     )
 
     movements = InventoryResolver.resolve_deliveries(deliveries, sync)
@@ -21,8 +20,6 @@ class SyncInventoryJob < ApplicationJob
       movements_count:      movements.size,
       unresolved_count:     movements.count { |m| m.status == "unresolved" }
     )
-
-    cursor.advance_to!(deliveries.filter_map { |d| d["updated_at"] }.max)
 
     Rails.logger.info(
       "[SyncInventoryJob] sync=#{sync.id} from=#{from} to=#{to} " \
