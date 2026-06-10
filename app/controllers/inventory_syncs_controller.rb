@@ -1,6 +1,6 @@
 class InventorySyncsController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_sala_admin!
   before_action :set_sync, only: %i[show confirm destroy bulk_ignore]
 
   def show

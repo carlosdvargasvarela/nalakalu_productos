@@ -1,7 +1,7 @@
 # app/controllers/showrooms_controller.rb
 class ShowroomsController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_sala_admin!
   before_action :set_showroom, only: %i[edit update destroy]
 
   def index

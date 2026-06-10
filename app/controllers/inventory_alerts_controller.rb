@@ -1,7 +1,7 @@
 # app/controllers/inventory_alerts_controller.rb
 class InventoryAlertsController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_sala_admin!
   before_action :set_alert, only: [:resolve]
 
   def index

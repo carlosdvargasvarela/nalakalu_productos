@@ -1,6 +1,6 @@
 class InventoriesController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_sala_admin!
 
   def index
     @pending_syncs = InventorySync.pending.ordered

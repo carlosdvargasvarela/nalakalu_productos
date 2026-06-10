@@ -6,7 +6,13 @@ class ApplicationController < ActionController::Base
   layout :layout_by_resource
 
   def authorize_admin!
-    unless current_user&.role == "admin"
+    unless current_user&.admin?
+      redirect_to root_path, alert: "No tienes permisos para realizar esta acción."
+    end
+  end
+
+  def authorize_sala_admin!
+    unless current_user&.sala_admin?
       redirect_to root_path, alert: "No tienes permisos para realizar esta acción."
     end
   end

@@ -12,8 +12,10 @@
       <ul class="navbar-nav me-auto gap-1">
         <%# Generar Código es visible para todos %>
         <%= render "layouts/navbar_seller_links" %>
-        <% if user_signed_in? && current_user.role == "admin" %>
+        <% if user_signed_in? && current_user.admin? %>
           <%= render "layouts/navbar_admin_links" %>
+        <% elsif user_signed_in? && current_user.showroom_admin? %>
+          <%= render "layouts/navbar_showroom_admin_links" %>
         <% end %>
       </ul>
       <div class="d-flex align-items-center gap-2">

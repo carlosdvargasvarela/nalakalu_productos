@@ -13,7 +13,7 @@ escazu:
   code: SE
   is_main: false
   active: true
-  order_number_prefixes: '["2","3"]'
+  order_number_prefixes: '[]'
   order_number_keywords: '[]'
   inter_sala_keywords: '[]'
   product_keywords: '[]'
@@ -23,7 +23,7 @@ guanacaste:
   code: SG
   is_main: false
   active: true
-  order_number_prefixes: '["2","3"]'
+  order_number_prefixes: '[]'
   order_number_keywords: '[]'
   inter_sala_keywords: '[]'
   product_keywords: '[]'

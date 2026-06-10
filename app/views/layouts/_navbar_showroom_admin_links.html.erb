@@ -1,0 +1,44 @@
+<li class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+     href="#" role="button" data-bs-toggle="dropdown">
+    <i class="bi bi-boxes text-info"></i>
+    <span>Inventario de Salas</span>
+  </a>
+  <ul class="dropdown-menu dropdown-menu-dark border-0 shadow-lg" style="min-width: 240px;">
+    <li><span class="dropdown-header small text-uppercase opacity-50">Inventario</span></li>
+    <li>
+      <%= link_to inventory_path,
+          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name.in?(%w[inventories inventory_syncs])}" do %>
+        <span><i class="bi bi-boxes me-2"></i>Stock por Sala</span>
+        <% pending_inv = InventorySync.pending.count %>
+        <% if pending_inv > 0 %>
+          <span class="badge bg-warning text-dark small"><%= pending_inv %></span>
+        <% end %>
+      <% end %>
+    </li>
+    <li>
+      <%= link_to new_inventory_exit_path,
+          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'inventory_exits'}" do %>
+        <i class="bi bi-box-arrow-up me-2"></i>Registrar Salidas
+      <% end %>
+    </li>
+    <li>
+      <%= link_to inventory_alerts_path,
+          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'inventory_alerts'}" do %>
+        <span><i class="bi bi-exclamation-triangle me-2"></i>Alertas</span>
+        <% flagged = InventoryMovement.flagged.count %>
+        <% if flagged > 0 %>
+          <span class="badge bg-danger small"><%= flagged %></span>
+        <% end %>
+      <% end %>
+    </li>
+    <li><hr class="dropdown-divider opacity-25"></li>
+    <li><span class="dropdown-header small text-uppercase opacity-50">Configuración</span></li>
+    <li>
+      <%= link_to showrooms_path,
+          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'showrooms'}" do %>
+        <i class="bi bi-shop me-2"></i>Administración de Salas
+      <% end %>
+    </li>
+  </ul>
+</li>

@@ -35,14 +35,16 @@ class InventoryClassifier
     end
   end
 
-  # Rule 2: main-sala restock — independent of Rule 1.
-  # If order_number starts with any of the is_main showroom's configured prefixes,
-  # generate an entry toward that sala.
+  # Rule 2: prefix-based restock — independent of Rule 1.
+  # For every active showroom whose order_number_prefixes_array includes a prefix
+  # that matches the current order_number, generate an entry toward that showroom.
+  # This covers both main-showroom restocks and non-main inter-sala transfers
+  # whose order numbers start with a configured prefix (e.g. "2-", "3-").
   def add_main_restock_results(items, results)
-    main = main_showroom
-    return unless main && restock_order?(main)
-
-    items.each { |item| results << Result.new(type: "entry", showroom: main, item: item) }
+    showrooms_by_code.each_value do |showroom|
+      next unless restock_order?(showroom)
+      items.each { |item| results << Result.new(type: "entry", showroom: showroom, item: item) }
+    end
   end
 
   def matching_showroom(showroom_data)

@@ -5,7 +5,7 @@ class User < ApplicationRecord
     :omniauthable, omniauth_providers: [:microsoft_graph]
 
   # 2. Constantes y Validaciones
-  ROLES = %w[admin seller].freeze
+  ROLES = %w[admin showroom_admin seller].freeze
   validates :role, inclusion: {in: ROLES}
 
   # 3. Métodos de Clase (Static methods)
@@ -27,6 +27,14 @@ class User < ApplicationRecord
   # 4. Métodos de Instancia Públicos
   def admin?
     role == "admin"
+  end
+
+  def showroom_admin?
+    role == "showroom_admin"
+  end
+
+  def sala_admin?
+    admin? || showroom_admin?
   end
 
   # Devuelve un token válido, renovándolo automáticamente si es necesario
