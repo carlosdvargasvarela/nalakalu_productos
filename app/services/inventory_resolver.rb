@@ -45,6 +45,7 @@ class InventoryResolver
         delivery_date:    delivery["delivery_date"],
         order_number:     delivery["order_number"],
         client_name:      delivery.dig("client", "name"),
+        delivery_status:  delivery["status"],
         product_name_raw: item["product_name"],
         quantity:         item["quantity_delivered"].to_f,
         source:           "synced",

@@ -14,6 +14,7 @@ class InventorySyncsController < ApplicationController
     @stat_unassigned  = all_movements.count { |m| m.status == "unresolved" && m.product_id.nil? }
     @stat_ignored     = all_movements.count { |m| m.status == "ignored" }
     @products_for_select = Product.where(active: true).order(:name)
+    @families = Family.order(:name)
   end
 
   def confirm_matched

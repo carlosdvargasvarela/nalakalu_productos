@@ -1,3 +1,6 @@
+<div data-controller="sync-review"
+     data-sync-review-quick-create-url-value="<%= inventory_quick_create_product_path %>">
+
 <%# ── HEADER ──────────────────────────────────────────────────────────────── %>
 <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
   <div>
@@ -104,11 +107,20 @@
 
 <%# ── GRUPOS DE MOVIMIENTOS ───────────────────────────────────────────────── %>
 <% @movement_groups.each do |order_number, movements| %>
-  <% exits   = movements.select { |m| m.movement_type == "exit" } %>
-  <% entries = movements.select { |m| m.movement_type == "entry" } %>
-  <% is_transfer = exits.any? && entries.any? %>
-  <% group_date = movements.first&.delivery_date %>
-  <% pending_count = movements.count { |m| m.status == "unresolved" } %>
+  <% exits            = movements.select { |m| m.movement_type == "exit" } %>
+  <% entries          = movements.select { |m| m.movement_type == "entry" } %>
+  <% is_transfer      = exits.any? && entries.any? %>
+  <% group_date       = movements.first&.delivery_date %>
+  <% pending_count    = movements.count { |m| m.status == "unresolved" } %>
+  <% client_name      = movements.first&.client_name %>
+  <% delivery_status  = movements.first&.delivery_status %>
+  <% delivery_badge   = case delivery_status&.downcase
+      when /entregad|delivered/   then "bg-success"
+      when /cancelad|cancelled/   then "bg-danger"
+      when /parcial|partial/      then "bg-warning text-dark"
+      when /transit|en_ruta/      then "bg-info text-dark"
+      else                             "bg-secondary"
+     end %>
 
   <div class="card border-0 shadow-sm mb-3">
     <%# ── Cabecera del grupo ──────────────────────────────────────── %>
@@ -139,7 +151,15 @@
         <span class="text-muted small">
           <%= group_date&.strftime("%d/%m/%Y") %>
           &middot; <code class="small"><%= order_number %></code>
+          <% if client_name.present? %>
+            &middot; <i class="bi bi-person me-1"></i><%= client_name %>
+          <% end %>
         </span>
+        <% if delivery_status.present? %>
+          <span class="badge <%= delivery_badge %> ms-1">
+            <i class="bi bi-truck me-1"></i><%= delivery_status %>
+          </span>
+        <% end %>
       </div>
       <% if pending_count > 0 %>
         <span class="badge bg-warning text-dark">
@@ -160,7 +180,7 @@
             <th>Tipo</th>
             <% if is_transfer %><th>Sala</th><% end %>
             <th class="text-center">Cant.</th>
-            <th style="min-width: 260px">Producto a confirmar</th>
+            <th style="min-width: 300px">Producto a confirmar</th>
             <th></th>
           </tr>
         </thead>
@@ -195,11 +215,18 @@
                   </span>
                 <% else %>
                   <%= form_with url: inventory_movement_path(m), method: :patch,
-                        class: "d-flex gap-2 align-items-center" do |f| %>
+                        class: "d-flex gap-1 align-items-center" do |f| %>
                     <%= select_tag "inventory_movement[product_id]",
                           options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
-                          include_blank: "— Seleccionar producto —",
-                          class: "form-select form-select-sm" %>
+                          include_blank: "— Seleccionar —",
+                          class: "form-select form-select-sm",
+                          data: { "sync-review-target": "productSelect" } %>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary text-nowrap"
+                            title="Crear producto nuevo"
+                            data-action="click->sync-review#openQuickCreate">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
                     <button type="submit"
                             class="btn btn-sm <%= m.product_id.present? ? 'btn-primary' : 'btn-success' %> text-nowrap">
                       <i class="bi bi-check-lg"></i>
@@ -232,3 +259,56 @@
     Esta sincronización no tiene movimientos registrados.
   </div>
 <% end %>
+
+<%# ── MODAL: CREAR PRODUCTO RÁPIDO ───────────────────────────────────────── %>
+<div class="modal fade" id="quickCreateProductModal" tabindex="-1"
+     aria-labelledby="quickCreateProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="quickCreateProductModalLabel">
+          <i class="bi bi-plus-circle me-2 text-primary"></i>Nuevo producto
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger d-none small py-2"
+             data-sync-review-target="quickCreateError"></div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            Nombre <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="form-control"
+                 placeholder="Ej: Sofá 3 plazas gris"
+                 data-sync-review-target="newProductName">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            Código base <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="form-control font-monospace"
+                 placeholder="Ej: SOF-3P-GR"
+                 data-sync-review-target="newProductCode">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Familia</label>
+          <select class="form-select" data-sync-review-target="newProductFamily">
+            <option value="">— Sin familia —</option>
+            <% @families.each do |f| %>
+              <option value="<%= f.id %>"><%= f.name %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary"
+                data-action="click->sync-review#submitQuickCreate">
+          <i class="bi bi-check-lg me-1"></i>Crear y seleccionar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><%# cierre data-controller="sync-review" %>

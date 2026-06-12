@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_10_000001) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_10_000002) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -75,8 +75,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_10_000001) do
     t.integer "showroom_id"
     t.string "source", default: "synced", null: false
     t.string "flag"
+    t.string "delivery_status"
     t.index ["delivery_id"], name: "index_inventory_movements_on_delivery_id"
     t.index ["delivery_item_id", "movement_type", "showroom_id"], name: "index_inventory_movements_unique_item", unique: true, where: "delivery_item_id IS NOT NULL"
+    t.index ["delivery_status"], name: "index_inventory_movements_on_delivery_status"
     t.index ["flag"], name: "index_inventory_movements_on_flag"
     t.index ["inventory_sync_id"], name: "index_inventory_movements_on_inventory_sync_id"
     t.index ["movement_type"], name: "index_inventory_movements_on_movement_type"
