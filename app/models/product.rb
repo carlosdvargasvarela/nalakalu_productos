@@ -15,6 +15,13 @@ class Product < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :base_code, presence: true
 
+  after_create_commit -> {
+    broadcast_append_to "products",
+      target: "products_live_source",
+      partial: "products/option",
+      locals: { product: self }
+  }
+
   after_commit :bust_decoder_cache
 
   # --------- Helpers de variantes ----------

@@ -1,3 +1,10 @@
+<%# Suscripción Turbo Stream — distribuye nuevos productos a todos los selects de la página %>
+<div data-controller="products-live">
+  <%= turbo_stream_from "products" %>
+  <select id="products_live_source" class="d-none" aria-hidden="true"
+          data-products-live-target="source"></select>
+</div>
+
 <div data-controller="sync-review"
      data-sync-review-quick-create-url-value="<%= inventory_quick_create_product_path %>">
 
@@ -319,7 +326,7 @@
                         options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
                         include_blank: "— Seleccionar —",
                         class: "form-select form-select-sm",
-                        data: { "sync-review-target": "productSelect" } %>
+                        data: { "sync-review-target": "productSelect", "product-select": "true" } %>
                   <button type="button"
                           class="btn btn-sm btn-outline-secondary text-nowrap"
                           title="Crear producto nuevo"

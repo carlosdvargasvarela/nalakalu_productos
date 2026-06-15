@@ -1,4 +1,11 @@
 <%# app/views/inventory_exits/new.html.erb %>
+<%# Suscripción Turbo Stream — distribuye nuevos productos a todos los selects de la página %>
+<div data-controller="products-live">
+  <%= turbo_stream_from "products" %>
+  <select id="products_live_source" class="d-none" aria-hidden="true"
+          data-products-live-target="source"></select>
+</div>
+
 <div data-controller="inventory-exit-form"
      data-inventory-exit-form-new-url-value="<%= new_inventory_exit_path %>"
      data-inventory-exit-form-quick-create-url-value="<%= inventory_quick_create_product_path %>">
@@ -111,7 +118,8 @@
                                 ),
                                 include_blank: "— Selecciona —",
                                 class: "form-select form-select-sm",
-                                "data-inventory-exit-form-target": "productSelect" %>
+                                "data-inventory-exit-form-target": "productSelect",
+                                "data-product-select": "true" %>
                           <button type="button"
                                   class="btn btn-sm btn-outline-secondary text-nowrap"
                                   title="Crear producto nuevo"

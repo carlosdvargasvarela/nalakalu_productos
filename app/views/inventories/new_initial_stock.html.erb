@@ -12,6 +12,13 @@
 </div>
 
 <%# ── FORMULARIO PRINCIPAL ────────────────────────────────────────────────── %>
+<%# Suscripción Turbo Stream — distribuye nuevos productos a todos los selects de la página %>
+<div data-controller="products-live">
+  <%= turbo_stream_from "products" %>
+  <select id="products_live_source" class="d-none" aria-hidden="true"
+          data-products-live-target="source"></select>
+</div>
+
 <div data-controller="initial-stock-form"
      data-initial-stock-form-quick-create-url-value="<%= inventory_quick_create_product_path %>">
 
@@ -73,7 +80,8 @@
                       options_for_select(@products.map { |p| [p.name, p.id] }),
                       include_blank: "— Seleccionar producto —",
                       class: "form-select form-select-sm",
-                      "data-initial-stock-form-target": "productSelect" %>
+                      "data-initial-stock-form-target": "productSelect",
+                      "data-product-select": "true" %>
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary text-nowrap"
                         title="Crear producto nuevo"
