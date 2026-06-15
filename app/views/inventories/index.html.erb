@@ -15,7 +15,7 @@
       <i class="bi bi-box-arrow-up me-1"></i>Registrar salida
     <% end %>
     <%= link_to inventory_alerts_path, class: "btn btn-outline-warning" do %>
-      <i class="bi bi-exclamation-triangle me-1"></i>Alertas de inventario
+      <i class="bi bi-exclamation-triangle me-1"></i>Alertas
       <% if @flagged_count > 0 %>
         <span class="badge rounded-pill bg-danger ms-1"><%= @flagged_count %></span>
       <% end %>
@@ -77,8 +77,20 @@
 
 <%# ── TABLA DE STOCK ──────────────────────────────────────────────────────── %>
 <div class="card border-0 shadow-sm mb-5">
-  <div class="card-header bg-white py-3">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <h5 class="mb-0 fw-bold"><i class="bi bi-table me-2"></i>Stock actual por sala</h5>
+    <% if @products.any? %>
+      <div class="input-group input-group-sm" style="max-width: 260px;">
+        <span class="input-group-text bg-white border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" id="stock-search" class="form-control border-start-0 ps-0"
+               placeholder="Buscar producto…" autocomplete="off">
+        <button class="btn btn-outline-secondary" type="button" onclick="clearStockSearch()" title="Limpiar">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    <% end %>
   </div>
   <div class="card-body p-0">
     <% if @products.empty? %>
@@ -87,8 +99,12 @@
         Sin movimientos confirmados aún. Sincroniza y confirma un lote para ver el stock.
       </div>
     <% else %>
+      <div id="no-results-stock" class="text-center text-muted py-4 d-none">
+        <i class="bi bi-search fs-2 d-block mb-2"></i>
+        Sin productos que coincidan con la búsqueda.
+      </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0" id="stock-table">
           <thead class="table-light">
             <tr>
               <th>Producto</th>
@@ -101,9 +117,9 @@
               <th class="text-center fw-bold">Total</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="stock-tbody">
             <% @products.each_value do |product| %>
-              <tr>
+              <tr data-product-name="<%= product.name.downcase %>">
                 <td class="fw-semibold">
                   <a href="#" class="text-decoration-none"
                      data-bs-toggle="modal"
@@ -177,8 +193,9 @@
   </div>
 <% end %>
 
-<%# Modal historial de movimientos %>
-<div class="modal fade" id="productHistoryModal" tabindex="-1" aria-hidden="true">
+<%# ── MODAL HISTORIAL ────────────────────────────────────────────────────── %>
+<div class="modal fade" id="productHistoryModal" tabindex="-1" aria-hidden="true"
+     data-controller="product-history">
   <div class="modal-dialog modal-lg">
     <div class="modal-content border-0 shadow">
       <div id="productHistoryContent">
@@ -191,14 +208,44 @@
 </div>
 
 <script>
-  document.getElementById("productHistoryModal").addEventListener("show.bs.modal", function(event) {
-    const link = event.relatedTarget
-    const productId = link.dataset.productId
-    const content = document.getElementById("productHistoryContent")
-    content.innerHTML = '<div class="modal-body text-center py-5 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Cargando historial...</div>'
-    fetch(`/inventory/product/${productId}/movements`, { headers: { Accept: "text/html" } })
-      .then(r => r.text())
-      .then(html => content.innerHTML = html)
-      .catch(() => content.innerHTML = '<div class="modal-body text-danger">Error al cargar el historial.</div>')
-  })
+  (function () {
+    <%# Búsqueda en tabla de stock %>
+    const searchInput = document.getElementById("stock-search")
+    const noResults   = document.getElementById("no-results-stock")
+
+    if (searchInput) {
+      searchInput.addEventListener("input", filterStock)
+    }
+
+    function filterStock() {
+      const term = searchInput.value.toLowerCase().trim()
+      const rows = document.querySelectorAll("#stock-tbody tr")
+      let visible = 0
+      rows.forEach(row => {
+        const match = !term || row.dataset.productName.includes(term)
+        row.style.display = match ? "" : "none"
+        if (match) visible++
+      })
+      if (noResults) noResults.classList.toggle("d-none", visible > 0)
+    }
+
+    window.clearStockSearch = function () {
+      if (searchInput) { searchInput.value = ""; filterStock() }
+    }
+
+    <%# Modal historial de movimientos %>
+    const historyModal = document.getElementById("productHistoryModal")
+    if (historyModal) {
+      historyModal.addEventListener("show.bs.modal", function (event) {
+        const link      = event.relatedTarget
+        const productId = link.dataset.productId
+        const content   = document.getElementById("productHistoryContent")
+        content.innerHTML = '<div class="modal-body text-center py-5 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Cargando historial...</div>'
+        fetch(`/inventory/product/${productId}/movements`, { headers: { Accept: "text/html" } })
+          .then(r => r.text())
+          .then(html => content.innerHTML = html)
+          .catch(() => content.innerHTML = '<div class="modal-body text-danger">Error al cargar el historial.</div>')
+      })
+    }
+  })()
 </script>

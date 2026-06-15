@@ -122,6 +122,16 @@ class InventoriesController < ApplicationController
     }
   end
 
+  def bulk_destroy_movements
+    ids = Array(params[:ids]).map(&:to_i).reject(&:zero?)
+    return redirect_to inventory_movements_log_path, alert: "No seleccionaste ningún movimiento." if ids.empty?
+
+    movements = InventoryMovement.where(id: ids, source: "manual")
+    count = movements.count
+    movements.destroy_all
+    redirect_to inventory_movements_log_path, notice: "#{count} movimiento(s) eliminado(s)."
+  end
+
   def quick_create_product
     product = Product.new(quick_product_params.merge(active: true))
     if product.save

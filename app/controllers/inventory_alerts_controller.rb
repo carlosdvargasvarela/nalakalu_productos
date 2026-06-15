@@ -10,6 +10,21 @@ class InventoryAlertsController < ApplicationController
       .order(created_at: :desc)
   end
 
+  def bulk_resolve
+    ids = Array(params[:ids]).map(&:to_i).reject(&:zero?)
+    return redirect_to inventory_alerts_path, alert: "No seleccionaste ninguna alerta." if ids.empty?
+
+    alerts = InventoryMovement.flagged.where(id: ids)
+    count = 0
+    alerts.each do |a|
+      note = "[Resolución masiva #{Date.current.strftime('%d/%m/%Y')}]"
+      full_notes = [a.notes.presence, note].compact.join("\n\n")
+      a.update_columns(flag: nil, notes: full_notes)
+      count += 1
+    end
+    redirect_to inventory_alerts_path, notice: "#{count} alerta(s) resueltas."
+  end
+
   def resolve
     note = build_resolution_note
     adjustment = create_adjustment! if create_adjustment?

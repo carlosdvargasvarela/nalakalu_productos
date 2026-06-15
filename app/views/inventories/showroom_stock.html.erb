@@ -45,6 +45,22 @@
 
 <%# ── TABLA DE STOCK ──────────────────────────────────────────────────────── %>
 <div class="card border-0 shadow-sm">
+  <% if @products.any? %>
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold"><i class="bi bi-table me-2 text-muted"></i>Productos en sala</h5>
+      <div class="input-group input-group-sm" style="max-width: 240px;">
+        <span class="input-group-text bg-white border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" id="showroom-search" class="form-control border-start-0 ps-0"
+               placeholder="Buscar producto…" autocomplete="off">
+        <button class="btn btn-outline-secondary" type="button"
+                onclick="document.getElementById('showroom-search').value='';filterShowroom()" title="Limpiar">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    </div>
+  <% end %>
   <div class="card-body p-0">
     <% if @products.empty? %>
       <div class="text-center text-muted py-5">
@@ -52,6 +68,10 @@
         Sin stock confirmado para esta sala. Carga stock inicial o confirma una sincronización.
       </div>
     <% else %>
+      <div id="no-results-showroom" class="text-center text-muted py-4 d-none">
+        <i class="bi bi-search fs-2 d-block mb-2"></i>
+        Sin productos que coincidan con la búsqueda.
+      </div>
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
@@ -59,10 +79,10 @@
             <th class="text-center" style="width:120px;">Stock actual</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="showroom-tbody">
           <% @products.values.each do |product| %>
             <% qty = @stock[product.id] || 0 %>
-            <tr>
+            <tr data-product-name="<%= product.name.downcase %>">
               <td class="fw-semibold"><%= product.name %></td>
               <td class="text-center">
                 <% if qty > 0 %>
@@ -90,3 +110,26 @@
     <% end %>
   </div>
 </div>
+
+<% if @products.any? %>
+  <script>
+    (function () {
+      const input    = document.getElementById("showroom-search")
+      const noResult = document.getElementById("no-results-showroom")
+
+      window.filterShowroom = function () {
+        const term = input.value.toLowerCase().trim()
+        const rows = document.querySelectorAll("#showroom-tbody tr")
+        let visible = 0
+        rows.forEach(row => {
+          const match = !term || row.dataset.productName.includes(term)
+          row.style.display = match ? "" : "none"
+          if (match) visible++
+        })
+        if (noResult) noResult.classList.toggle("d-none", visible > 0)
+      }
+
+      input.addEventListener("input", filterShowroom)
+    })()
+  </script>
+<% end %>

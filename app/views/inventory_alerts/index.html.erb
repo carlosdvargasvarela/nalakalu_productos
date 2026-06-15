@@ -14,11 +14,32 @@
     <i class="bi bi-check-circle me-2"></i>No hay alertas de inventario pendientes.
   </div>
 <% else %>
+
+  <%# ── BARRA BULK (siempre visible, botón deshabilitado si no hay selección) ── %>
+  <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-warning-subtle border border-warning-subtle rounded-3">
+    <div class="form-check mb-0">
+      <input class="form-check-input" type="checkbox" id="select-all-alerts">
+      <label class="form-check-label fw-semibold small" for="select-all-alerts">Seleccionar todo</label>
+    </div>
+    <span class="text-muted small">
+      <span id="alert-bulk-count">0</span> seleccionada(s)
+    </span>
+    <form id="bulk-resolve-form" action="<%= bulk_resolve_inventory_alerts_path %>" method="post" class="mb-0">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <button type="button" id="bulk-resolve-btn" class="btn btn-sm btn-warning" disabled
+              onclick="submitBulkAlerts()">
+        <i class="bi bi-check-all me-1"></i>Resolver seleccionadas
+      </button>
+    </form>
+    <span class="text-muted small fst-italic">Solo marca como resueltas (sin ajuste de stock)</span>
+  </div>
+
   <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
       <table class="table align-middle mb-0">
         <thead class="table-light">
           <tr>
+            <th style="width:40px;"></th>
             <th>Producto</th>
             <th>Sala</th>
             <th class="text-center">Cant.</th>
@@ -31,6 +52,10 @@
         <tbody>
           <% @alerts.each do |alert| %>
             <tr>
+              <td>
+                <input class="form-check-input alert-cb" type="checkbox"
+                       value="<%= alert.id %>" aria-label="Seleccionar alerta <%= alert.id %>">
+              </td>
               <td class="fw-semibold"><%= alert.product&.name || alert.product_name_raw %></td>
               <td><span class="badge bg-secondary"><%= alert.showroom&.name || "—" %></span></td>
               <td class="text-center"><%= alert.quantity %></td>
@@ -45,7 +70,7 @@
               </td>
             </tr>
             <tr class="collapse" id="resolve-<%= alert.id %>">
-              <td colspan="7" class="bg-light">
+              <td colspan="8" class="bg-light">
                 <%= form_with url: resolve_inventory_alert_path(alert), method: :patch, class: "row g-2 align-items-end py-2" do |f| %>
                   <div class="col-md-3">
                     <div class="form-check">
@@ -71,4 +96,43 @@
       </table>
     </div>
   </div>
+
+  <script>
+    (function () {
+      const allCbs      = () => [...document.querySelectorAll(".alert-cb")]
+      const selectAll   = document.getElementById("select-all-alerts")
+      const resolveBtn  = document.getElementById("bulk-resolve-btn")
+      const countEl     = document.getElementById("alert-bulk-count")
+
+      function update() {
+        const checked = allCbs().filter(cb => cb.checked)
+        countEl.textContent = checked.length
+        resolveBtn.disabled = checked.length === 0
+        selectAll.checked       = checked.length === allCbs().length && allCbs().length > 0
+        selectAll.indeterminate = checked.length > 0 && checked.length < allCbs().length
+      }
+
+      selectAll.addEventListener("change", function () {
+        allCbs().forEach(cb => cb.checked = this.checked)
+        update()
+      })
+
+      document.addEventListener("change", function (e) {
+        if (e.target.matches(".alert-cb")) update()
+      })
+
+      window.submitBulkAlerts = function () {
+        const ids  = allCbs().filter(cb => cb.checked).map(cb => cb.value)
+        if (!ids.length) return
+        const form = document.getElementById("bulk-resolve-form")
+        form.querySelectorAll("input[name='ids[]']").forEach(el => el.remove())
+        ids.forEach(id => {
+          const inp = document.createElement("input")
+          inp.type = "hidden"; inp.name = "ids[]"; inp.value = id
+          form.appendChild(inp)
+        })
+        form.submit()
+      }
+    })()
+  </script>
 <% end %>

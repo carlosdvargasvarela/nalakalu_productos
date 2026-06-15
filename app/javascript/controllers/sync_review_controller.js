@@ -1,12 +1,78 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["productSelect", "newProductName", "newProductCode", "newProductFamily", "quickCreateError"]
+  static targets = [
+    "productSelect", "newProductName", "newProductCode", "newProductFamily", "quickCreateError",
+    "movementRow", "orderGroup", "bulkCount", "bulkIgnoreBtn", "selectAllUnresolved"
+  ]
   static values = { quickCreateUrl: String }
 
   connect() {
-    this._targetSelect = null
+    this._targetSelect  = null
+    this._activeFilter  = "all"
+    this._searchTerm    = ""
+    this.#applyFilters()
   }
+
+  // ── Tabs de filtro ───────────────────────────────────────────────────────────
+
+  setFilter(event) {
+    this._activeFilter = event.currentTarget.dataset.status
+    this.element.querySelectorAll("[data-action*='setFilter']").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.status === this._activeFilter)
+    })
+    this.#applyFilters()
+  }
+
+  // ── Búsqueda ─────────────────────────────────────────────────────────────────
+
+  search(event) {
+    this._searchTerm = event.target.value.toLowerCase().trim()
+    this.#applyFilters()
+  }
+
+  clearSearch(event) {
+    const input = this.element.querySelector("[data-action*='search']")
+    if (input) { input.value = ""; this._searchTerm = "" }
+    this.#applyFilters()
+  }
+
+  // ── Bulk checkboxes ──────────────────────────────────────────────────────────
+
+  toggleSelectAll(event) {
+    const checked = event.target.checked
+    this.movementRowTargets
+      .filter(row => (row.dataset.status === "suggested" || row.dataset.status === "unassigned") &&
+                     row.style.display !== "none")
+      .forEach(row => {
+        const cb = row.querySelector(".ignore-cb")
+        if (cb) cb.checked = checked
+      })
+    this.#updateBulkCount()
+  }
+
+  checkboxChanged() {
+    this.#updateBulkCount()
+    this.#syncSelectAll()
+  }
+
+  submitBulkIgnore(event) {
+    event.preventDefault()
+    const ids = [...document.querySelectorAll(".ignore-cb:checked")].map(cb => cb.value)
+    if (!ids.length) return
+    const form = document.getElementById("bulk-ignore-form")
+    form.querySelectorAll("input[name='movement_ids[]']").forEach(el => el.remove())
+    ids.forEach(id => {
+      const inp = document.createElement("input")
+      inp.type = "hidden"
+      inp.name = "movement_ids[]"
+      inp.value = id
+      form.appendChild(inp)
+    })
+    form.submit()
+  }
+
+  // ── Quick-create producto ────────────────────────────────────────────────────
 
   openQuickCreate(event) {
     event.preventDefault()
@@ -57,9 +123,7 @@ export default class extends Controller {
         this.productSelectTargets.forEach(sel => {
           sel.appendChild(new Option(data.name, data.id))
         })
-        if (this._targetSelect) {
-          this._targetSelect.value = data.id
-        }
+        if (this._targetSelect) this._targetSelect.value = data.id
         bootstrap.Modal.getInstance(
           document.getElementById("quickCreateProductModal")
         ).hide()
@@ -69,6 +133,53 @@ export default class extends Controller {
     } catch {
       this.#showQuickCreateError("Error de red. Intenta de nuevo.")
     }
+  }
+
+  // ── Privado ──────────────────────────────────────────────────────────────────
+
+  #applyFilters() {
+    this.movementRowTargets.forEach(row => {
+      const statusMatch = this.#statusMatch(row.dataset.status)
+      const text        = row.textContent.toLowerCase()
+      const searchMatch = !this._searchTerm || text.includes(this._searchTerm)
+      row.style.display = statusMatch && searchMatch ? "" : "none"
+    })
+
+    this.orderGroupTargets.forEach(group => {
+      const rows       = group.querySelectorAll("[data-sync-review-target='movementRow']")
+      const anyVisible = [...rows].some(r => r.style.display !== "none")
+      group.style.display = anyVisible ? "" : "none"
+    })
+
+    this.#updateBulkCount()
+    this.#syncSelectAll()
+  }
+
+  #statusMatch(status) {
+    switch (this._activeFilter) {
+      case "all":        return true
+      case "pending":    return status === "unassigned" || status === "suggested"
+      case "unassigned": return status === "unassigned"
+      case "suggested":  return status === "suggested"
+      case "resolved":   return status === "resolved"
+      case "ignored":    return status === "ignored"
+      default:           return true
+    }
+  }
+
+  #updateBulkCount() {
+    const count = document.querySelectorAll(".ignore-cb:checked").length
+    if (this.hasBulkCountTarget)    this.bulkCountTarget.textContent = count > 0 ? count : ""
+    if (this.hasBulkIgnoreBtnTarget) this.bulkIgnoreBtnTarget.disabled = count === 0
+  }
+
+  #syncSelectAll() {
+    if (!this.hasSelectAllUnresolvedTarget) return
+    const allCbs = [...document.querySelectorAll(".ignore-cb")]
+      .filter(cb => cb.closest("tr")?.style.display !== "none")
+    const checkedCount = allCbs.filter(cb => cb.checked).length
+    this.selectAllUnresolvedTarget.checked       = checkedCount === allCbs.length && allCbs.length > 0
+    this.selectAllUnresolvedTarget.indeterminate = checkedCount > 0 && checkedCount < allCbs.length
   }
 
   #showQuickCreateError(msg) {

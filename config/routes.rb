@@ -164,7 +164,8 @@ Rails.application.routes.draw do
 
   get "inventory",                    to: "inventories#index",          as: :inventory
   post "inventory/sync",             to: "inventories#sync",           as: :sync_inventory
-  get  "inventory/movements",        to: "inventories#movements_log",  as: :inventory_movements_log
+  get    "inventory/movements",        to: "inventories#movements_log",     as: :inventory_movements_log
+  delete "inventory/movements/bulk",   to: "inventories#bulk_destroy_movements", as: :bulk_destroy_inventory_movements
   get  "inventory/sala/:showroom_id", to: "inventories#showroom_stock", as: :inventory_showroom_stock
   get  "inventory/initial_stock/new",          to: "inventories#new_initial_stock",      as: :new_inventory_initial_stock
   post "inventory/initial_stock/quick_product", to: "inventories#quick_create_product",  as: :inventory_quick_create_product,
@@ -186,6 +187,7 @@ Rails.application.routes.draw do
 
   resources :inventory_alerts, only: [:index] do
     member { patch :resolve }
+    collection { post :bulk_resolve }
   end
 
   get "inventory/product/:product_id/movements", to: "inventories#product_movements", as: :inventory_product_movements
