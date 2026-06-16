@@ -155,42 +155,45 @@ Rails.application.routes.draw do
   patch "profile", to: "profiles#update"
 
   # --- INVENTARIO DE SALAS ---
-  # ── Configuración de sincronización ──────────────────────────────────────
-  get   "inventory/sync_config",                          to: "inventory_sync_configs#show",            as: :inventory_sync_config
-  patch "inventory/sync_config/prefixes/:showroom_id",    to: "inventory_sync_configs#update_prefixes", as: :inventory_sync_config_prefixes
-  post  "inventory/sync_config/test_classify",            to: "inventory_sync_configs#test_classify",   as: :inventory_sync_config_test_classify, defaults: { format: :json }
-  patch "inventory/sync_config/defaults",                 to: "inventory_sync_configs#update_defaults", as: :inventory_sync_config_defaults
-  patch "inventory/sync_config/schedule",                 to: "inventory_sync_configs#update_schedule", as: :inventory_sync_config_schedule
+  scope "inventory", module: "inventory" do
+    get  "",             to: "dashboard#index",            as: :inventory
+    post "sync",         to: "dashboard#sync",             as: :sync_inventory
+    get  "product/:product_id/movements", to: "dashboard#product_movements", as: :inventory_product_movements
 
-  get "inventory",                    to: "inventories#index",          as: :inventory
-  post "inventory/sync",             to: "inventories#sync",           as: :sync_inventory
-  get    "inventory/movements",        to: "inventories#movements_log",     as: :inventory_movements_log
-  delete "inventory/movements/bulk",   to: "inventories#bulk_destroy_movements", as: :bulk_destroy_inventory_movements
-  get  "inventory/sala/:showroom_id", to: "inventories#showroom_stock", as: :inventory_showroom_stock
-  get  "inventory/initial_stock/new",          to: "inventories#new_initial_stock",      as: :new_inventory_initial_stock
-  post "inventory/initial_stock/quick_product", to: "inventories#quick_create_product",  as: :inventory_quick_create_product,
-       defaults: { format: :json }
-  post "inventory/initial_stock",               to: "inventories#create_initial_stock",  as: :inventory_initial_stock
+    get    "movements",       to: "movements#index",        as: :inventory_movements_log
+    delete "movements/bulk",  to: "movements#bulk_destroy", as: :bulk_destroy_inventory_movements
 
-  resources :inventory_syncs, only: %i[show destroy] do
-    member do
-      patch :confirm
-      post :bulk_ignore
-      patch :confirm_matched
+    get "sala/:showroom_id",  to: "stock#showroom",         as: :inventory_showroom_stock
+
+    get  "initial_stock/new",           to: "initial_stock#new",           as: :new_inventory_initial_stock
+    post "initial_stock/quick_product", to: "initial_stock#quick_product", as: :inventory_quick_create_product,
+         defaults: { format: :json }
+    post "initial_stock",               to: "initial_stock#create",        as: :inventory_initial_stock
+
+    get  "exits/new",  to: "exits#new",    as: :new_inventory_exit
+    post "exits",      to: "exits#create", as: :inventory_exits
+
+    resources :syncs, only: %i[show destroy], as: :inventory_sync do
+      member do
+        patch :confirm
+        post  :bulk_ignore
+        patch :confirm_matched
+      end
     end
+
+    patch "movements/:id", to: "movement_items#update", as: :inventory_movement
+
+    get  "alerts",                to: "alerts#index",        as: :inventory_alerts
+    post "alerts/bulk_resolve",   to: "alerts#bulk_resolve", as: :bulk_resolve_inventory_alerts
+    patch "alerts/:id/resolve",   to: "alerts#resolve",      as: :resolve_inventory_alert
+
+    get   "sync_config",                       to: "config#show",            as: :inventory_sync_config
+    patch "sync_config/prefixes/:showroom_id", to: "config#update_prefixes", as: :inventory_sync_config_prefixes
+    post  "sync_config/test_classify",         to: "config#test_classify",   as: :inventory_sync_config_test_classify,
+          defaults: { format: :json }
+    patch "sync_config/defaults",              to: "config#update_defaults", as: :inventory_sync_config_defaults
+    patch "sync_config/schedule",              to: "config#update_schedule", as: :inventory_sync_config_schedule
   end
-
-  resources :inventory_movements, only: [:update]
-
-  get  "inventory/exits/new", to: "inventory_exits#new",    as: :new_inventory_exit
-  post "inventory/exits",     to: "inventory_exits#create", as: :inventory_exits
-
-  resources :inventory_alerts, only: [:index] do
-    member { patch :resolve }
-    collection { post :bulk_resolve }
-  end
-
-  get "inventory/product/:product_id/movements", to: "inventories#product_movements", as: :inventory_product_movements
 
   # --- RECOMENDACIONES ---
   resources :recommendations, only: %i[new create index] do

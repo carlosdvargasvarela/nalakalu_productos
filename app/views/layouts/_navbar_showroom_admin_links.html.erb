@@ -8,7 +8,7 @@
     <li><span class="dropdown-header small text-uppercase opacity-50">Inventario</span></li>
     <li>
       <%= link_to inventory_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name.in?(%w[inventories inventory_syncs])}" do %>
+          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if params[:controller].to_s.start_with?('inventory/')}" do %>
         <span><i class="bi bi-boxes me-2"></i>Stock por Sala</span>
         <% pending_inv = InventorySync.pending.count %>
         <% if pending_inv > 0 %>
@@ -18,13 +18,13 @@
     </li>
     <li>
       <%= link_to new_inventory_exit_path,
-          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'inventory_exits'}" do %>
+          class: "dropdown-item d-flex align-items-center #{'active' if params[:controller] == 'inventory/exits'}" do %>
         <i class="bi bi-box-arrow-up me-2"></i>Registrar Salidas
       <% end %>
     </li>
     <li>
       <%= link_to inventory_alerts_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'inventory_alerts'}" do %>
+          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if params[:controller] == 'inventory/alerts'}" do %>
         <span><i class="bi bi-exclamation-triangle me-2"></i>Alertas</span>
         <% flagged = InventoryMovement.flagged.count %>
         <% if flagged > 0 %>

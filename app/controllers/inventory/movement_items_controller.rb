@@ -1,6 +1,4 @@
-class InventoryMovementsController < ApplicationController
-  before_action :authenticate_user!
-  before_action :authorize_sala_admin!
+class Inventory::MovementItemsController < Inventory::BaseController
   before_action :set_movement
 
   def update
@@ -16,7 +14,6 @@ class InventoryMovementsController < ApplicationController
         flash[:alert] = "Debes seleccionar un producto."
       end
     end
-
     redirect_to inventory_sync_path(@movement.inventory_sync)
   end
 

@@ -1,96 +1,79 @@
-<%# Suscripción Turbo Stream — distribuye nuevos productos a todos los selects de la página %>
+<div data-controller="sync-review"
+     data-sync-review-quick-create-url-value="<%= inventory_quick_create_product_path %>">
+
+<%# Turbo Stream %>
 <div data-controller="products-live">
   <%= turbo_stream_from "products" %>
   <select id="products_live_source" class="d-none" aria-hidden="true"
           data-products-live-target="source"></select>
 </div>
 
-<div data-controller="sync-review"
-     data-sync-review-quick-create-url-value="<%= inventory_quick_create_product_path %>">
-
-<%# ── HEADER ──────────────────────────────────────────────────────────────── %>
+<%# ── HEADER ── %>
 <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
   <div>
-    <h1 class="fw-bold mb-1">
-      <i class="bi bi-arrow-repeat me-2 text-primary"></i>Revisión de Sincronización
-    </h1>
-    <p class="text-muted mb-0">
-      Rango: <strong><%= @sync.from_date.strftime("%d/%m/%Y") %></strong> –
-      <strong><%= @sync.to_date.strftime("%d/%m/%Y") %></strong>
-      &nbsp;·&nbsp; <%= @sync.deliveries_processed %> entregas procesadas
-      &nbsp;·&nbsp; <strong><%= @sync.movements_count %></strong> movimientos detectados
+    <nav aria-label="breadcrumb" class="mb-1">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><%= link_to "Inventario", inventory_path %></li>
+        <li class="breadcrumb-item active">Revisión de sincronización</li>
+      </ol>
+    </nav>
+    <h1 class="fw-bold mb-0 fs-4"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Revisión de sincronización</h1>
+    <p class="text-muted small mb-0">
+      <%= @sync.from_date.strftime("%d/%m/%Y") %> – <%= @sync.to_date.strftime("%d/%m/%Y") %>
+      &nbsp;·&nbsp; <%= @sync.deliveries_processed %> entregas
+      &nbsp;·&nbsp; <strong><%= @sync.movements_count %></strong> movimientos
     </p>
   </div>
   <div class="d-flex gap-2 flex-wrap">
-    <%= link_to inventory_path, class: "btn btn-outline-secondary btn-sm" do %>
-      <i class="bi bi-arrow-left me-1"></i>Volver
-    <% end %>
     <% if @sync.confirmable? %>
       <%= button_to confirm_inventory_sync_path(@sync), method: :patch,
-            class: "btn btn-success",
-            data: { turbo_confirm: "¿Confirmar esta sincronización? Los movimientos afectarán el stock en tiempo real." } do %>
-        <i class="bi bi-check-circle me-1"></i>Confirmar y aplicar al inventario
+            class: "btn btn-success fw-semibold",
+            data: { turbo_confirm: "¿Confirmar esta sincronización? Los movimientos afectarán el stock." } do %>
+        <i class="bi bi-check-circle me-1"></i>Confirmar y aplicar
       <% end %>
     <% else %>
-      <button class="btn btn-success" disabled title="Resuelve todos los ítems pendientes primero">
+      <button class="btn btn-success fw-semibold" disabled title="Resuelve todos los ítems pendientes primero">
         <i class="bi bi-check-circle me-1"></i>Confirmar
       </button>
     <% end %>
     <%= button_to inventory_sync_path(@sync), method: :delete,
           class: "btn btn-outline-danger btn-sm",
-          data: { turbo_confirm: "¿Eliminar esta sincronización? Se perderán todos los movimientos del lote." } do %>
+          data: { turbo_confirm: "¿Eliminar esta sincronización? Se perderán todos los movimientos." } do %>
       <i class="bi bi-trash me-1"></i>Eliminar
     <% end %>
   </div>
 </div>
 
-<%# ── RESUMEN DE ESTADOS ──────────────────────────────────────────────────── %>
+<%# ── KPI CARDS ── %>
 <div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <div class="card border-0 text-center shadow-sm h-100 <%= @stat_confirmed > 0 ? 'bg-success-subtle' : 'bg-light' %>">
-      <div class="card-body py-3">
-        <div class="fs-2 fw-bold <%= @stat_confirmed > 0 ? 'text-success' : 'text-muted' %>"><%= @stat_confirmed %></div>
-        <div class="small fw-semibold <%= @stat_confirmed > 0 ? 'text-success-emphasis' : 'text-muted' %>">
-          <i class="bi bi-check-circle me-1"></i>Confirmados
+  <% [
+    [@stat_confirmed,  "Confirmados",  "bi-check-circle-fill", "success"],
+    [@stat_suggested,  "Sugeridos",    "bi-lightbulb-fill",    "info"],
+    [@stat_unassigned, "Sin asignar",  "bi-question-circle",   "warning"],
+    [@stat_ignored,    "Ignorados",    "bi-eye-slash",         "secondary"],
+  ].each do |count, label, icon, color| %>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-3">
+          <div class="rounded-3 bg-<%= color %> bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width:38px;height:38px;">
+            <i class="bi <%= icon %> text-<%= color %>"></i>
+          </div>
+          <div>
+            <div class="fs-4 fw-bold lh-1 mb-1 <%= count > 0 ? "text-#{color}-emphasis" : "text-muted" %>">
+              <%= count %>
+            </div>
+            <div class="text-muted small"><%= label %></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card border-0 text-center shadow-sm h-100 <%= @stat_suggested > 0 ? 'bg-info-subtle' : 'bg-light' %>">
-      <div class="card-body py-3">
-        <div class="fs-2 fw-bold <%= @stat_suggested > 0 ? 'text-info-emphasis' : 'text-muted' %>"><%= @stat_suggested %></div>
-        <div class="small fw-semibold <%= @stat_suggested > 0 ? 'text-info-emphasis' : 'text-muted' %>">
-          <i class="bi bi-lightbulb me-1"></i>Sugeridos
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card border-0 text-center shadow-sm h-100 <%= @stat_unassigned > 0 ? 'bg-warning-subtle' : 'bg-light' %>">
-      <div class="card-body py-3">
-        <div class="fs-2 fw-bold <%= @stat_unassigned > 0 ? 'text-warning-emphasis' : 'text-muted' %>"><%= @stat_unassigned %></div>
-        <div class="small fw-semibold <%= @stat_unassigned > 0 ? 'text-warning-emphasis' : 'text-muted' %>">
-          <i class="bi bi-question-circle me-1"></i>Sin asignar
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card border-0 text-center shadow-sm h-100 bg-light">
-      <div class="card-body py-3">
-        <div class="fs-2 fw-bold text-muted"><%= @stat_ignored %></div>
-        <div class="small fw-semibold text-muted">
-          <i class="bi bi-eye-slash me-1"></i>Ignorados
-        </div>
-      </div>
-    </div>
-  </div>
+  <% end %>
 </div>
 
-<%# ── ALERTA: CONFIRMAR SUGERIDOS EN LOTE ────────────────────────────────── %>
+<%# ── ALERTA: CONFIRMAR SUGERIDOS EN LOTE ── %>
 <% if @stat_suggested > 0 %>
-  <div class="alert alert-info d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="alert alert-info border-0 shadow-sm mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <i class="bi bi-lightbulb-fill me-2"></i>
       <strong><%= @stat_suggested %> movimiento(s)</strong> tienen producto detectado automáticamente.
@@ -103,18 +86,16 @@
   </div>
 <% end %>
 
-<%# ── ALERTA: TODO LISTO ───────────────────────────────────────────────────── %>
 <% if @sync.confirmable? %>
-  <div class="alert alert-success mb-4">
+  <div class="alert alert-success border-0 shadow-sm mb-4">
     <i class="bi bi-check-circle-fill me-2"></i>
-    Todos los movimientos están revisados. Puedes confirmar la sincronización y aplicarla al inventario.
+    Todos los movimientos están revisados. Puedes confirmar la sincronización.
   </div>
 <% end %>
 
-<%# ── BARRA DE FILTROS + BÚSQUEDA ────────────────────────────────────────── %>
+<%# ── FILTROS + BÚSQUEDA ── %>
 <% pending_count = @stat_suggested + @stat_unassigned %>
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-  <%# Tabs de filtro %>
   <div class="btn-group btn-group-sm" role="group">
     <button type="button" class="btn btn-outline-secondary active"
             data-action="click->sync-review#setFilter" data-status="all">
@@ -151,50 +132,38 @@
       </button>
     <% end %>
   </div>
-
-  <%# Búsqueda %>
-  <div class="input-group input-group-sm" style="max-width:300px;">
+  <div class="input-group input-group-sm" style="max-width:280px;">
     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
     <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar pedido o producto…"
            data-action="input->sync-review#search">
     <button class="btn btn-outline-secondary" type="button"
-            data-action="click->sync-review#clearSearch" title="Limpiar">
-      <i class="bi bi-x"></i>
-    </button>
+            data-action="click->sync-review#clearSearch"><i class="bi bi-x"></i></button>
   </div>
 </div>
 
-<%# ── BARRA BULK IGNORE ───────────────────────────────────────────────────── %>
+<%# ── BULK IGNORE ── %>
 <% if pending_count > 0 %>
-  <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light border rounded-3">
+  <div class="d-flex align-items-center gap-3 mb-3 px-3 py-2 bg-white border rounded-3 shadow-sm">
     <div class="form-check mb-0">
       <input class="form-check-input" type="checkbox" id="select-all-unresolved"
              data-sync-review-target="selectAllUnresolved"
              data-action="change->sync-review#toggleSelectAll">
-      <label class="form-check-label fw-semibold small" for="select-all-unresolved">
-        Seleccionar pendientes visibles
-      </label>
+      <label class="form-check-label small fw-semibold" for="select-all-unresolved">Seleccionar pendientes visibles</label>
     </div>
-    <span class="text-muted small">
-      <span data-sync-review-target="bulkCount"></span>
-      seleccionado(s)
-    </span>
+    <span class="text-muted small"><span data-sync-review-target="bulkCount"></span> seleccionado(s)</span>
     <button type="button" class="btn btn-sm btn-outline-secondary"
             data-sync-review-target="bulkIgnoreBtn"
             data-action="click->sync-review#submitBulkIgnore"
-            data-turbo-confirm="¿Ignorar los movimientos seleccionados? No afectarán el inventario."
-            disabled>
+            data-turbo-confirm="¿Ignorar los movimientos seleccionados?" disabled>
       <i class="bi bi-eye-slash me-1"></i>Ignorar seleccionados
     </button>
-
-    <%# Form oculto para bulk_ignore — IDs inyectados por JS %>
     <form id="bulk-ignore-form" action="<%= bulk_ignore_inventory_sync_path(@sync) %>" method="post" class="mb-0">
       <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
     </form>
   </div>
 <% end %>
 
-<%# ── GRUPOS DE MOVIMIENTOS ───────────────────────────────────────────────── %>
+<%# ── GRUPOS DE MOVIMIENTOS ── %>
 <% @movement_groups.each do |order_number, movements| %>
   <% exits           = movements.select { |m| m.movement_type == "exit" } %>
   <% entries         = movements.select { |m| m.movement_type == "entry" } %>
@@ -211,30 +180,28 @@
       else                            "bg-secondary"
      end %>
 
-  <div class="card border-0 shadow-sm mb-3"
-       data-sync-review-target="orderGroup">
-    <%# Cabecera del grupo %>
+  <div class="card border-0 shadow-sm mb-3" data-sync-review-target="orderGroup">
     <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2
                 <%= is_transfer ? 'bg-primary-subtle' : (entries.any? ? 'bg-success-subtle' : 'bg-danger-subtle') %>">
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <% if is_transfer %>
-          <i class="bi bi-arrow-left-right fs-5 text-primary"></i>
-          <strong class="text-primary-emphasis">Transferencia entre salas</strong>
-          <span class="badge bg-primary"><%= exits.first&.showroom&.name || "?" %></span>
-          <i class="bi bi-arrow-right text-primary"></i>
-          <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+          <i class="bi bi-arrow-left-right text-primary"></i>
+          <strong class="text-primary-emphasis small">Transferencia</strong>
+          <span class="badge bg-primary small"><%= exits.first&.showroom&.name || "?" %></span>
+          <i class="bi bi-arrow-right text-primary small"></i>
+          <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle small">
             <%= entries.first&.showroom&.name || "?" %>
           </span>
         <% elsif entries.any? %>
-          <i class="bi bi-arrow-down-circle fs-5 text-success"></i>
-          <strong class="text-success-emphasis">Entrada</strong>
-          <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+          <i class="bi bi-arrow-down-circle text-success"></i>
+          <strong class="text-success-emphasis small">Entrada</strong>
+          <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle small">
             <%= entries.first&.showroom&.name || "?" %>
           </span>
         <% else %>
-          <i class="bi bi-arrow-up-circle fs-5 text-danger"></i>
-          <strong class="text-danger-emphasis">Salida</strong>
-          <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">
+          <i class="bi bi-arrow-up-circle text-danger"></i>
+          <strong class="text-danger-emphasis small">Salida</strong>
+          <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle small">
             <%= exits.first&.showroom&.name || "?" %>
           </span>
         <% end %>
@@ -246,32 +213,25 @@
           <% end %>
         </span>
         <% if delivery_status.present? %>
-          <span class="badge <%= delivery_badge %> ms-1">
-            <i class="bi bi-truck me-1"></i><%= delivery_status %>
-          </span>
+          <span class="badge <%= delivery_badge %> small"><i class="bi bi-truck me-1"></i><%= delivery_status %></span>
         <% end %>
       </div>
       <% if pending_in_group > 0 %>
-        <span class="badge bg-warning text-dark">
-          <i class="bi bi-clock me-1"></i><%= pending_in_group %> pendiente(s)
-        </span>
+        <span class="badge bg-warning text-dark small"><i class="bi bi-clock me-1"></i><%= pending_in_group %> pendiente(s)</span>
       <% else %>
-        <span class="badge bg-success">
-          <i class="bi bi-check-lg me-1"></i>Completo
-        </span>
+        <span class="badge bg-success small"><i class="bi bi-check-lg me-1"></i>Completo</span>
       <% end %>
     </div>
 
-    <%# Tabla de movimientos del grupo %>
     <table class="table table-sm align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th style="width:36px;"></th>
+          <th style="width:36px;" class="ps-3"></th>
           <th>Nombre recibido</th>
           <th>Tipo</th>
           <% if is_transfer %><th>Sala</th><% end %>
           <th class="text-center">Cant.</th>
-          <th style="min-width: 300px">Producto a confirmar</th>
+          <th style="min-width:280px;">Producto a confirmar</th>
           <th></th>
         </tr>
       </thead>
@@ -293,61 +253,56 @@
           <tr class="<%= row_class %>"
               data-sync-review-target="movementRow"
               data-status="<%= m_status %>">
-            <td>
+            <td class="ps-3">
               <% if m.status == "unresolved" %>
                 <input class="form-check-input ignore-cb" type="checkbox" value="<%= m.id %>"
-                       data-action="change->sync-review#checkboxChanged"
-                       aria-label="Seleccionar movimiento <%= m.id %>">
+                       data-action="change->sync-review#checkboxChanged">
               <% end %>
             </td>
             <td><code class="small text-dark"><%= m.product_name_raw %></code></td>
             <td>
-              <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %>">
+              <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %> small">
                 <%= m.type_label %>
               </span>
             </td>
             <% if is_transfer %>
               <td><small class="text-muted"><%= m.showroom&.name %></small></td>
             <% end %>
-            <td class="text-center fw-semibold"><%= m.quantity %></td>
+            <td class="text-center fw-semibold small"><%= m.quantity %></td>
             <td>
               <% if m.status == "resolved" %>
-                <span class="text-success-emphasis fw-semibold">
+                <span class="text-success-emphasis fw-semibold small">
                   <i class="bi bi-check-circle-fill me-1"></i><%= m.product&.name || "—" %>
                 </span>
               <% elsif m.status == "ignored" %>
                 <span class="text-muted fst-italic small">
-                  <i class="bi bi-eye-slash me-1"></i>Ignorado — no afectará el stock
+                  <i class="bi bi-eye-slash me-1"></i>Ignorado
                 </span>
               <% else %>
                 <%= form_with url: inventory_movement_path(m), method: :patch,
-                      class: "d-flex gap-1 align-items-center" do |f| %>
+                      class: "d-flex gap-1 align-items-center" do %>
                   <%= select_tag "inventory_movement[product_id]",
                         options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
                         include_blank: "— Seleccionar —",
                         class: "form-select form-select-sm",
                         data: { "sync-review-target": "productSelect", "product-select": "true" } %>
-                  <button type="button"
-                          class="btn btn-sm btn-outline-secondary text-nowrap"
-                          title="Crear producto nuevo"
-                          data-action="click->sync-review#openQuickCreate">
+                  <button type="button" class="btn btn-sm btn-outline-secondary"
+                          title="Nuevo producto" data-action="click->sync-review#openQuickCreate">
                     <i class="bi bi-plus-lg"></i>
                   </button>
-                  <button type="submit"
-                          class="btn btn-sm <%= m.product_id.present? ? 'btn-primary' : 'btn-success' %> text-nowrap">
-                    <i class="bi bi-check-lg"></i>
-                    <%= m.product_id.present? ? "Confirmar" : "Asignar" %>
+                  <button type="submit" class="btn btn-sm <%= m.product_id.present? ? 'btn-primary' : 'btn-success' %> text-nowrap">
+                    <i class="bi bi-check-lg"></i> <%= m.product_id.present? ? "Confirmar" : "Asignar" %>
                   </button>
                 <% end %>
               <% end %>
             </td>
-            <td class="text-end">
+            <td>
               <% if m.status == "unresolved" %>
                 <%= button_to inventory_movement_path(m), method: :patch,
                       params: { ignore: true },
                       class: "btn btn-sm btn-outline-secondary",
-                      title: "Ignorar este movimiento",
-                      data: { turbo_confirm: "¿Ignorar este ítem? No afectará el inventario." } do %>
+                      title: "Ignorar",
+                      data: { turbo_confirm: "¿Ignorar este ítem?" } do %>
                   <i class="bi bi-eye-slash"></i>
                 <% end %>
               <% end %>
@@ -360,39 +315,36 @@
 <% end %>
 
 <% if @movement_groups.empty? %>
-  <div class="text-center text-muted py-5">
-    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-    Esta sincronización no tiene movimientos registrados.
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+      <p class="mb-0 fw-semibold text-muted">Esta sincronización no tiene movimientos.</p>
+    </div>
   </div>
 <% end %>
 
-<%# ── MODAL: CREAR PRODUCTO RÁPIDO ───────────────────────────────────────── %>
+<%# ── MODAL CREAR PRODUCTO RÁPIDO ── %>
 <div class="modal fade" id="quickCreateProductModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">
-          <i class="bi bi-plus-circle me-2 text-primary"></i>Nuevo producto
-        </h5>
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2 text-primary"></i>Nuevo producto</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="alert alert-danger d-none small py-2"
-             data-sync-review-target="quickCreateError"></div>
+        <div class="alert alert-danger d-none small py-2" data-sync-review-target="quickCreateError"></div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-          <input type="text" class="form-control"
-                 placeholder="Ej: Sofá 3 plazas gris"
+          <label class="form-label small fw-semibold">Nombre <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" placeholder="Ej: Sofá 3 plazas gris"
                  data-sync-review-target="newProductName">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Código base <span class="text-danger">*</span></label>
-          <input type="text" class="form-control font-monospace"
-                 placeholder="Ej: SOF-3P-GR"
+          <label class="form-label small fw-semibold">Código base <span class="text-danger">*</span></label>
+          <input type="text" class="form-control font-monospace" placeholder="Ej: SOF-3P-GR"
                  data-sync-review-target="newProductCode">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Familia</label>
+          <label class="form-label small fw-semibold">Familia</label>
           <select class="form-select" data-sync-review-target="newProductFamily">
             <option value="">— Sin familia —</option>
             <% @families.each do |f| %>
@@ -401,9 +353,9 @@
           </select>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer border-top">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary"
+        <button type="button" class="btn btn-primary fw-semibold"
                 data-action="click->sync-review#submitQuickCreate">
           <i class="bi bi-check-lg me-1"></i>Crear y seleccionar
         </button>
@@ -412,4 +364,4 @@
   </div>
 </div>
 
-</div><%# cierre data-controller="sync-review" %>
+</div>

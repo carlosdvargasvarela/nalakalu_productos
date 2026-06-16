@@ -1,5 +1,4 @@
-class InventorySyncConfigsController < ApplicationController
-  before_action :authenticate_user!
+class Inventory::ConfigController < Inventory::BaseController
   before_action :authorize_admin!
 
   def show
@@ -11,8 +10,7 @@ class InventorySyncConfigsController < ApplicationController
     @showroom = Showroom.find(params[:showroom_id])
     prefixes  = params[:prefixes].to_s.split(",").map(&:strip).reject(&:blank?)
     @showroom.update!(order_number_prefixes: prefixes)
-    redirect_to inventory_sync_config_path,
-      notice: "Prefijos de #{@showroom.name} actualizados."
+    redirect_to inventory_sync_config_path, notice: "Prefijos de #{@showroom.name} actualizados."
   end
 
   def test_classify
@@ -25,9 +23,7 @@ class InventorySyncConfigsController < ApplicationController
       "destination_showroom" => params[:destination_showroom].present? ? { "code" => params[:destination_showroom] } : nil,
       "items"                => [{ "id" => 0, "product_name" => "Artículo de prueba", "quantity_delivered" => 1 }]
     }
-
     results = InventoryClassifier.classify(delivery)
-
     render json: {
       matched: results.any?,
       order_number: params[:order_number],
@@ -43,8 +39,7 @@ class InventorySyncConfigsController < ApplicationController
   end
 
   def update_schedule
-    config = InventorySyncConfig.current
-    # schedule_enabled viene como "1"/"0" desde un checkbox
+    config  = InventorySyncConfig.current
     enabled = params.dig(:inventory_sync_config, :schedule_enabled) == "1"
     config.update!(schedule_params.merge(schedule_enabled: enabled))
     config.apply_schedule!

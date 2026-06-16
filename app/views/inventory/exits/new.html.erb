@@ -1,0 +1,182 @@
+<%# Turbo Stream %>
+<div data-controller="products-live">
+  <%= turbo_stream_from "products" %>
+  <select id="products_live_source" class="d-none" aria-hidden="true"
+          data-products-live-target="source"></select>
+</div>
+
+<div data-controller="inventory-exit-form"
+     data-inventory-exit-form-new-url-value="<%= new_inventory_exit_path %>"
+     data-inventory-exit-form-quick-create-url-value="<%= inventory_quick_create_product_path %>">
+
+  <%# ── HEADER ── %>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="fw-bold mb-0 fs-4"><i class="bi bi-box-arrow-up me-2 text-danger"></i>Registrar salidas</h1>
+      <p class="text-muted small mb-0">Selecciona la sala y registra todos los productos de una vez.</p>
+    </div>
+  </div>
+
+  <%= form_with url: inventory_exits_path, method: :post do %>
+
+    <% if @errors&.any? %>
+      <div class="alert alert-danger mb-4">
+        <% @errors.each do |err| %>
+          <div><strong>Fila <%= err[:index] + 1 %>:</strong> <%= err[:messages].join(", ") %></div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-gear me-2 text-muted"></i>Parámetros</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label small fw-semibold">Sala de origen <span class="text-danger">*</span></label>
+            <%= select_tag "showroom_id",
+                  options_for_select(@showrooms.map { |s| [s.name, s.id] }, @showroom_id),
+                  include_blank: "— Selecciona una sala —",
+                  class: "form-select", required: true,
+                  data: { "inventory-exit-form-target": "showroomSelect" } %>
+          </div>
+          <div class="col-md-7">
+            <label class="form-label small fw-semibold">
+              Número de pedido
+              <span class="text-muted fw-normal">(opcional)</span>
+            </label>
+            <div class="input-group">
+              <%= text_field_tag "order_number", @order_number, class: "form-control",
+                    placeholder: "Ej: 2-00123",
+                    data: { "inventory-exit-form-target": "orderInput" } %>
+              <button type="button" class="btn btn-outline-primary"
+                      data-action="click->inventory-exit-form#consultOrder">
+                <i class="bi bi-search me-1"></i>Consultar
+              </button>
+            </div>
+            <% if @order_number.present? %>
+              <% if @delivery_preview %>
+                <div class="alert alert-info mt-2 mb-0 small py-2">
+                  <strong>Pedido encontrado</strong> — <%= @delivery_preview.dig("client","name") || "—" %>
+                  · <%= @delivery_preview["delivery_date"] %>
+                  <ul class="mb-0 mt-1">
+                    <% Array(@delivery_preview["items"]).each do |item| %>
+                      <li><%= item["product_name"] %> — <%= item["quantity_delivered"] %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% elsif @delivery_preview_error %>
+                <div class="alert alert-warning mt-2 mb-0 small py-2"><%= @delivery_preview_error %></div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-list-ul me-2 text-muted"></i>Productos a retirar</h6>
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-action="click->inventory-exit-form#addRow">
+          <i class="bi bi-plus-circle me-1"></i>Agregar fila
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3" style="width:50%">Producto <span class="text-danger">*</span></th>
+              <th style="width:15%">Cantidad <span class="text-danger">*</span></th>
+              <th>Notas</th>
+              <th style="width:42px;"></th>
+            </tr>
+          </thead>
+          <tbody data-inventory-exit-form-target="body">
+            <% @items.each_with_index do |item, i| %>
+              <tr data-inventory-exit-form-target="row">
+                <td class="ps-3">
+                  <div class="d-flex gap-2 align-items-center">
+                    <%= select_tag "items[#{i}][product_id]",
+                          options_for_select(@products.map { |p| [p.name, p.id] }, item[:product_id]),
+                          include_blank: "— Selecciona —",
+                          class: "form-select form-select-sm",
+                          "data-inventory-exit-form-target": "productSelect",
+                          "data-product-select": "true" %>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            title="Crear producto" data-action="click->inventory-exit-form#openQuickCreate">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                  </div>
+                </td>
+                <td>
+                  <%= number_field_tag "items[#{i}][quantity]", item[:quantity],
+                        min: 0.01, step: 0.01, class: "form-control form-control-sm",
+                        placeholder: "1" %>
+                </td>
+                <td>
+                  <%= text_field_tag "items[#{i}][notes]", item[:notes],
+                        class: "form-control form-control-sm", placeholder: "Observación" %>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-outline-danger" disabled
+                          data-action="click->inventory-exit-form#removeRow">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-white border-top d-flex justify-content-end gap-2 py-3">
+        <%= hidden_field_tag "delivery_date", Date.current %>
+        <%= link_to "Cancelar", inventory_path, class: "btn btn-outline-secondary" %>
+        <button type="submit" class="btn btn-danger fw-semibold">
+          <i class="bi bi-check2-circle me-1"></i>Registrar salidas
+        </button>
+      </div>
+    </div>
+
+  <% end %>
+
+  <%# ── MODAL CREAR PRODUCTO RÁPIDO ── %>
+  <div class="modal fade" id="quickCreateProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0 bg-danger text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Crear nuevo producto</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-danger d-none" data-inventory-exit-form-target="quickCreateError"></div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" placeholder="Ej: Sofá 3 puestos Oslo"
+                   data-inventory-exit-form-target="newProductName">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Código interno <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" placeholder="Ej: SOF-001"
+                   data-inventory-exit-form-target="newProductCode">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Familia <span class="text-muted fw-normal">(opcional)</span></label>
+            <%= select_tag nil, options_for_select(@families.map { |f| [f.name, f.id] }),
+                  include_blank: "— Sin familia —", class: "form-select",
+                  "data-inventory-exit-form-target": "newProductFamily" %>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger fw-semibold"
+                  data-action="click->inventory-exit-form#submitQuickCreate">
+            <i class="bi bi-check-lg me-1"></i>Crear producto
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

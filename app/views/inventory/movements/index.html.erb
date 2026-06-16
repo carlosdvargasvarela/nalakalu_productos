@@ -1,0 +1,160 @@
+<%# ── HEADER ── %>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+  <div>
+    <h1 class="fw-bold mb-0 fs-4">Movimientos de inventario</h1>
+    <p class="text-muted mb-0 small">
+      <% if @movements.size == 300 %>
+        Mostrando los últimos 300 movimientos.
+        <span class="badge bg-warning text-dark ms-1">Limit 300</span>
+      <% else %>
+        <%= @movements.size %> movimiento(s) encontrado(s).
+      <% end %>
+    </p>
+  </div>
+</div>
+
+<%# ── FILTROS ── %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <%= form_with url: inventory_movements_log_path, method: :get,
+          class: "row g-2 align-items-end" do %>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Sala</label>
+        <%= select_tag :showroom_id,
+              options_for_select([["Todas", ""]] + @showrooms.map { |s| [s.name, s.id] }, @filter["showroom_id"]),
+              class: "form-select form-select-sm" %>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold mb-1">Producto</label>
+        <%= select_tag :product_id,
+              options_for_select([["Todos", ""]] + @products.map { |p| [p.name, p.id] }, @filter["product_id"]),
+              class: "form-select form-select-sm" %>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Tipo</label>
+        <%= select_tag :movement_type,
+              options_for_select(
+                [["Todos", ""], ["Entrada", "entry"], ["Salida", "exit"], ["Stock inicial", "initial"]],
+                @filter["movement_type"]
+              ),
+              class: "form-select form-select-sm" %>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Desde</label>
+        <%= date_field_tag :from, @filter["from"], class: "form-control form-control-sm" %>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Hasta</label>
+        <%= date_field_tag :to, @filter["to"], class: "form-control form-control-sm" %>
+      </div>
+      <div class="col-md-1 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+          <i class="bi bi-search"></i>
+        </button>
+        <% if @filter.values.any?(&:present?) %>
+          <%= link_to inventory_movements_log_path, class: "btn btn-outline-secondary btn-sm", title: "Limpiar" do %>
+            <i class="bi bi-x-lg"></i>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# ── TABLA (con bulk delete) ── %>
+<% manual_ids = @movements.select { |m| m.source == "manual" }.map(&:id) %>
+
+<%= form_with url: bulk_destroy_inventory_movements_path, method: :delete,
+      data: { controller: "bulk-check" } do %>
+
+  <% if manual_ids.any? %>
+    <div class="d-flex align-items-center gap-3 mb-3 px-3 py-2 bg-white border rounded-3 shadow-sm">
+      <div class="form-check mb-0">
+        <input class="form-check-input" type="checkbox" id="select-all-movements"
+               data-bulk-check-target="selectAll"
+               data-action="change->bulk-check#toggleAll">
+        <label class="form-check-label small fw-semibold" for="select-all-movements">Seleccionar todo</label>
+      </div>
+      <span class="text-muted small"><span data-bulk-check-target="countBadge"></span> seleccionado(s)</span>
+      <button type="submit" class="btn btn-sm btn-outline-danger"
+              data-bulk-check-target="bulkButton"
+              data-turbo-confirm="¿Eliminar los movimientos manuales seleccionados? Esta acción no se puede deshacer.">
+        <i class="bi bi-trash me-1"></i>Eliminar seleccionados
+      </button>
+      <span class="text-muted small ms-auto fst-italic">Solo movimientos de origen <strong>manual</strong></span>
+    </div>
+  <% end %>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <% if @movements.empty? %>
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+          <p class="mb-0 fw-semibold">Sin movimientos para los filtros aplicados.</p>
+        </div>
+      <% else %>
+        <div class="table-responsive">
+          <table class="table table-hover table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:38px;" class="ps-3"></th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Sala</th>
+                <th>Producto</th>
+                <th class="text-center">Cant.</th>
+                <th>Origen</th>
+                <th>Pedido</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @movements.each do |m| %>
+                <%
+                  is_manual = m.source == "manual"
+                  row_bg = case m.movement_type
+                    when "entry"   then "table-success"
+                    when "exit"    then "table-danger"
+                    when "initial" then "table-info"
+                  end
+                  badge_class = case m.movement_type
+                    when "entry"   then "bg-success"
+                    when "exit"    then "bg-danger"
+                    when "initial" then "bg-info text-dark"
+                  end
+                %>
+                <tr class="<%= row_bg %>">
+                  <td class="ps-3">
+                    <% if is_manual %>
+                      <input class="form-check-input" type="checkbox"
+                             name="ids[]" value="<%= m.id %>"
+                             data-bulk-check-target="checkbox"
+                             data-action="change->bulk-check#updateBulkButton">
+                    <% end %>
+                  </td>
+                  <td class="small text-nowrap"><%= m.delivery_date&.strftime("%d/%m/%Y") || "—" %></td>
+                  <td><span class="badge <%= badge_class %>"><%= m.type_label %></span></td>
+                  <td class="small"><%= m.showroom&.name || "—" %></td>
+                  <td class="fw-semibold small"><%= m.product&.name || m.product_name_raw || "—" %></td>
+                  <td class="text-center fw-bold"><%= m.quantity.round(2) %></td>
+                  <td>
+                    <span class="badge <%= is_manual ? 'bg-secondary' : 'bg-light text-dark border' %> small">
+                      <%= is_manual ? "Manual" : "Sync" %>
+                    </span>
+                    <% if m.flag == "stock_missing" %>
+                      <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Stock insuficiente"></i>
+                    <% end %>
+                  </td>
+                  <td class="small text-muted"><%= m.order_number&.truncate(18) || "—" %></td>
+                  <td class="small text-muted" style="max-width:160px;">
+                    <span title="<%= m.notes %>"><%= m.notes&.truncate(38) %></span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

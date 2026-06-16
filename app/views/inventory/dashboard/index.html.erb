@@ -1,0 +1,269 @@
+<%# ── HEADER ── %>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+  <div>
+    <h1 class="fw-bold mb-0 fs-4">Stock de inventario</h1>
+    <p class="text-muted mb-0 small">Vista consolidada por sala · solo movimientos confirmados.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#syncForm">
+      <i class="bi bi-arrow-repeat me-1"></i>Sincronizar
+    </button>
+  </div>
+</div>
+
+<%# ── KPI CARDS ── %>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:42px;height:42px;">
+          <i class="bi bi-box-seam text-primary fs-5"></i>
+        </div>
+        <div>
+          <div class="fs-4 fw-bold lh-1 mb-1"><%= @kpi_products %></div>
+          <div class="text-muted small">Productos en stock</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="rounded-3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:42px;height:42px;">
+          <i class="bi bi-stack text-success fs-5"></i>
+        </div>
+        <div>
+          <div class="fs-4 fw-bold lh-1 mb-1"><%= number_with_delimiter(@kpi_units) %></div>
+          <div class="text-muted small">Unidades totales</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <%= link_to(@pending_syncs.first ? inventory_sync_path(@pending_syncs.first) : inventory_path,
+          class: "text-decoration-none") do %>
+      <div class="card border-0 shadow-sm h-100 <%= @pending_syncs.any? ? 'border-warning border' : '' %>"
+           style="<%= @pending_syncs.any? ? 'border-color:#ffc107!important;' : '' %>">
+        <div class="card-body d-flex align-items-center gap-3 py-3">
+          <div class="rounded-3 <%= @pending_syncs.any? ? 'bg-warning' : 'bg-secondary' %> bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width:42px;height:42px;">
+            <i class="bi bi-arrow-repeat <%= @pending_syncs.any? ? 'text-warning' : 'text-muted' %> fs-5"></i>
+          </div>
+          <div>
+            <div class="fs-4 fw-bold lh-1 mb-1 <%= @pending_syncs.any? ? 'text-warning-emphasis' : '' %>">
+              <%= @pending_syncs.size %>
+            </div>
+            <div class="text-muted small">Syncs pendientes</div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <div class="col-6 col-md-3">
+    <%= link_to(@flagged_count > 0 ? inventory_alerts_path : inventory_path,
+          class: "text-decoration-none") do %>
+      <div class="card border-0 shadow-sm h-100 <%= @flagged_count > 0 ? 'border-danger border' : '' %>"
+           style="<%= @flagged_count > 0 ? 'border-color:#dc3545!important;' : '' %>">
+        <div class="card-body d-flex align-items-center gap-3 py-3">
+          <div class="rounded-3 <%= @flagged_count > 0 ? 'bg-danger' : 'bg-secondary' %> bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width:42px;height:42px;">
+            <i class="bi bi-exclamation-triangle <%= @flagged_count > 0 ? 'text-danger' : 'text-muted' %> fs-5"></i>
+          </div>
+          <div>
+            <div class="fs-4 fw-bold lh-1 mb-1 <%= @flagged_count > 0 ? 'text-danger' : '' %>">
+              <%= @flagged_count %>
+            </div>
+            <div class="text-muted small">Alertas activas</div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# ── PANEL SYNC (colapsable) ── %>
+<div class="collapse mb-4" id="syncForm">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3">
+      <h6 class="mb-0 fw-semibold"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Iniciar sincronización manual</h6>
+    </div>
+    <div class="card-body">
+      <%= form_with url: sync_inventory_path, method: :post,
+            class: "row g-3 align-items-end",
+            data: { controller: "loading-button", action: "turbo:submit-start->loading-button#submit" } do %>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Desde</label>
+          <input type="date" name="from" value="<%= @from %>" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Hasta</label>
+          <input type="date" name="to" value="<%= @to %>" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-primary w-100"
+                  data-turbo-confirm="¿Iniciar sincronización de inventario para este rango?"
+                  data-loading-button-target="button">
+            <i class="bi bi-cloud-download me-1"></i>Iniciar sync
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%# ── SYNCS PENDIENTES ── %>
+<% if @pending_syncs.any? %>
+  <div class="alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-start gap-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+    <div class="flex-grow-1">
+      <strong><%= @pending_syncs.size %> sincronización(es) pendiente(s)</strong> — el stock mostrado no incluye estos movimientos hasta que sean confirmados.
+      <div class="mt-2 d-flex flex-wrap gap-2">
+        <% @pending_syncs.each do |s| %>
+          <%= link_to inventory_sync_path(s), class: "btn btn-sm btn-warning" do %>
+            <i class="bi bi-eye me-1"></i>
+            Revisar <%= s.from_date.strftime("%d/%m") %>–<%= s.to_date.strftime("%d/%m") %>
+            <span class="badge bg-dark ms-1"><%= s.unresolved_count %></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<%# ── TABLA DE STOCK ── %>
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h6 class="mb-0 fw-semibold"><i class="bi bi-table me-2 text-muted"></i>Stock actual por sala</h6>
+    <% if @products.any? %>
+      <div class="input-group input-group-sm" style="max-width:240px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" id="stock-search" class="form-control border-start-0 ps-0"
+               placeholder="Buscar producto…" autocomplete="off">
+        <button class="btn btn-outline-secondary" type="button" onclick="clearStockSearch()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    <% end %>
+  </div>
+  <div class="card-body p-0">
+    <% if @products.empty? %>
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+        <p class="mb-1 fw-semibold">Sin stock confirmado</p>
+        <p class="small mb-0">Sincroniza y confirma un lote para ver el inventario.</p>
+      </div>
+    <% else %>
+      <div id="no-results-stock" class="text-center text-muted py-5 d-none">
+        <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
+        Sin productos que coincidan.
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0" id="stock-table">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Producto</th>
+              <% @showrooms.each do |showroom| %>
+                <th class="text-center">
+                  <%= link_to showroom.name, inventory_showroom_stock_path(showroom),
+                        class: "text-decoration-none text-dark fw-semibold small" %>
+                </th>
+              <% end %>
+              <th class="text-center pe-3">Total</th>
+            </tr>
+          </thead>
+          <tbody id="stock-tbody">
+            <% @products.each_value do |product| %>
+              <% row_total = @showrooms.sum { |s| @stock[[product.id, s.id]] || 0 } %>
+              <tr data-product-name="<%= product.name.downcase %>">
+                <td class="ps-3 fw-semibold">
+                  <a href="#" class="text-decoration-none text-dark"
+                     data-bs-toggle="modal" data-bs-target="#productHistoryModal"
+                     data-product-id="<%= product.id %>" data-product-name="<%= product.name %>">
+                    <%= product.name %>
+                    <i class="bi bi-clock-history ms-1 text-muted" style="font-size:0.75rem;"></i>
+                  </a>
+                </td>
+                <% @showrooms.each do |showroom| %>
+                  <% qty = @stock[[product.id, showroom.id]] || 0 %>
+                  <td class="text-center">
+                    <% if qty > 0 %>
+                      <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2"><%= qty %></span>
+                    <% elsif qty < 0 %>
+                      <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle px-2"><%= qty %></span>
+                    <% else %>
+                      <span class="text-muted small">—</span>
+                    <% end %>
+                  </td>
+                <% end %>
+                <td class="text-center pe-3 fw-bold">
+                  <% if row_total > 0 %>
+                    <span class="text-success"><%= row_total %></span>
+                  <% elsif row_total < 0 %>
+                    <span class="text-danger"><%= row_total %></span>
+                  <% else %>
+                    <span class="text-muted">0</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# ── MODAL HISTORIAL ── %>
+<div class="modal fade" id="productHistoryModal" tabindex="-1" aria-hidden="true"
+     data-controller="product-history">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div id="productHistoryContent">
+        <div class="modal-body text-center py-5 text-muted">
+          <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const searchInput = document.getElementById("stock-search")
+    const noResults   = document.getElementById("no-results-stock")
+
+    if (searchInput) searchInput.addEventListener("input", filterStock)
+
+    function filterStock() {
+      const term = searchInput.value.toLowerCase().trim()
+      const rows = document.querySelectorAll("#stock-tbody tr")
+      let visible = 0
+      rows.forEach(row => {
+        const match = !term || row.dataset.productName.includes(term)
+        row.style.display = match ? "" : "none"
+        if (match) visible++
+      })
+      if (noResults) noResults.classList.toggle("d-none", visible > 0)
+    }
+
+    window.clearStockSearch = function () {
+      if (searchInput) { searchInput.value = ""; filterStock() }
+    }
+
+    const historyModal = document.getElementById("productHistoryModal")
+    if (historyModal) {
+      historyModal.addEventListener("show.bs.modal", function (event) {
+        const link      = event.relatedTarget
+        const productId = link.dataset.productId
+        const content   = document.getElementById("productHistoryContent")
+        content.innerHTML = '<div class="modal-body text-center py-5 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Cargando…</div>'
+        fetch(`/inventory/product/${productId}/movements`, { headers: { Accept: "text/html" } })
+          .then(r => r.text())
+          .then(html => content.innerHTML = html)
+          .catch(() => content.innerHTML = '<div class="modal-body text-danger">Error al cargar el historial.</div>')
+      })
+    }
+  })()
+</script>

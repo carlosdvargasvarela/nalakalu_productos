@@ -1,7 +1,4 @@
-class InventoryExitsController < ApplicationController
-  before_action :authenticate_user!
-  before_action :authorize_sala_admin!
-
+class Inventory::ExitsController < Inventory::BaseController
   def new
     @showroom_id  = params[:showroom_id]
     @order_number = params[:order_number]
@@ -18,8 +15,7 @@ class InventoryExitsController < ApplicationController
     @families     = Family.order(:name)
     @showroom_id  = params[:showroom_id]
     @order_number = params[:order_number]
-
-    items_input = parse_items
+    items_input   = parse_items
 
     if items_input.empty?
       flash.now[:alert] = "Debes agregar al menos un producto."
@@ -30,32 +26,23 @@ class InventoryExitsController < ApplicationController
 
     movements = []
     @errors   = []
-
     items_input.each_with_index do |item, i|
       m = InventoryMovement.new(
-        showroom_id:   @showroom_id,
-        product_id:    item[:product_id],
-        quantity:      item[:quantity],
-        notes:         item[:notes],
-        order_number:  @order_number,
+        showroom_id: @showroom_id, product_id: item[:product_id],
+        quantity: item[:quantity], notes: item[:notes],
+        order_number: @order_number,
         delivery_date: params[:delivery_date].presence || Date.current,
-        movement_type: "exit",
-        source:        "manual",
-        status:        "resolved"
+        movement_type: "exit", source: "manual", status: "resolved"
       )
       apply_stock_flag!(m)
-      if m.valid?
-        movements << m
-      else
-        @errors << { index: i, messages: m.errors.full_messages }
-      end
+      m.valid? ? movements << m : @errors << { index: i, messages: m.errors.full_messages }
     end
 
     if @errors.empty?
       movements.each(&:save!)
       flagged = movements.count { |m| m.flag == "stock_missing" }
       notice  = flagged > 0 ?
-        "#{movements.size} salida(s) registradas (#{flagged} con alerta de stock faltante)." :
+        "#{movements.size} salida(s) registradas (#{flagged} con alerta de stock insuficiente)." :
         "#{movements.size} salida(s) registradas correctamente."
       redirect_to inventory_path, notice: notice
     else

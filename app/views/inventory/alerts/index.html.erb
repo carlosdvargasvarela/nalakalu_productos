@@ -1,0 +1,133 @@
+<%# ── HEADER ── %>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="fw-bold mb-0 fs-4"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Alertas de inventario</h1>
+    <p class="text-muted small mb-0">Discrepancias detectadas al registrar salidas manuales.</p>
+  </div>
+</div>
+
+<% if @alerts.empty? %>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-check-circle-fill text-success fs-1 d-block mb-3"></i>
+      <p class="fw-semibold mb-1">Sin alertas pendientes</p>
+      <p class="text-muted small mb-0">El inventario está al día. No hay discrepancias detectadas.</p>
+    </div>
+  </div>
+<% else %>
+
+  <div class="d-flex align-items-center gap-3 mb-3 px-3 py-2 bg-warning-subtle border border-warning-subtle rounded-3">
+    <div class="form-check mb-0">
+      <input class="form-check-input" type="checkbox" id="select-all-alerts">
+      <label class="form-check-label small fw-semibold" for="select-all-alerts">Seleccionar todo</label>
+    </div>
+    <span class="text-muted small"><span id="alert-bulk-count">0</span> seleccionada(s)</span>
+    <form id="bulk-resolve-form" action="<%= bulk_resolve_inventory_alerts_path %>" method="post" class="mb-0">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <button type="button" id="bulk-resolve-btn" class="btn btn-sm btn-warning" disabled
+              onclick="submitBulkAlerts()">
+        <i class="bi bi-check-all me-1"></i>Resolver seleccionadas
+      </button>
+    </form>
+    <span class="text-muted small fst-italic ms-auto">Solo marca como resueltas (sin ajuste de stock)</span>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:38px;" class="ps-3"></th>
+            <th>Producto</th>
+            <th>Sala</th>
+            <th class="text-center">Cant.</th>
+            <th>Pedido</th>
+            <th>Fecha</th>
+            <th class="text-end pe-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @alerts.each do |alert| %>
+            <tr>
+              <td class="ps-3">
+                <input class="form-check-input alert-cb" type="checkbox"
+                       value="<%= alert.id %>" aria-label="Seleccionar alerta">
+              </td>
+              <td class="fw-semibold small"><%= alert.product&.name || alert.product_name_raw %></td>
+              <td><span class="badge bg-secondary-subtle text-secondary-emphasis border"><%= alert.showroom&.name || "—" %></span></td>
+              <td class="text-center fw-bold"><%= alert.quantity %></td>
+              <td class="text-muted small"><%= alert.order_number || "—" %></td>
+              <td class="text-muted small text-nowrap"><%= alert.delivery_date&.strftime("%d/%m/%Y") || "—" %></td>
+              <td class="text-end pe-3">
+                <button class="btn btn-sm btn-outline-success" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#resolve-<%= alert.id %>">
+                  <i class="bi bi-check-circle me-1"></i>Resolver
+                </button>
+              </td>
+            </tr>
+            <tr class="collapse bg-light" id="resolve-<%= alert.id %>">
+              <td colspan="7" class="p-3">
+                <%= form_with url: resolve_inventory_alert_path(alert), method: :patch,
+                      class: "row g-2 align-items-end" do %>
+                  <div class="col-md-3">
+                    <div class="form-check mb-1">
+                      <%= check_box_tag :create_adjustment, "1", false, class: "form-check-input",
+                            id: "adjust-#{alert.id}" %>
+                      <%= label_tag "adjust-#{alert.id}", "Registrar ajuste de stock",
+                            class: "form-check-label small fw-semibold" %>
+                    </div>
+                    <%= number_field_tag :adjustment_quantity, nil, step: 0.01, min: 0.01,
+                          class: "form-control form-control-sm", placeholder: "Cantidad a ajustar" %>
+                  </div>
+                  <div class="col-md-6">
+                    <%= text_area_tag :note, nil, rows: 2, class: "form-control form-control-sm",
+                          placeholder: "Nota de resolución — ¿qué pasó?" %>
+                  </div>
+                  <div class="col-md-3">
+                    <%= submit_tag "Confirmar resolución", class: "btn btn-sm btn-success w-100",
+                          data: { turbo_confirm: "¿Marcar esta alerta como resuelta?" } %>
+                  </div>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const allCbs    = () => [...document.querySelectorAll(".alert-cb")]
+      const selectAll = document.getElementById("select-all-alerts")
+      const btn       = document.getElementById("bulk-resolve-btn")
+      const countEl   = document.getElementById("alert-bulk-count")
+
+      function update() {
+        const checked = allCbs().filter(cb => cb.checked)
+        countEl.textContent = checked.length
+        btn.disabled = checked.length === 0
+        selectAll.checked       = checked.length === allCbs().length && allCbs().length > 0
+        selectAll.indeterminate = checked.length > 0 && checked.length < allCbs().length
+      }
+
+      selectAll.addEventListener("change", function () {
+        allCbs().forEach(cb => cb.checked = this.checked); update()
+      })
+      document.addEventListener("change", e => { if (e.target.matches(".alert-cb")) update() })
+
+      window.submitBulkAlerts = function () {
+        const ids  = allCbs().filter(cb => cb.checked).map(cb => cb.value)
+        if (!ids.length) return
+        const form = document.getElementById("bulk-resolve-form")
+        form.querySelectorAll("input[name='ids[]']").forEach(el => el.remove())
+        ids.forEach(id => {
+          const inp = document.createElement("input")
+          inp.type = "hidden"; inp.name = "ids[]"; inp.value = id
+          form.appendChild(inp)
+        })
+        form.submit()
+      }
+    })()
+  </script>
+<% end %>
