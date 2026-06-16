@@ -66,3 +66,5 @@ end
 group :production do
   gem "pg"
 end
+
+gem "sidekiq-cron", "~> 2.4"
