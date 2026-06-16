@@ -67,8 +67,16 @@ Rails.application.configure do
   # want to log everything, set the level to "debug".
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
-  # Use a different cache store in production.
-  config.cache_store = :memory_store
+  # memory_store no sirve aquí: el dyno worker (Sidekiq, donde corre el sync
+  # automático) y el dyno web son procesos separados, así que invalidar el
+  # cache desde uno nunca se vería en el otro. Redis ya es una dependencia
+  # dura (Sidekiq, ActionCable), así que lo reusamos para que la invalidación
+  # del stock cacheado sea visible para todos los procesos.
+  config.cache_store = :redis_cache_store, {
+    url: ENV.fetch("REDIS_URL", "redis://localhost:6379/1"),
+    ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE },
+    namespace: "nalakalu_cache"
+  }
 
   # Asegúrate de que esta línea también esté activa
   config.active_job.queue_adapter = :sidekiq

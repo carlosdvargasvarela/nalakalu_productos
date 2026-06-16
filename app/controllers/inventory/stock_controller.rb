@@ -3,12 +3,7 @@ class Inventory::StockController < Inventory::BaseController
     @showroom  = Showroom.find(params[:showroom_id])
     @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
 
-    raw = InventoryMovement
-      .confirmed_only.resolved
-      .where.not(product_id: nil)
-      .where(showroom_id: @showroom.id)
-      .group(:product_id, :movement_type)
-      .sum(:quantity)
+    raw = InventoryMovement.stock_by_showroom(@showroom.id)
 
     @stock = Hash.new(0)
     raw.each do |(product_id, movement_type), qty|

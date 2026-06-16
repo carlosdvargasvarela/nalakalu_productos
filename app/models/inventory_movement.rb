@@ -26,12 +26,41 @@ class InventoryMovement < ApplicationRecord
       )
   }
 
+  STOCK_CACHE_TTL = 5.minutes
+
+  after_commit :bust_stock_cache, on: [:create, :update, :destroy]
+
+  # Llamar explícitamente después de cualquier escritura que no dispare
+  # callbacks de InventoryMovement pero afecte qué cuenta como stock:
+  # update_all sobre movimientos, o cambiar inventory_syncs.status (el JOIN
+  # de confirmed_only depende de esa columna, no de los movimientos mismos).
+  def self.bust_stock_cache!
+    Rails.cache.delete("inventory_movements/stock_by_product_and_showroom")
+    Showroom.ids.each { |id| Rails.cache.delete("inventory_movements/stock_by_showroom/#{id}") }
+  end
+
+  # Agrega TODO el historial de movimientos — no hay filtro selectivo que
+  # un índice pueda explotar, así que cachear es lo que realmente evita
+  # recalcularlo en cada carga del dashboard.
   def self.stock_by_product_and_showroom
-    confirmed_only
-      .resolved
-      .where.not(product_id: nil)
-      .group(:product_id, :showroom_id, :movement_type)
-      .sum(:quantity)
+    Rails.cache.fetch("inventory_movements/stock_by_product_and_showroom", expires_in: STOCK_CACHE_TTL) do
+      confirmed_only
+        .resolved
+        .where.not(product_id: nil)
+        .group(:product_id, :showroom_id, :movement_type)
+        .sum(:quantity)
+    end
+  end
+
+  def self.stock_by_showroom(showroom_id)
+    Rails.cache.fetch("inventory_movements/stock_by_showroom/#{showroom_id}", expires_in: STOCK_CACHE_TTL) do
+      confirmed_only
+        .resolved
+        .where.not(product_id: nil)
+        .where(showroom_id: showroom_id)
+        .group(:product_id, :movement_type)
+        .sum(:quantity)
+    end
   end
 
   def self.current_stock_for(product_id:, showroom_id:)
@@ -54,5 +83,11 @@ class InventoryMovement < ApplicationRecord
 
   def source_label
     source == "manual" ? "Manual" : "Automático"
+  end
+
+  private
+
+  def bust_stock_cache
+    self.class.bust_stock_cache!
   end
 end

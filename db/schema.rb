@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_10_000002) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_16_230029) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -85,6 +85,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_10_000002) do
     t.index ["product_id"], name: "index_inventory_movements_on_product_id"
     t.index ["showroom_id"], name: "index_inventory_movements_on_showroom_id"
     t.index ["source"], name: "index_inventory_movements_on_source"
+    t.index ["status", "delivery_date", "created_at"], name: "index_inv_movements_on_status_delivery_date"
+    t.index ["status", "product_id", "showroom_id"], name: "index_inv_movements_on_status_product_showroom"
+    t.index ["status", "showroom_id", "product_id"], name: "index_inv_movements_on_status_showroom_product"
     t.index ["status"], name: "index_inventory_movements_on_status"
   end
 

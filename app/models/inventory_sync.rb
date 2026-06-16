@@ -13,6 +13,7 @@ class InventorySync < ApplicationRecord
   def confirm!
     return false if inventory_movements.unresolved.any?
     update!(status: "confirmed")
+    InventoryMovement.bust_stock_cache!
     true
   end
 

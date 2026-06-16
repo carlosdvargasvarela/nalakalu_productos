@@ -21,6 +21,7 @@ class Inventory::SyncsController < Inventory::BaseController
       .where.not(product_id: nil)
       .update_all(status: "resolved")
     @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
+    InventoryMovement.bust_stock_cache!
     redirect_to inventory_sync_path(@sync), notice: "#{count} movimiento(s) con producto detectado fueron confirmados."
   end
 
@@ -42,6 +43,7 @@ class Inventory::SyncsController < Inventory::BaseController
     return redirect_to inventory_sync_path(@sync), alert: "No seleccionaste ningún ítem." if ids.empty?
     @sync.inventory_movements.where(id: ids, status: "unresolved").update_all(status: "ignored")
     @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
+    InventoryMovement.bust_stock_cache!
     redirect_to inventory_sync_path(@sync), notice: "#{ids.size} ítem(s) ignorados."
   end
 
