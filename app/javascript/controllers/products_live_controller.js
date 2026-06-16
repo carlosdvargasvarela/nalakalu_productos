@@ -27,13 +27,19 @@ export default class extends Controller {
 
   #distribute(option) {
     document.querySelectorAll("select[data-product-select]").forEach(sel => {
-      if (sel.querySelector(`option[value="${option.value}"]`)) return
+      const alreadyNative = !!sel.querySelector(`option[value="${option.value}"]`)
 
-      const clone = option.cloneNode(true)
-      const insertBefore = [...sel.options].find(
-        o => o.value !== "" && o.text.localeCompare(clone.text) > 0
-      )
-      insertBefore ? sel.insertBefore(clone, insertBefore) : sel.appendChild(clone)
+      if (!alreadyNative) {
+        const clone        = option.cloneNode(true)
+        const insertBefore = [...sel.options].find(
+          o => o.value !== "" && o.text.localeCompare(clone.text) > 0
+        )
+        insertBefore ? sel.insertBefore(clone, insertBefore) : sel.appendChild(clone)
+      }
+
+      if (sel.tomselect && !sel.tomselect.options[option.value]) {
+        sel.tomselect.addOption({ value: option.value, text: option.text })
+      }
     })
   }
 }

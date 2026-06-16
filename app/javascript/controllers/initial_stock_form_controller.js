@@ -1,4 +1,5 @@
-import { Controller } from "@hotwired/stimulus"
+import { Controller }    from "@hotwired/stimulus"
+import { applyTomSelect } from "lib/search_selects"
 
 export default class extends Controller {
   static targets = [
@@ -17,6 +18,12 @@ export default class extends Controller {
     const index    = this.rowTargets.length
     const template = this.rowTargets[0].cloneNode(true)
 
+    // Extraer el <select> nativo de dentro del wrapper que crea TomSelect
+    template.querySelectorAll(".ts-wrapper").forEach(wrapper => {
+      const native = wrapper.querySelector("select")
+      if (native) { native.removeAttribute("style"); wrapper.replaceWith(native) }
+    })
+
     template.querySelectorAll("input, select, textarea").forEach(el => {
       el.name = el.name.replace(/items\[\d+\]/, `items[${index}]`)
       if (el.tagName === "SELECT") el.selectedIndex = 0
@@ -24,6 +31,7 @@ export default class extends Controller {
     })
 
     this.bodyTarget.appendChild(template)
+    applyTomSelect(template)
     this.#updateRemoveButtons()
   }
 
@@ -79,15 +87,15 @@ export default class extends Controller {
       const data = await resp.json()
 
       if (resp.ok) {
-        // Add new option to every product select in the table
-        this.productSelectTargets.forEach(sel => {
-          sel.appendChild(new Option(data.name, data.id))
-        })
-        // Auto-select in the row that triggered the modal
+        // Insertar en todos los selects del doc en orden alfabético
+        this.#distributeOption(data.id, data.name)
+        // Auto-select en el row que abrió el modal
         if (this._targetRowIndex !== null) {
           const sel = this.rowTargets[this._targetRowIndex]
             ?.querySelector("[data-initial-stock-form-target='productSelect']")
-          if (sel) sel.value = data.id
+          if (sel) {
+            sel.tomselect ? sel.tomselect.setValue(String(data.id)) : (sel.value = data.id)
+          }
         }
         bootstrap.Modal.getInstance(
           document.getElementById("quickCreateProductModal")
@@ -113,6 +121,20 @@ export default class extends Controller {
     this.rowTargets.forEach(row => {
       const btn = row.querySelector("[data-action*='removeRow']")
       if (btn) btn.disabled = single
+    })
+  }
+
+  #distributeOption(id, name) {
+    const strId = String(id)
+    document.querySelectorAll("select[data-product-select]").forEach(sel => {
+      if (!sel.querySelector(`option[value="${strId}"]`)) {
+        const after = [...sel.options].find(o => o.value !== "" && o.text.localeCompare(name) > 0)
+        const opt   = new Option(name, strId)
+        after ? sel.insertBefore(opt, after) : sel.appendChild(opt)
+      }
+      if (sel.tomselect && !sel.tomselect.options[strId]) {
+        sel.tomselect.addOption({ value: strId, text: name })
+      }
     })
   }
 

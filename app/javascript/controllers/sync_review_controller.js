@@ -120,10 +120,12 @@ export default class extends Controller {
       const data = await resp.json()
 
       if (resp.ok) {
-        this.productSelectTargets.forEach(sel => {
-          sel.appendChild(new Option(data.name, data.id))
-        })
-        if (this._targetSelect) this._targetSelect.value = data.id
+        this.#distributeOption(data.id, data.name)
+        if (this._targetSelect) {
+          this._targetSelect.tomselect
+            ? this._targetSelect.tomselect.setValue(String(data.id))
+            : (this._targetSelect.value = data.id)
+        }
         bootstrap.Modal.getInstance(
           document.getElementById("quickCreateProductModal")
         ).hide()
@@ -180,6 +182,20 @@ export default class extends Controller {
     const checkedCount = allCbs.filter(cb => cb.checked).length
     this.selectAllUnresolvedTarget.checked       = checkedCount === allCbs.length && allCbs.length > 0
     this.selectAllUnresolvedTarget.indeterminate = checkedCount > 0 && checkedCount < allCbs.length
+  }
+
+  #distributeOption(id, name) {
+    const strId = String(id)
+    document.querySelectorAll("select[data-product-select]").forEach(sel => {
+      if (!sel.querySelector(`option[value="${strId}"]`)) {
+        const after = [...sel.options].find(o => o.value !== "" && o.text.localeCompare(name) > 0)
+        const opt   = new Option(name, strId)
+        after ? sel.insertBefore(opt, after) : sel.appendChild(opt)
+      }
+      if (sel.tomselect && !sel.tomselect.options[strId]) {
+        sel.tomselect.addOption({ value: strId, text: name })
+      }
+    })
   }
 
   #showQuickCreateError(msg) {
