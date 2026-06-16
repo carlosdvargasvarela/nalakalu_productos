@@ -18,14 +18,21 @@ export default class extends Controller {
     const index    = this.rowTargets.length
     const template = this.rowTargets[0].cloneNode(true)
 
-    // Extraer el <select> nativo de dentro del wrapper que crea TomSelect
+    // TomSelect deja el <select> oculto como hermano anterior de .ts-wrapper
+    // (no anidado adentro) — hay que quitar el wrapper viejo del clon o
+    // applyTomSelect() crea uno nuevo encima y quedan dos UI apiladas.
     template.querySelectorAll(".ts-wrapper").forEach(wrapper => {
-      const native = wrapper.querySelector("select")
-      if (native) { native.removeAttribute("style"); wrapper.replaceWith(native) }
+      const native = wrapper.previousElementSibling
+      if (native && native.tagName === "SELECT") {
+        native.classList.remove("tomselected", "ts-hidden-accessible")
+        native.removeAttribute("tabindex")
+      }
+      wrapper.remove()
     })
 
     template.querySelectorAll("input, select, textarea").forEach(el => {
       el.name = el.name.replace(/items\[\d+\]/, `items[${index}]`)
+      if (el.id) el.id = el.id.replace(/items_\d+_/, `items_${index}_`)
       if (el.tagName === "SELECT") el.selectedIndex = 0
       else el.value = ""
     })
@@ -112,6 +119,7 @@ export default class extends Controller {
     this.rowTargets.forEach((row, i) => {
       row.querySelectorAll("input, select, textarea").forEach(el => {
         el.name = el.name.replace(/items\[\d+\]/, `items[${i}]`)
+        if (el.id) el.id = el.id.replace(/items_\d+_/, `items_${i}_`)
       })
     })
   }
