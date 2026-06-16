@@ -25,6 +25,10 @@ gem "faraday-retry"
 # ── Background Jobs ───────────────────────────────────────────────────────────
 gem "sidekiq"
 gem "redis", "~> 5.0"
+# connection_pool 3.x quitó la firma ConnectionPool.new(hash_posicional) que
+# usa ActiveSupport::Cache::RedisCacheStore en Rails 7.2.3 (rompe el boot con
+# "wrong number of arguments"). Fijado a 2.x hasta actualizar Rails.
+gem "connection_pool", "~> 2.4"
 
 # ── Procurement / Lógica de negocio ──────────────────────────────────────────
 gem "fuzzy_match"
