@@ -2,8 +2,10 @@ class InventorySync < ApplicationRecord
   has_many :inventory_movements, dependent: :destroy
 
   STATUSES = %w[pending_review confirmed].freeze
+  KINDS    = %w[logistics_sync bulk_upload].freeze
 
   validates :status, inclusion: { in: STATUSES }
+  validates :kind, inclusion: { in: KINDS }
   validates :from_date, :to_date, presence: true
 
   scope :pending, -> { where(status: "pending_review") }
@@ -23,5 +25,9 @@ class InventorySync < ApplicationRecord
 
   def status_label
     status == "confirmed" ? "Confirmado" : "Pendiente revisión"
+  end
+
+  def bulk_upload?
+    kind == "bulk_upload"
   end
 end
