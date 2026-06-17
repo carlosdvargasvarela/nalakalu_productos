@@ -144,6 +144,8 @@ class InventoryBulkImportService
         status:             entry.product ? "resolved" : "unresolved"
       )
 
+      InventoryMovement.flag_if_stock_missing!(movement) if movement.movement_type == "exit"
+
       if movement.save
         movement
       else
