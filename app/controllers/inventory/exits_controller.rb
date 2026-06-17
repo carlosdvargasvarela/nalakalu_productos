@@ -34,7 +34,7 @@ class Inventory::ExitsController < Inventory::BaseController
         delivery_date: params[:delivery_date].presence || Date.current,
         movement_type: "exit", source: "manual", status: "resolved"
       )
-      apply_stock_flag!(m)
+      InventoryMovement.flag_if_stock_missing!(m)
       m.valid? ? movements << m : @errors << { index: i, messages: m.errors.full_messages }
     end
 
@@ -68,18 +68,5 @@ class Inventory::ExitsController < Inventory::BaseController
     @delivery_preview_error = "No se encontró ningún pedido con ese número." unless @delivery_preview
   rescue => e
     @delivery_preview_error = "No se pudo consultar el pedido: #{e.message}"
-  end
-
-  def apply_stock_flag!(movement)
-    return unless movement.product_id.present? && movement.showroom_id.present?
-    available = InventoryMovement.current_stock_for(
-      product_id: movement.product_id, showroom_id: movement.showroom_id
-    )
-    return if movement.quantity.to_f <= available
-    movement.flag = "stock_missing"
-    movement.notes = [
-      movement.notes.presence,
-      "Alerta automática: salida de #{movement.quantity} pero stock calculado era #{available}."
-    ].compact.join("\n\n")
   end
 end

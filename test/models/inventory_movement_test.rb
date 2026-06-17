@@ -60,4 +60,29 @@ class InventoryMovementTest < ActiveSupport::TestCase
     assert_equal 5, raw[[@product.id, @showroom.id, "entry"]]
     assert_equal 2, raw[[@product.id, other_showroom.id, "exit"]]
   end
+
+  test "flag_if_stock_missing! marca exit con stock insuficiente y deja notes" do
+    movement = build_movement(movement_type: "exit", quantity: 3)
+    InventoryMovement.flag_if_stock_missing!(movement)
+
+    assert_equal "stock_missing", movement.flag
+    assert_match "Alerta automática", movement.notes
+  end
+
+  test "flag_if_stock_missing! no marca exit con stock suficiente" do
+    InventoryMovement.create!(movement_type: "entry", showroom: @showroom, product: @product,
+      quantity: 10, status: "resolved", source: "manual", delivery_date: Date.current)
+
+    movement = build_movement(movement_type: "exit", quantity: 3)
+    InventoryMovement.flag_if_stock_missing!(movement)
+
+    assert_nil movement.flag
+  end
+
+  test "flag_if_stock_missing! es no-op para movimientos que no son exit" do
+    movement = build_movement(movement_type: "entry", quantity: 999)
+    InventoryMovement.flag_if_stock_missing!(movement)
+
+    assert_nil movement.flag
+  end
 end

@@ -73,6 +73,21 @@ class InventoryMovement < ApplicationRecord
     sums.fetch("entry", 0) + sums.fetch("initial", 0) - sums.fetch("exit", 0)
   end
 
+  def self.flag_if_stock_missing!(movement)
+    return movement unless movement.movement_type == "exit" &&
+      movement.product_id.present? && movement.showroom_id.present?
+
+    available = current_stock_for(product_id: movement.product_id, showroom_id: movement.showroom_id)
+    return movement if movement.quantity.to_f <= available
+
+    movement.flag = "stock_missing"
+    movement.notes = [
+      movement.notes.presence,
+      "Alerta automática: salida de #{movement.quantity} pero stock calculado era #{available}."
+    ].compact.join("\n\n")
+    movement
+  end
+
   def type_label
     case movement_type
     when "entry"   then "Entrada"
