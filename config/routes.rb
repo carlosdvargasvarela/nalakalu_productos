@@ -170,6 +170,10 @@ Rails.application.routes.draw do
          defaults: { format: :json }
     post "initial_stock",               to: "initial_stock#create",        as: :inventory_initial_stock
 
+    get  "bulk_imports/new",      to: "bulk_imports#new",      as: :new_inventory_bulk_import
+    post "bulk_imports",          to: "bulk_imports#create",   as: :inventory_bulk_imports
+    get  "bulk_imports/template", to: "bulk_imports#template", as: :inventory_bulk_import_template
+
     get  "exits/new",  to: "exits#new",    as: :new_inventory_exit
     post "exits",      to: "exits#create", as: :inventory_exits
 

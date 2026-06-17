@@ -1,0 +1,31 @@
+<%# app/views/inventory/bulk_imports/new.html.erb %>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+  <div>
+    <h1 class="fw-bold mb-0 fs-4"><i class="bi bi-file-earmark-spreadsheet me-2 text-primary"></i>Carga masiva de inventario</h1>
+    <p class="text-muted small mb-0">Sube un Excel con movimientos de entrada, salida o transferencia entre salas.</p>
+  </div>
+  <%= link_to inventory_bulk_import_template_path, class: "btn btn-outline-secondary btn-sm" do %>
+    <i class="bi bi-download me-1"></i>Descargar plantilla
+  <% end %>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with url: inventory_bulk_imports_path, method: :post, multipart: true do %>
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Archivo Excel (.xlsx) <span class="text-danger">*</span></label>
+        <%= file_field_tag :file, accept: ".xlsx", class: "form-control", required: true %>
+      </div>
+      <div class="form-text mb-3">
+        Columnas esperadas: Sala receptora (Entradas), Sala emisora (Salidas), Código producto,
+        Nombre de producto, Cantidad, Pedido (opcional), Fecha del movimiento (opcional).
+      </div>
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancelar", inventory_path, class: "btn btn-outline-secondary" %>
+        <button type="submit" class="btn btn-primary fw-semibold">
+          <i class="bi bi-cloud-upload me-1"></i>Procesar archivo
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
