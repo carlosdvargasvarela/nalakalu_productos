@@ -6,6 +6,6 @@ one:
   active: false
 
 two:
-  name: MyString
-  base_code: MyString
+  name: Product Two
+  base_code: PRODUCT-TWO
   active: false

@@ -1,7 +1,10 @@
 require "test_helper"
 
 class VariantTypesControllerTest < ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
+
   setup do
+    sign_in users(:admin)
     @variant_type = variant_types(:one)
   end
 
@@ -17,10 +20,10 @@ class VariantTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create variant_type" do
     assert_difference("VariantType.count") do
-      post variant_types_url, params: { variant_type: { name: @variant_type.name } }
+      post variant_types_url, params: { variant_type: { name: "Tipo de Variante Nuevo" } }
     end
 
-    assert_redirected_to variant_type_url(VariantType.last)
+    assert_redirected_to variant_types_path(selected_id: VariantType.last.id)
   end
 
   test "should show variant_type" do
@@ -35,7 +38,7 @@ class VariantTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update variant_type" do
     patch variant_type_url(@variant_type), params: { variant_type: { name: @variant_type.name } }
-    assert_redirected_to variant_type_url(@variant_type)
+    assert_redirected_to variant_types_path(selected_id: @variant_type.id)
   end
 
   test "should destroy variant_type" do

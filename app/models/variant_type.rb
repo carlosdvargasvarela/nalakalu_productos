@@ -1,6 +1,9 @@
 class VariantType < ApplicationRecord
   has_many :variants, dependent: :destroy
   has_many :supply_rules, dependent: :destroy
+  has_many :product_variant_rules, dependent: :destroy
+  has_many :family_variant_rules, dependent: :destroy
+  has_many :recommendations, dependent: :destroy
 
   PROCUREMENT_STRATEGIES = %w[individual consolidated].freeze
 

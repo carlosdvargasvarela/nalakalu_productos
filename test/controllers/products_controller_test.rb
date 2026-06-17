@@ -1,7 +1,10 @@
 require "test_helper"
 
 class ProductsControllerTest < ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
+
   setup do
+    sign_in users(:admin)
     @product = products(:one)
   end
 
@@ -17,10 +20,10 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create product" do
     assert_difference("Product.count") do
-      post products_url, params: { product: { active: @product.active, base_code: @product.base_code, name: @product.name } }
+      post products_url, params: { product: { active: @product.active, base_code: "PRODUCT-NUEVO", name: "Producto Nuevo" } }
     end
 
-    assert_redirected_to product_url(Product.last)
+    assert_redirected_to products_path(selected_id: Product.last.id)
   end
 
   test "should show product" do
@@ -35,7 +38,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update product" do
     patch product_url(@product), params: { product: { active: @product.active, base_code: @product.base_code, name: @product.name } }
-    assert_redirected_to product_url(@product)
+    assert_redirected_to products_path(selected_id: @product.id)
   end
 
   test "should destroy product" do

@@ -6,6 +6,6 @@ one:
   active: false
 
 two:
-  name: MyString
+  name: Family Two
   description: MyText
   active: false

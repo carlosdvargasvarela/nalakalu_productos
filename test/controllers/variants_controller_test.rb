@@ -1,7 +1,10 @@
 require "test_helper"
 
 class VariantsControllerTest < ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
+
   setup do
+    sign_in users(:admin)
     @variant = variants(:one)
   end
 
@@ -17,10 +20,10 @@ class VariantsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create variant" do
     assert_difference("Variant.count") do
-      post variants_url, params: { variant: { active: @variant.active, code: @variant.code, cost: @variant.cost, name: @variant.name, provider_id: @variant.provider_id, provider_sku: @variant.provider_sku, variant_type_id: @variant.variant_type_id } }
+      post variants_url, params: { variant: { active: @variant.active, code: @variant.code, display_name: @variant.display_name, name: @variant.name, technical_description: @variant.technical_description, variant_type_id: @variant.variant_type_id } }
     end
 
-    assert_redirected_to variant_url(Variant.last)
+    assert_redirected_to variants_path(selected_id: Variant.last.id)
   end
 
   test "should show variant" do
@@ -34,8 +37,8 @@ class VariantsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update variant" do
-    patch variant_url(@variant), params: { variant: { active: @variant.active, code: @variant.code, cost: @variant.cost, name: @variant.name, provider_id: @variant.provider_id, provider_sku: @variant.provider_sku, variant_type_id: @variant.variant_type_id } }
-    assert_redirected_to variant_url(@variant)
+    patch variant_url(@variant), params: { variant: { active: @variant.active, code: @variant.code, display_name: @variant.display_name, name: @variant.name, technical_description: @variant.technical_description, variant_type_id: @variant.variant_type_id } }
+    assert_redirected_to variants_path(selected_id: @variant.id)
   end
 
   test "should destroy variant" do

@@ -9,7 +9,7 @@ one:
   active: false
 
 two:
-  name: MyString
+  name: Provider Two
   contact_name: MyString
   email: MyString
   phone: MyString

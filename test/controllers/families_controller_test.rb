@@ -1,7 +1,10 @@
 require "test_helper"
 
 class FamiliesControllerTest < ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
+
   setup do
+    sign_in users(:admin)
     @family = families(:one)
   end
 
@@ -17,10 +20,10 @@ class FamiliesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create family" do
     assert_difference("Family.count") do
-      post families_url, params: { family: { active: @family.active, description: @family.description, name: @family.name } }
+      post families_url, params: { family: { active: @family.active, description: @family.description, name: "Familia Nueva" } }
     end
 
-    assert_redirected_to family_url(Family.last)
+    assert_redirected_to families_path
   end
 
   test "should show family" do
@@ -35,7 +38,7 @@ class FamiliesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update family" do
     patch family_url(@family), params: { family: { active: @family.active, description: @family.description, name: @family.name } }
-    assert_redirected_to family_url(@family)
+    assert_redirected_to families_path
   end
 
   test "should destroy family" do
