@@ -45,6 +45,8 @@ gem "pagy"
 
 # ── Utilidades ────────────────────────────────────────────────────────────────
 gem "csv"
+gem "roo"
+gem "caxlsx"
 gem "tzinfo-data", platforms: %i[windows jruby]
 
 group :development, :test do

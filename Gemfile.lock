@@ -100,6 +100,11 @@ GEM
       rack-test (>= 0.6.3)
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
+    caxlsx (4.5.0)
+      htmlentities (~> 4.3, >= 4.3.4)
+      marcel (~> 1.0)
+      nokogiri (~> 1.10, >= 1.10.4)
+      rubyzip (>= 2.4, < 4)
     cgi (0.5.1)
     childprocess (5.1.0)
       logger (~> 1.5)
@@ -180,6 +185,7 @@ GEM
       logger
     heapy (0.2.0)
       thor
+    htmlentities (4.4.2)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     importmap-rails (2.2.3)
@@ -371,6 +377,12 @@ GEM
       actionpack (>= 7.0)
       railties (>= 7.0)
     rexml (3.4.4)
+    roo (3.0.0)
+      base64 (~> 0.2)
+      csv (~> 3)
+      logger (~> 1)
+      nokogiri (~> 1)
+      rubyzip (>= 3.0.0, < 4.0.0)
     rubocop (1.82.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -496,6 +508,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   capybara
+  caxlsx
   connection_pool (~> 2.4)
   cssbundling-rails
   csv
@@ -521,6 +534,7 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 7.2.3)
   redis (~> 5.0)
+  roo
   selenium-webdriver
   sidekiq
   sidekiq-cron (~> 2.4)
