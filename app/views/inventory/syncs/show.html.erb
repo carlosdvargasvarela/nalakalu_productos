@@ -9,18 +9,21 @@
 </div>
 
 <%# ── HEADER ── %>
+<% title      = @sync.bulk_upload? ? "Revisión de carga masiva" : "Revisión de sincronización" %>
+<% unit_label = @sync.bulk_upload? ? "filas procesadas" : "entregas" %>
+<% icon       = @sync.bulk_upload? ? "bi-file-earmark-spreadsheet" : "bi-arrow-repeat" %>
 <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
   <div>
     <nav aria-label="breadcrumb" class="mb-1">
       <ol class="breadcrumb mb-0 small">
         <li class="breadcrumb-item"><%= link_to "Inventario", inventory_path %></li>
-        <li class="breadcrumb-item active">Revisión de sincronización</li>
+        <li class="breadcrumb-item active"><%= title %></li>
       </ol>
     </nav>
-    <h1 class="fw-bold mb-0 fs-4"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Revisión de sincronización</h1>
+    <h1 class="fw-bold mb-0 fs-4"><i class="bi <%= icon %> me-2 text-primary"></i><%= title %></h1>
     <p class="text-muted small mb-0">
       <%= @sync.from_date.strftime("%d/%m/%Y") %> – <%= @sync.to_date.strftime("%d/%m/%Y") %>
-      &nbsp;·&nbsp; <%= @sync.deliveries_processed %> entregas
+      &nbsp;·&nbsp; <%= @sync.deliveries_processed %> <%= unit_label %>
       &nbsp;·&nbsp; <strong><%= @sync.movements_count %></strong> movimientos
     </p>
   </div>
@@ -43,6 +46,18 @@
     <% end %>
   </div>
 </div>
+
+<% if @sync.import_errors.present? %>
+  <div class="alert alert-warning border-0 shadow-sm mb-4">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    <strong><%= @sync.import_errors.size %> fila(s)</strong> del archivo no se pudieron procesar y fueron omitidas:
+    <ul class="mb-0 mt-2 small">
+      <% @sync.import_errors.each do |err| %>
+        <li><%= err %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
 
 <%# ── KPI CARDS ── %>
 <div class="row g-3 mb-4">
