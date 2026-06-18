@@ -47,6 +47,20 @@ class Inventory::SyncsController < Inventory::BaseController
     redirect_to inventory_sync_path(@sync), notice: "#{ids.size} ítem(s) ignorados."
   end
 
+  def bulk_assign_product
+    ids = params[:movement_ids].to_a.map(&:to_i).reject(&:zero?)
+    product = Product.find_by(id: params[:product_id])
+
+    if ids.empty? || product.nil?
+      return redirect_to inventory_sync_path(@sync), alert: "Selecciona un producto y al menos un ítem."
+    end
+
+    count = @sync.inventory_movements.where(id: ids, status: "unresolved").update_all(product_id: product.id, status: "resolved")
+    @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
+    InventoryMovement.bust_stock_cache!
+    redirect_to inventory_sync_path(@sync), notice: "#{count} ítem(s) asignados a \"#{product.name}\"."
+  end
+
   private
 
   def set_sync

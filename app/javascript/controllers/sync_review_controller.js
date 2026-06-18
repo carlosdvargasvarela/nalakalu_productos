@@ -3,7 +3,8 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "productSelect", "newProductName", "newProductCode", "newProductFamily", "quickCreateError",
-    "movementRow", "orderGroup", "bulkCount", "bulkIgnoreBtn", "selectAllUnresolved"
+    "movementRow", "orderGroup", "bulkCount", "bulkIgnoreBtn", "bulkAssignBtn",
+    "bulkAssignProductSelect", "selectAllUnresolved"
   ]
   static values = { quickCreateUrl: String }
 
@@ -60,16 +61,15 @@ export default class extends Controller {
     event.preventDefault()
     const ids = [...document.querySelectorAll(".ignore-cb:checked")].map(cb => cb.value)
     if (!ids.length) return
-    const form = document.getElementById("bulk-ignore-form")
-    form.querySelectorAll("input[name='movement_ids[]']").forEach(el => el.remove())
-    ids.forEach(id => {
-      const inp = document.createElement("input")
-      inp.type = "hidden"
-      inp.name = "movement_ids[]"
-      inp.value = id
-      form.appendChild(inp)
-    })
-    form.submit()
+    this.#submitBulkForm("bulk-ignore-form", ids)
+  }
+
+  submitBulkAssignProduct(event) {
+    event.preventDefault()
+    const ids = [...document.querySelectorAll(".ignore-cb:checked")].map(cb => cb.value)
+    const productId = this.bulkAssignProductSelectTarget.value
+    if (!ids.length || !productId) return
+    this.#submitBulkForm("bulk-assign-product-form", ids, { product_id: productId })
   }
 
   // ── Quick-create producto ────────────────────────────────────────────────────
@@ -171,8 +171,31 @@ export default class extends Controller {
 
   #updateBulkCount() {
     const count = document.querySelectorAll(".ignore-cb:checked").length
-    if (this.hasBulkCountTarget)    this.bulkCountTarget.textContent = count > 0 ? count : ""
+    if (this.hasBulkCountTarget)     this.bulkCountTarget.textContent = count > 0 ? count : ""
     if (this.hasBulkIgnoreBtnTarget) this.bulkIgnoreBtnTarget.disabled = count === 0
+    if (this.hasBulkAssignBtnTarget) this.bulkAssignBtnTarget.disabled = count === 0
+  }
+
+  #submitBulkForm(formId, ids, extraFields = {}) {
+    const form = document.getElementById(formId)
+    form.querySelectorAll("input[data-bulk-field]").forEach(el => el.remove())
+    ids.forEach(id => {
+      const inp = document.createElement("input")
+      inp.type = "hidden"
+      inp.name = "movement_ids[]"
+      inp.value = id
+      inp.dataset.bulkField = "true"
+      form.appendChild(inp)
+    })
+    Object.entries(extraFields).forEach(([name, value]) => {
+      const inp = document.createElement("input")
+      inp.type = "hidden"
+      inp.name = name
+      inp.value = value
+      inp.dataset.bulkField = "true"
+      form.appendChild(inp)
+    })
+    form.submit()
   }
 
   #syncSelectAll() {

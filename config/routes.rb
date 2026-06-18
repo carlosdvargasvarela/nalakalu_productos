@@ -188,6 +188,7 @@ Rails.application.routes.draw do
       member do
         patch :confirm
         post  :bulk_ignore
+        post  :bulk_assign_product
         patch :confirm_matched
       end
     end

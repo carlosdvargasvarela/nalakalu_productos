@@ -21,6 +21,7 @@ class InventoryMovementsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "#bulkReassignShowroomModal"
     assert_select "#bulkEditNoteModal"
+    assert_select "input[type=checkbox][data-bulk-check-target=checkbox]", 1
   end
 
   test "bulk_destroy preserva los filtros activos al redirigir al log" do

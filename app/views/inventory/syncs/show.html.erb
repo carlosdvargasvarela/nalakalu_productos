@@ -166,6 +166,11 @@
       <label class="form-check-label small fw-semibold" for="select-all-unresolved">Seleccionar pendientes visibles</label>
     </div>
     <span class="text-muted small"><span data-sync-review-target="bulkCount"></span> seleccionado(s)</span>
+    <button type="button" class="btn btn-sm btn-outline-primary"
+            data-sync-review-target="bulkAssignBtn"
+            data-bs-toggle="modal" data-bs-target="#bulkAssignProductModal" disabled>
+      <i class="bi bi-box-seam me-1"></i>Asignar producto
+    </button>
     <button type="button" class="btn btn-sm btn-outline-secondary"
             data-sync-review-target="bulkIgnoreBtn"
             data-action="click->sync-review#submitBulkIgnore"
@@ -175,8 +180,40 @@
     <form id="bulk-ignore-form" action="<%= bulk_ignore_inventory_sync_path(@sync) %>" method="post" class="mb-0">
       <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
     </form>
+    <form id="bulk-assign-product-form" action="<%= bulk_assign_product_inventory_sync_path(@sync) %>" method="post" class="mb-0">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+    </form>
   </div>
 <% end %>
+
+<%# ── MODAL: Asignar producto en lote ── %>
+<div class="modal fade" id="bulkAssignProductModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 rounded-4 shadow">
+      <div class="modal-header border-bottom-0 p-4 pb-2">
+        <h5 class="modal-title fw-bold">Asignar producto a seleccionados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 pt-0">
+        <label class="form-label small fw-semibold">Producto</label>
+        <select class="form-select" data-sync-review-target="bulkAssignProductSelect">
+          <option value="">— Seleccionar —</option>
+          <% @products_for_select.each do |p| %>
+            <option value="<%= p.id %>"><%= p.name %></option>
+          <% end %>
+        </select>
+        <p class="text-muted small mt-2 mb-0">Se asignará el mismo producto a todos los ítems seleccionados y quedarán confirmados.</p>
+      </div>
+      <div class="modal-footer border-top-0 p-4 pt-2">
+        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold"
+                data-action="click->sync-review#submitBulkAssignProduct">
+          Asignar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <%# ── GRUPOS DE MOVIMIENTOS ── %>
 <% @movement_groups.each do |order_number, movements| %>
