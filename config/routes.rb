@@ -27,7 +27,11 @@ Rails.application.routes.draw do
   # Productos: compatibilidades por member, importación por collection
   resources :products do
     member { post :update_compatibilities }
-    collection { post :import }
+    collection do
+      post :import
+      patch :bulk_activate
+      patch :bulk_deactivate
+    end
   end
 
   # Tipos de variante: variantes en JSON por member, operaciones bulk por collection
@@ -162,6 +166,9 @@ Rails.application.routes.draw do
 
     get    "movements",       to: "movements#index",        as: :inventory_movements_log
     delete "movements/bulk",  to: "movements#bulk_destroy", as: :bulk_destroy_inventory_movements
+    get    "movements/bulk_export",            to: "movements#bulk_export",            as: :bulk_export_inventory_movements
+    patch  "movements/bulk_reassign_showroom",  to: "movements#bulk_reassign_showroom",  as: :bulk_reassign_showroom_inventory_movements
+    patch  "movements/bulk_edit_note",          to: "movements#bulk_edit_note",          as: :bulk_edit_note_inventory_movements
 
     get "sala/:showroom_id",  to: "stock#showroom",         as: :inventory_showroom_stock
 

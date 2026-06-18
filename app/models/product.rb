@@ -16,10 +16,14 @@ class Product < ApplicationRecord
   validates :base_code, presence: true
 
   after_create_commit -> {
-    broadcast_append_to "products",
-      target: "products_live_source",
-      partial: "products/option",
-      locals: { product: self }
+    begin
+      broadcast_append_to "products",
+        target: "products_live_source",
+        partial: "products/option",
+        locals: { product: self }
+    rescue => e
+      Rails.logger.error "[Product] broadcast_append_to 'products' falló: #{e.class}: #{e.message}"
+    end
   }
 
   after_commit :bust_decoder_cache

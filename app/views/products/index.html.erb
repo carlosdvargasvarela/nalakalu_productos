@@ -74,23 +74,58 @@
             <%= f.hidden_field :selected_id, value: params[:selected_id] %>
           <% end %>
         </div>
-        <%# ── Lista ── %>
-        <div class="list-group list-group-flush"
-             style="max-height: calc(100vh - 380px); overflow-y: auto;">
-          <% if @products.empty? %>
-            <div class="text-center py-5 text-muted">
-              <i class="bi bi-box-seam d-block fs-1 mb-2 opacity-25"></i>
-              <p class="fw-bold mb-0">No hay productos para estos filtros.</p>
+        <%# ── Bulk actions + Lista ── %>
+        <div data-controller="bulk-check">
+          <% if @products.any? %>
+            <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom bg-light flex-wrap">
+              <div class="form-check mb-0">
+                <input class="form-check-input" type="checkbox" id="select-all-products"
+                       data-bulk-check-target="selectAll"
+                       data-action="change->bulk-check#toggleAll">
+                <label class="form-check-label small fw-semibold" for="select-all-products">Todos</label>
+              </div>
+              <span class="text-muted small"><span data-bulk-check-target="countBadge"></span> seleccionado(s)</span>
+
+              <%= form_with url: bulk_activate_products_path, method: :patch,
+                    data: { bulk_check_target: "form" }, class: "ms-auto d-inline" do %>
+                <%= hidden_field_tag :search, params[:search] %>
+                <%= hidden_field_tag :family_id, params[:family_id] %>
+                <%= hidden_field_tag :status, params[:status] %>
+                <%= hidden_field_tag :selected_id, params[:selected_id] %>
+                <button type="submit" class="btn btn-sm btn-outline-success" data-bulk-check-target="bulkButton">
+                  <i class="bi bi-check-circle me-1"></i>Activar
+                </button>
+              <% end %>
+              <%= form_with url: bulk_deactivate_products_path, method: :patch,
+                    data: { bulk_check_target: "form" }, class: "d-inline" do %>
+                <%= hidden_field_tag :search, params[:search] %>
+                <%= hidden_field_tag :family_id, params[:family_id] %>
+                <%= hidden_field_tag :status, params[:status] %>
+                <%= hidden_field_tag :selected_id, params[:selected_id] %>
+                <button type="submit" class="btn btn-sm btn-outline-secondary" data-bulk-check-target="bulkButton">
+                  <i class="bi bi-slash-circle me-1"></i>Desactivar
+                </button>
+              <% end %>
             </div>
-          <% else %>
-            <% @products.each do |product| %>
-              <%= render "product_row",
-                    product: product,
-                    selected: @selected_product&.id == product.id,
-                    supplier_type_map: @supplier_type_map,
-                    procurement_ready_map: @procurement_ready_map %>
-            <% end %>
           <% end %>
+
+          <div class="list-group list-group-flush"
+               style="max-height: calc(100vh - 380px); overflow-y: auto;">
+            <% if @products.empty? %>
+              <div class="text-center py-5 text-muted">
+                <i class="bi bi-box-seam d-block fs-1 mb-2 opacity-25"></i>
+                <p class="fw-bold mb-0">No hay productos para estos filtros.</p>
+              </div>
+            <% else %>
+              <% @products.each do |product| %>
+                <%= render "product_row",
+                      product: product,
+                      selected: @selected_product&.id == product.id,
+                      supplier_type_map: @supplier_type_map,
+                      procurement_ready_map: @procurement_ready_map %>
+              <% end %>
+            <% end %>
+          </div>
         </div>
         <%# ── Paginación ── %>
         <% if @pagy.pages > 1 %>

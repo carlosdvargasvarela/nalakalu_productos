@@ -161,7 +161,32 @@ class ProductsController < ApplicationController
     redirect_to products_path
   end
 
+  def bulk_activate
+    bulk_set_active(true)
+  end
+
+  def bulk_deactivate
+    bulk_set_active(false)
+  end
+
   private
+
+  def bulk_set_active(active)
+    ids = Array(params[:ids]).map(&:to_i).reject(&:zero?)
+    return redirect_to products_path(current_filter), alert: "No seleccionaste ningún producto." if ids.empty?
+
+    count = 0
+    Product.where(id: ids).find_each do |product|
+      count += 1 if product.update(active: active)
+    end
+
+    verb = active ? "activado" : "desactivado"
+    redirect_to products_path(current_filter), notice: "#{count} producto(s) #{verb}(s)."
+  end
+
+  def current_filter
+    params.permit(:search, :family_id, :status, :selected_id).to_h
+  end
 
   def set_product
     @product = Product.find(params[:id])

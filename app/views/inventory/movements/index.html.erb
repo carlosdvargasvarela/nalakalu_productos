@@ -61,14 +61,12 @@
   </div>
 </div>
 
-<%# ── TABLA (con bulk delete) ── %>
+<%# ── TABLA (con bulk actions) ── %>
 <% manual_ids = @movements.select { |m| m.source == "manual" }.map(&:id) %>
 
-<%= form_with url: bulk_destroy_inventory_movements_path, method: :delete,
-      data: { controller: "bulk-check" } do %>
-
+<div data-controller="bulk-check">
   <% if manual_ids.any? %>
-    <div class="d-flex align-items-center gap-3 mb-3 px-3 py-2 bg-white border rounded-3 shadow-sm">
+    <div class="d-flex align-items-center gap-3 mb-3 px-3 py-2 bg-white border rounded-3 shadow-sm flex-wrap">
       <div class="form-check mb-0">
         <input class="form-check-input" type="checkbox" id="select-all-movements"
                data-bulk-check-target="selectAll"
@@ -76,12 +74,39 @@
         <label class="form-check-label small fw-semibold" for="select-all-movements">Seleccionar todo</label>
       </div>
       <span class="text-muted small"><span data-bulk-check-target="countBadge"></span> seleccionado(s)</span>
-      <button type="submit" class="btn btn-sm btn-outline-danger"
-              data-bulk-check-target="bulkButton"
-              data-turbo-confirm="¿Eliminar los movimientos manuales seleccionados? Esta acción no se puede deshacer.">
-        <i class="bi bi-trash me-1"></i>Eliminar seleccionados
+
+      <%= form_with url: bulk_destroy_inventory_movements_path, method: :delete,
+            data: { bulk_check_target: "form" } do %>
+        <%= hidden_field_tag :showroom_id, @filter["showroom_id"] %>
+        <%= hidden_field_tag :product_id, @filter["product_id"] %>
+        <%= hidden_field_tag :movement_type, @filter["movement_type"] %>
+        <%= hidden_field_tag :from, @filter["from"] %>
+        <%= hidden_field_tag :to, @filter["to"] %>
+        <button type="submit" class="btn btn-sm btn-outline-danger"
+                data-bulk-check-target="bulkButton"
+                data-turbo-confirm="¿Eliminar los movimientos manuales seleccionados? Esta acción no se puede deshacer.">
+          <i class="bi bi-trash me-1"></i>Eliminar
+        </button>
+      <% end %>
+
+      <%= form_with url: bulk_export_inventory_movements_path, method: :get,
+            data: { bulk_check_target: "form" } do %>
+        <button type="submit" class="btn btn-sm btn-outline-secondary" data-bulk-check-target="bulkButton">
+          <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+        </button>
+      <% end %>
+
+      <button type="button" class="btn btn-sm btn-outline-primary" data-bulk-check-target="bulkButton"
+              data-bs-toggle="modal" data-bs-target="#bulkReassignShowroomModal">
+        <i class="bi bi-arrow-left-right me-1"></i>Reasignar sala
       </button>
-      <span class="text-muted small ms-auto fst-italic">Solo movimientos de origen <strong>manual</strong></span>
+
+      <button type="button" class="btn btn-sm btn-outline-primary" data-bulk-check-target="bulkButton"
+              data-bs-toggle="modal" data-bs-target="#bulkEditNoteModal">
+        <i class="bi bi-pencil-square me-1"></i>Editar nota/pedido
+      </button>
+
+      <span class="text-muted small ms-auto fst-italic">Edición y exportación solo para movimientos <strong>manuales</strong></span>
     </div>
   <% end %>
 
@@ -127,7 +152,7 @@
                   <td class="ps-3">
                     <% if is_manual %>
                       <input class="form-check-input" type="checkbox"
-                             name="ids[]" value="<%= m.id %>"
+                             value="<%= m.id %>"
                              data-bulk-check-target="checkbox"
                              data-action="change->bulk-check#updateBulkButton">
                     <% end %>
@@ -157,4 +182,66 @@
       <% end %>
     </div>
   </div>
-<% end %>
+
+  <%# ── MODAL: Reasignar sala ── %>
+  <div class="modal fade" id="bulkReassignShowroomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content border-0 rounded-4 shadow">
+        <%= form_with url: bulk_reassign_showroom_inventory_movements_path, method: :patch,
+              data: { bulk_check_target: "form" } do %>
+          <%= hidden_field_tag :showroom_id, @filter["showroom_id"] %>
+          <%= hidden_field_tag :product_id, @filter["product_id"] %>
+          <%= hidden_field_tag :movement_type, @filter["movement_type"] %>
+          <%= hidden_field_tag :from, @filter["from"] %>
+          <%= hidden_field_tag :to, @filter["to"] %>
+          <div class="modal-header border-bottom-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold">Reasignar sala</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4 pt-0">
+            <label class="form-label small fw-semibold">Nueva sala</label>
+            <%= select_tag :new_showroom_id,
+                  options_for_select([["— Seleccione —", ""]] + @showrooms.map { |s| [s.name, s.id] }),
+                  class: "form-select" %>
+            <p class="text-muted small mt-2 mb-0">Solo aplica a movimientos manuales seleccionados.</p>
+          </div>
+          <div class="modal-footer border-top-0 p-4 pt-2">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Reasignar</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%# ── MODAL: Editar nota/pedido ── %>
+  <div class="modal fade" id="bulkEditNoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content border-0 rounded-4 shadow">
+        <%= form_with url: bulk_edit_note_inventory_movements_path, method: :patch,
+              data: { bulk_check_target: "form" } do %>
+          <%= hidden_field_tag :showroom_id, @filter["showroom_id"] %>
+          <%= hidden_field_tag :product_id, @filter["product_id"] %>
+          <%= hidden_field_tag :movement_type, @filter["movement_type"] %>
+          <%= hidden_field_tag :from, @filter["from"] %>
+          <%= hidden_field_tag :to, @filter["to"] %>
+          <div class="modal-header border-bottom-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold">Editar nota / pedido</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4 pt-0">
+            <label class="form-label small fw-semibold">Pedido</label>
+            <%= text_field_tag :order_number, nil, class: "form-control mb-3", placeholder: "Dejar en blanco para no modificar" %>
+            <label class="form-label small fw-semibold">Nota</label>
+            <%= text_area_tag :note, nil, rows: 3, class: "form-control", placeholder: "Dejar en blanco para no modificar" %>
+            <p class="text-muted small mt-2 mb-0">Solo aplica a movimientos manuales seleccionados. Los campos en blanco no se modifican.</p>
+          </div>
+          <div class="modal-footer border-top-0 p-4 pt-2">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
