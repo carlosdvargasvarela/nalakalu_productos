@@ -62,6 +62,33 @@
       </button>
     </div>
 
+    <div class="col-12"
+         data-controller="tag-list"
+         data-tag-list-name-value="showroom[product_keywords][]"
+         data-tag-list-placeholder-value="Ej: VENDIDO SALA SE">
+      <label class="form-label fw-bold">Palabras clave de producto para salida</label>
+      <div class="form-text mb-3">
+        Si el nombre de un producto contiene alguna de estas palabras, se genera una <strong>salida</strong>
+        desde esta sala — pero solo para pedidos cuyo número matchee algún
+        <%= link_to "prefijo de pedido de salida", inventory_sync_config_path, class: "link-underline" %>
+        configurado globalmente (Regla 3).
+      </div>
+      <div data-tag-list-target="list" class="d-flex flex-column gap-2 mb-3">
+        <% (showroom.product_keywords_array.presence || [""]).each do |kw| %>
+          <div class="input-group" data-tag-list-target="item">
+            <input type="text" name="showroom[product_keywords][]" value="<%= kw %>"
+                   class="form-control" placeholder="Ej: VENDIDO SALA SE">
+            <button type="button" class="btn btn-outline-danger" data-action="click->tag-list#remove">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-action="click->tag-list#add">
+        <i class="bi bi-plus-circle me-1"></i>Agregar palabra clave
+      </button>
+    </div>
+
     <div class="col-12 mt-3">
       <button class="btn btn-link text-decoration-none p-0" type="button"
               data-bs-toggle="collapse" data-bs-target="#advancedRules">
@@ -73,7 +100,7 @@
           clasificación, pero el clasificador actual <strong>no los utiliza todavía</strong>.
         </div>
         <div class="row g-4">
-          <div class="col-md-4"
+          <div class="col-md-6"
                data-controller="tag-list"
                data-tag-list-name-value="showroom[order_number_keywords][]"
                data-tag-list-placeholder-value="Ej: ESCAZU">
@@ -93,7 +120,7 @@
               <i class="bi bi-plus-circle me-1"></i>Agregar
             </button>
           </div>
-          <div class="col-md-4"
+          <div class="col-md-6"
                data-controller="tag-list"
                data-tag-list-name-value="showroom[inter_sala_keywords][]"
                data-tag-list-placeholder-value="Ej: ENTRE SALA">
@@ -103,26 +130,6 @@
                 <div class="input-group input-group-sm" data-tag-list-target="item">
                   <input type="text" name="showroom[inter_sala_keywords][]" value="<%= kw %>"
                          class="form-control" placeholder="Ej: ENTRE SALA">
-                  <button type="button" class="btn btn-outline-danger" data-action="click->tag-list#remove">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              <% end %>
-            </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="click->tag-list#add">
-              <i class="bi bi-plus-circle me-1"></i>Agregar
-            </button>
-          </div>
-          <div class="col-md-4"
-               data-controller="tag-list"
-               data-tag-list-name-value="showroom[product_keywords][]"
-               data-tag-list-placeholder-value="Ej: SOFA">
-            <label class="form-label fw-bold small">Palabras clave de producto</label>
-            <div data-tag-list-target="list" class="d-flex flex-column gap-2 mb-2">
-              <% (showroom.product_keywords_array.presence || [""]).each do |kw| %>
-                <div class="input-group input-group-sm" data-tag-list-target="item">
-                  <input type="text" name="showroom[product_keywords][]" value="<%= kw %>"
-                         class="form-control" placeholder="Ej: SOFA">
                   <button type="button" class="btn btn-outline-danger" data-action="click->tag-list#remove">
                     <i class="bi bi-trash"></i>
                   </button>

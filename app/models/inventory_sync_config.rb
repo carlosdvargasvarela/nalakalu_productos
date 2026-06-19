@@ -1,4 +1,8 @@
 class InventorySyncConfig < ApplicationRecord
+  include SerializedArrayAttribute
+
+  array_attribute :exit_order_prefixes
+
   validates :default_days_back,  numericality: { greater_than_or_equal_to: 0 }
   validates :default_days_forward, numericality: { greater_than_or_equal_to: 0 }
   validates :schedule_days_back, numericality: { greater_than: 0 }

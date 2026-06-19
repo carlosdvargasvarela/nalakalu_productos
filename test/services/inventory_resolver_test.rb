@@ -47,4 +47,19 @@ class InventoryResolverTest < ActiveSupport::TestCase
     assert_includes decode_calls, "Sofá 3 puestos"
     assert_includes decode_calls, "Mesa de centro"
   end
+
+  test "crea el movimiento con showroom_id nil cuando la sala de salida queda ambigua" do
+    InventorySyncConfig.current.update!(exit_order_prefixes: ["PED-4"])
+    showrooms(:escazu).update!(product_keywords: ["VENDIDO"])
+    showrooms(:guanacaste).update!(product_keywords: ["VENDIDO"])
+
+    deliveries = [delivery(order_number: "PED-4-00123", items: [item("Sofá 3 puestos VENDIDO")])]
+
+    movements = InventoryResolver.resolve_deliveries(deliveries, @sync)
+
+    assert_equal 1, movements.size
+    assert_nil movements.first.showroom_id
+    assert_equal "exit", movements.first.movement_type
+    assert_equal "unresolved", movements.first.status
+  end
 end

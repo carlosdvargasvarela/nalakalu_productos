@@ -8,10 +8,11 @@ class Inventory::SyncsController < Inventory::BaseController
 
     @movement_groups = all_movements.group_by(&:order_number)
     @stat_confirmed  = all_movements.count { |m| m.status == "resolved" }
-    @stat_suggested  = all_movements.count { |m| m.status == "unresolved" && m.product_id.present? }
-    @stat_unassigned = all_movements.count { |m| m.status == "unresolved" && m.product_id.nil? }
+    @stat_suggested  = all_movements.count { |m| m.status == "unresolved" && m.showroom_id.present? && m.product_id.present? }
+    @stat_unassigned = all_movements.count { |m| m.status == "unresolved" && (m.showroom_id.nil? || m.product_id.nil?) }
     @stat_ignored    = all_movements.count { |m| m.status == "ignored" }
-    @products_for_select = Product.where(active: true).order(:name)
+    @products_for_select  = Product.where(active: true).order(:name)
+    @showrooms_for_select = Showroom.active.order(:name)
     @families = Family.order(:name)
   end
 
@@ -55,10 +56,16 @@ class Inventory::SyncsController < Inventory::BaseController
       return redirect_to inventory_sync_path(@sync), alert: "Selecciona un producto y al menos un ítem."
     end
 
-    count = @sync.inventory_movements.where(id: ids, status: "unresolved").update_all(product_id: product.id, status: "resolved")
+    scope = @sync.inventory_movements.where(id: ids, status: "unresolved")
+    resolved_count = scope.where.not(showroom_id: nil).update_all(product_id: product.id, status: "resolved")
+    pending_showroom_count = scope.where(showroom_id: nil).update_all(product_id: product.id)
+
     @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
     InventoryMovement.bust_stock_cache!
-    redirect_to inventory_sync_path(@sync), notice: "#{count} ítem(s) asignados a \"#{product.name}\"."
+
+    notice = "#{resolved_count} ítem(s) asignados a \"#{product.name}\"."
+    notice += " #{pending_showroom_count} quedaron pendientes de seleccionar sala." if pending_showroom_count > 0
+    redirect_to inventory_sync_path(@sync), notice: notice
   end
 
   private

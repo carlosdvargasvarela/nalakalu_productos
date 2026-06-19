@@ -13,7 +13,14 @@ class Inventory::ConfigController < Inventory::BaseController
     redirect_to inventory_sync_config_path, notice: "Prefijos de #{@showroom.name} actualizados."
   end
 
+  def update_exit_prefixes
+    prefixes = params[:exit_order_prefixes].to_s.split(",").map(&:strip).reject(&:blank?)
+    InventorySyncConfig.current.update!(exit_order_prefixes: prefixes)
+    redirect_to inventory_sync_config_path, notice: "Prefijos de pedidos de salida actualizados."
+  end
+
   def test_classify
+    product_name = params[:product_name].presence || "Artículo de prueba"
     delivery = {
       "id"                   => 0,
       "order_number"         => params[:order_number].to_s.strip,
@@ -21,14 +28,18 @@ class Inventory::ConfigController < Inventory::BaseController
       "client"               => { "name" => "Prueba" },
       "source_showroom"      => params[:source_showroom].present? ? { "code" => params[:source_showroom] } : nil,
       "destination_showroom" => params[:destination_showroom].present? ? { "code" => params[:destination_showroom] } : nil,
-      "items"                => [{ "id" => 0, "product_name" => "Artículo de prueba", "quantity_delivered" => 1 }]
+      "items"                => [{ "id" => 0, "product_name" => product_name, "quantity_delivered" => 1 }]
     }
     results = InventoryClassifier.classify(delivery)
     render json: {
       matched: results.any?,
       order_number: params[:order_number],
       movements: results.map { |r|
-        { type: r.type, type_label: r.type == "entry" ? "Entrada" : "Salida", showroom: r.showroom.name }
+        {
+          type: r.type,
+          type_label: r.type == "entry" ? "Entrada" : "Salida",
+          showroom: r.showroom&.name || "Ambigua — requiere selección manual"
+        }
       }
     }
   end

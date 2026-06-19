@@ -23,10 +23,10 @@ class InventoryResolver
     results = []
 
     classified.each do |c|
-      item     = c.item
-      showroom = c.showroom
+      item        = c.item
+      showroom_id = c.showroom&.id
 
-      next if confirmed_duplicate?(item["id"], c.type, showroom.id)
+      next if confirmed_duplicate?(item["id"], c.type, showroom_id)
 
       decoding   = @decoded_by_name[item["product_name"].to_s]
       product_id = decoding.base_product&.id
@@ -35,7 +35,7 @@ class InventoryResolver
       movement = InventoryMovement.find_or_initialize_by(
         delivery_item_id: item["id"],
         movement_type:    c.type,
-        showroom_id:      showroom.id
+        showroom_id:      showroom_id
       )
 
       movement.assign_attributes(

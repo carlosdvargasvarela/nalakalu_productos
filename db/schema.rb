@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_17_000001) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_19_142607) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -99,6 +99,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_17_000001) do
     t.integer "schedule_days_back", default: 14, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "exit_order_prefixes"
   end
 
   create_table "inventory_syncs", force: :cascade do |t|

@@ -45,12 +45,26 @@ class InventorySyncsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-sync-review-target=bulkAssignBtn]"
   end
 
+  test "show ofrece un selector de sala inline para movimientos sin sala asignada" do
+    sync = InventorySync.create!(from_date: Date.current, to_date: Date.current, status: "pending_review")
+    InventoryMovement.create!(
+      inventory_sync: sync, movement_type: "exit", source: "synced", status: "unresolved",
+      showroom: nil, quantity: 1, order_number: "PED-4-001", product_name_raw: "Sofá VENDIDO"
+    )
+
+    get inventory_sync_url(sync)
+
+    assert_response :success
+    assert_select "select[name='inventory_movement[showroom_id]']"
+    assert_match "Sin sala", @response.body
+  end
+
   test "bulk_assign_product asigna el producto y resuelve solo los ítems no resueltos seleccionados" do
     sync = InventorySync.create!(from_date: Date.current, to_date: Date.current, status: "pending_review", unresolved_count: 2)
     product = products(:one)
     pending = InventoryMovement.create!(
       inventory_sync: sync, movement_type: "entry", source: "synced", status: "unresolved",
-      quantity: 1, order_number: "2-00001", product_name_raw: "Producto sin asignar"
+      showroom: showrooms(:palmares), quantity: 1, order_number: "2-00001", product_name_raw: "Producto sin asignar"
     )
     already_resolved = InventoryMovement.create!(
       inventory_sync: sync, movement_type: "entry", source: "synced", status: "resolved",
@@ -68,6 +82,22 @@ class InventorySyncsControllerTest < ActionDispatch::IntegrationTest
     assert_equal product.id, pending.product_id
     assert_equal products(:two).id, already_resolved.reload.product_id, "no debe tocar ítems ya resueltos"
     assert_equal 0, sync.reload.unresolved_count
+  end
+
+  test "bulk_assign_product asigna el producto pero deja pendiente de sala el ítem ambiguo" do
+    sync = InventorySync.create!(from_date: Date.current, to_date: Date.current, status: "pending_review")
+    product = products(:one)
+    ambiguous = InventoryMovement.create!(
+      inventory_sync: sync, movement_type: "exit", source: "synced", status: "unresolved",
+      showroom: nil, quantity: 1, order_number: "PED-4-001", product_name_raw: "Sofá VENDIDO"
+    )
+
+    post bulk_assign_product_inventory_sync_url(sync), params: { movement_ids: [ambiguous.id], product_id: product.id }
+
+    ambiguous.reload
+    assert_equal "unresolved", ambiguous.status
+    assert_equal product.id, ambiguous.product_id
+    assert_nil ambiguous.showroom_id
   end
 
   test "bulk_assign_product sin producto redirige con alerta" do

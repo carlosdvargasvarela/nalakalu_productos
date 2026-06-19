@@ -199,12 +199,13 @@ Rails.application.routes.draw do
     post "alerts/bulk_resolve",   to: "alerts#bulk_resolve", as: :bulk_resolve_inventory_alerts
     patch "alerts/:id/resolve",   to: "alerts#resolve",      as: :resolve_inventory_alert
 
-    get   "sync_config",                       to: "config#show",            as: :inventory_sync_config
-    patch "sync_config/prefixes/:showroom_id", to: "config#update_prefixes", as: :inventory_sync_config_prefixes
-    post  "sync_config/test_classify",         to: "config#test_classify",   as: :inventory_sync_config_test_classify,
+    get   "sync_config",                       to: "config#show",               as: :inventory_sync_config
+    patch "sync_config/prefixes/:showroom_id", to: "config#update_prefixes",    as: :inventory_sync_config_prefixes
+    patch "sync_config/exit_prefixes",         to: "config#update_exit_prefixes", as: :inventory_sync_config_exit_prefixes
+    post  "sync_config/test_classify",         to: "config#test_classify",      as: :inventory_sync_config_test_classify,
           defaults: { format: :json }
-    patch "sync_config/defaults",              to: "config#update_defaults", as: :inventory_sync_config_defaults
-    patch "sync_config/schedule",              to: "config#update_schedule", as: :inventory_sync_config_schedule
+    patch "sync_config/defaults",              to: "config#update_defaults",    as: :inventory_sync_config_defaults
+    patch "sync_config/schedule",              to: "config#update_schedule",    as: :inventory_sync_config_schedule
   end
 
   # --- RECOMENDACIONES ---

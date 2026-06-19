@@ -64,6 +64,35 @@
   </div>
 </div>
 
+<%# ── 1B. PREFIJOS GLOBALES DE PEDIDOS DE SALIDA ── %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="mb-0 fw-semibold"><i class="bi bi-box-arrow-right me-2 text-danger"></i>Prefijos de pedidos de salida</h6>
+    <p class="text-muted small mb-0 mt-1">
+      Si el número de pedido empieza con alguno de estos prefijos (ej. pedidos de venta a cliente),
+      se evalúan las <strong>palabras clave de producto</strong> de cada sala (Regla 3) para detectar una <strong>Salida</strong>.
+    </p>
+  </div>
+  <div class="card-body">
+    <%= form_with url: inventory_sync_config_exit_prefixes_path, method: :patch,
+          class: "d-flex gap-2 align-items-center" do %>
+      <input type="text" name="exit_order_prefixes"
+             value="<%= @config.exit_order_prefixes_array.join(', ') %>"
+             class="form-control font-monospace"
+             placeholder="Ej: PED-4, PED-5">
+      <button type="submit" class="btn btn-outline-primary text-nowrap">
+        <i class="bi bi-check-lg"></i> Guardar
+      </button>
+    <% end %>
+  </div>
+  <div class="card-footer bg-white text-muted small">
+    <i class="bi bi-info-circle me-1"></i>
+    Las palabras clave de cada sala se configuran en su ficha (<%= link_to "ver salas", showrooms_path %>).
+    Si un producto matchea palabras clave de más de una sala, el movimiento queda pendiente de
+    revisión manual en la pantalla de sincronización.
+  </div>
+</div>
+
 <%# ── 2. PROBAR CLASIFICACIÓN ── %>
 <div class="card border-0 shadow-sm mb-4">
   <div class="card-header bg-white border-bottom py-3">
@@ -73,12 +102,17 @@
   <div class="card-body">
     <form data-action="submit->sync-config#runTest">
       <div class="row g-3 mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small fw-semibold">Número de pedido <span class="text-danger">*</span></label>
           <input type="text" name="order_number" class="form-control font-monospace"
-                 placeholder="Ej: 2-00123">
+                 placeholder="Ej: 2-00123 o PED-4-00123">
         </div>
         <div class="col-md-3">
+          <label class="form-label small fw-semibold">Nombre del producto <span class="text-muted fw-normal">(Regla 3)</span></label>
+          <input type="text" name="product_name" class="form-control"
+                 placeholder="Ej: Sofá VENDIDO SALA SE">
+        </div>
+        <div class="col-md-2">
           <label class="form-label small fw-semibold">Sala de origen <span class="text-muted fw-normal">(Regla 1)</span></label>
           <select name="source_showroom" class="form-select">
             <option value="">— Ninguna —</option>
@@ -87,7 +121,7 @@
             <% end %>
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label small fw-semibold">Sala de destino <span class="text-muted fw-normal">(Regla 1)</span></label>
           <select name="destination_showroom" class="form-select">
             <option value="">— Ninguna —</option>

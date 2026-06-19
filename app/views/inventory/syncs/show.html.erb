@@ -59,133 +59,6 @@
   </div>
 <% end %>
 
-<%# ── KPI CARDS ── %>
-<div class="row g-3 mb-4">
-  <% [
-    [@stat_confirmed,  "Confirmados",  "bi-check-circle-fill", "success"],
-    [@stat_suggested,  "Sugeridos",    "bi-lightbulb-fill",    "info"],
-    [@stat_unassigned, "Sin asignar",  "bi-question-circle",   "warning"],
-    [@stat_ignored,    "Ignorados",    "bi-eye-slash",         "secondary"],
-  ].each do |count, label, icon, color| %>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-body d-flex align-items-center gap-3 py-3">
-          <div class="rounded-3 bg-<%= color %> bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
-               style="width:38px;height:38px;">
-            <i class="bi <%= icon %> text-<%= color %>"></i>
-          </div>
-          <div>
-            <div class="fs-4 fw-bold lh-1 mb-1 <%= count > 0 ? "text-#{color}-emphasis" : "text-muted" %>">
-              <%= count %>
-            </div>
-            <div class="text-muted small"><%= label %></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  <% end %>
-</div>
-
-<%# ── ALERTA: CONFIRMAR SUGERIDOS EN LOTE ── %>
-<% if @stat_suggested > 0 %>
-  <div class="alert alert-info border-0 shadow-sm mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <div>
-      <i class="bi bi-lightbulb-fill me-2"></i>
-      <strong><%= @stat_suggested %> movimiento(s)</strong> tienen producto detectado automáticamente.
-    </div>
-    <%= button_to confirm_matched_inventory_sync_path(@sync), method: :patch,
-          class: "btn btn-info btn-sm text-white",
-          data: { turbo_confirm: "¿Confirmar todos los movimientos con producto detectado?" } do %>
-      <i class="bi bi-check-all me-1"></i>Confirmar todos los sugeridos (<%= @stat_suggested %>)
-    <% end %>
-  </div>
-<% end %>
-
-<% if @sync.confirmable? %>
-  <div class="alert alert-success border-0 shadow-sm mb-4">
-    <i class="bi bi-check-circle-fill me-2"></i>
-    Todos los movimientos están revisados. Puedes confirmar la sincronización.
-  </div>
-<% end %>
-
-<%# ── FILTROS + BÚSQUEDA ── %>
-<% pending_count = @stat_suggested + @stat_unassigned %>
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-  <div class="btn-group btn-group-sm" role="group">
-    <button type="button" class="btn btn-outline-secondary active"
-            data-action="click->sync-review#setFilter" data-status="all">
-      Todos <span class="badge bg-secondary ms-1"><%= @sync.movements_count %></span>
-    </button>
-    <% if pending_count > 0 %>
-      <button type="button" class="btn btn-outline-warning"
-              data-action="click->sync-review#setFilter" data-status="pending">
-        Pendientes <span class="badge bg-warning text-dark ms-1"><%= pending_count %></span>
-      </button>
-    <% end %>
-    <% if @stat_suggested > 0 %>
-      <button type="button" class="btn btn-outline-info"
-              data-action="click->sync-review#setFilter" data-status="suggested">
-        Sugeridos <span class="badge bg-info text-dark ms-1"><%= @stat_suggested %></span>
-      </button>
-    <% end %>
-    <% if @stat_unassigned > 0 %>
-      <button type="button" class="btn btn-outline-warning"
-              data-action="click->sync-review#setFilter" data-status="unassigned">
-        Sin asignar <span class="badge bg-warning text-dark ms-1"><%= @stat_unassigned %></span>
-      </button>
-    <% end %>
-    <% if @stat_confirmed > 0 %>
-      <button type="button" class="btn btn-outline-success"
-              data-action="click->sync-review#setFilter" data-status="resolved">
-        Confirmados <span class="badge bg-success ms-1"><%= @stat_confirmed %></span>
-      </button>
-    <% end %>
-    <% if @stat_ignored > 0 %>
-      <button type="button" class="btn btn-outline-secondary"
-              data-action="click->sync-review#setFilter" data-status="ignored">
-        Ignorados <span class="badge bg-secondary ms-1"><%= @stat_ignored %></span>
-      </button>
-    <% end %>
-  </div>
-  <div class="input-group input-group-sm" style="max-width:280px;">
-    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-    <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar pedido o producto…"
-           data-action="input->sync-review#search">
-    <button class="btn btn-outline-secondary" type="button"
-            data-action="click->sync-review#clearSearch"><i class="bi bi-x"></i></button>
-  </div>
-</div>
-
-<%# ── BULK IGNORE ── %>
-<% if pending_count > 0 %>
-  <div class="d-flex align-items-center gap-3 mb-3 px-3 py-2 bg-white border rounded-3 shadow-sm">
-    <div class="form-check mb-0">
-      <input class="form-check-input" type="checkbox" id="select-all-unresolved"
-             data-sync-review-target="selectAllUnresolved"
-             data-action="change->sync-review#toggleSelectAll">
-      <label class="form-check-label small fw-semibold" for="select-all-unresolved">Seleccionar pendientes visibles</label>
-    </div>
-    <span class="text-muted small"><span data-sync-review-target="bulkCount"></span> seleccionado(s)</span>
-    <button type="button" class="btn btn-sm btn-outline-primary"
-            data-sync-review-target="bulkAssignBtn"
-            data-bs-toggle="modal" data-bs-target="#bulkAssignProductModal" disabled>
-      <i class="bi bi-box-seam me-1"></i>Asignar producto
-    </button>
-    <button type="button" class="btn btn-sm btn-outline-secondary"
-            data-sync-review-target="bulkIgnoreBtn"
-            data-action="click->sync-review#submitBulkIgnore"
-            data-turbo-confirm="¿Ignorar los movimientos seleccionados?" disabled>
-      <i class="bi bi-eye-slash me-1"></i>Ignorar seleccionados
-    </button>
-    <form id="bulk-ignore-form" action="<%= bulk_ignore_inventory_sync_path(@sync) %>" method="post" class="mb-0">
-      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-    </form>
-    <form id="bulk-assign-product-form" action="<%= bulk_assign_product_inventory_sync_path(@sync) %>" method="post" class="mb-0">
-      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-    </form>
-  </div>
-<% end %>
-
 <%# ── MODAL: Asignar producto en lote ── %>
 <div class="modal fade" id="bulkAssignProductModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
@@ -202,7 +75,10 @@
             <option value="<%= p.id %>"><%= p.name %></option>
           <% end %>
         </select>
-        <p class="text-muted small mt-2 mb-0">Se asignará el mismo producto a todos los ítems seleccionados y quedarán confirmados.</p>
+        <p class="text-muted small mt-2 mb-0">
+          Se asignará el mismo producto a todos los ítems seleccionados. Los que ya tengan sala
+          quedarán confirmados; los que no, seguirán pendientes hasta elegirla.
+        </p>
       </div>
       <div class="modal-footer border-top-0 p-4 pt-2">
         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
@@ -215,165 +91,283 @@
   </div>
 </div>
 
-<%# ── GRUPOS DE MOVIMIENTOS ── %>
-<% @movement_groups.each do |order_number, movements| %>
-  <% exits           = movements.select { |m| m.movement_type == "exit" } %>
-  <% entries         = movements.select { |m| m.movement_type == "entry" } %>
-  <% is_transfer     = exits.any? && entries.any? %>
-  <% group_date      = movements.first&.delivery_date %>
-  <% pending_in_group = movements.count { |m| m.status == "unresolved" } %>
-  <% client_name     = movements.first&.client_name %>
-  <% delivery_status = movements.first&.delivery_status %>
-  <% delivery_badge  = case delivery_status&.downcase
-      when /entregad|delivered/  then "bg-success"
-      when /cancelad|cancelled/  then "bg-danger"
-      when /parcial|partial/     then "bg-warning text-dark"
-      when /transit|en_ruta/     then "bg-info text-dark"
-      else                            "bg-secondary"
-     end %>
+<%# ── PANEL PRINCIPAL: filtros + tabla agrupada ── %>
+<% pending_count = @stat_suggested + @stat_unassigned %>
+<div class="card border-0 shadow-sm">
 
-  <div class="card border-0 shadow-sm mb-3" data-sync-review-target="orderGroup">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2
-                <%= is_transfer ? 'bg-primary-subtle' : (entries.any? ? 'bg-success-subtle' : 'bg-danger-subtle') %>">
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        <% if is_transfer %>
-          <i class="bi bi-arrow-left-right text-primary"></i>
-          <strong class="text-primary-emphasis small">Transferencia</strong>
-          <span class="badge bg-primary small"><%= exits.first&.showroom&.name || "?" %></span>
-          <i class="bi bi-arrow-right text-primary small"></i>
-          <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle small">
-            <%= entries.first&.showroom&.name || "?" %>
-          </span>
-        <% elsif entries.any? %>
-          <i class="bi bi-arrow-down-circle text-success"></i>
-          <strong class="text-success-emphasis small">Entrada</strong>
-          <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle small">
-            <%= entries.first&.showroom&.name || "?" %>
-          </span>
-        <% else %>
-          <i class="bi bi-arrow-up-circle text-danger"></i>
-          <strong class="text-danger-emphasis small">Salida</strong>
-          <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle small">
-            <%= exits.first&.showroom&.name || "?" %>
-          </span>
-        <% end %>
-        <span class="text-muted small">
-          <%= group_date&.strftime("%d/%m/%Y") %>
-          &middot; <code class="small"><%= order_number %></code>
-          <% if client_name.present? %>
-            &middot; <i class="bi bi-person me-1"></i><%= client_name %>
-          <% end %>
-        </span>
-        <% if delivery_status.present? %>
-          <span class="badge <%= delivery_badge %> small"><i class="bi bi-truck me-1"></i><%= delivery_status %></span>
-        <% end %>
-      </div>
-      <% if pending_in_group > 0 %>
-        <span class="badge bg-warning text-dark small"><i class="bi bi-clock me-1"></i><%= pending_in_group %> pendiente(s)</span>
-      <% else %>
-        <span class="badge bg-success small"><i class="bi bi-check-lg me-1"></i>Completo</span>
+  <%# ── Barra de filtros + búsqueda ── %>
+  <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="btn-group btn-group-sm" role="group">
+      <button type="button" class="btn btn-outline-secondary active"
+              data-action="click->sync-review#setFilter" data-status="all">
+        Todos <span class="badge bg-secondary ms-1"><%= @sync.movements_count %></span>
+      </button>
+      <% if pending_count > 0 %>
+        <button type="button" class="btn btn-outline-warning"
+                data-action="click->sync-review#setFilter" data-status="pending">
+          Pendientes <span class="badge bg-warning text-dark ms-1"><%= pending_count %></span>
+        </button>
+      <% end %>
+      <% if @stat_suggested > 0 %>
+        <button type="button" class="btn btn-outline-info"
+                data-action="click->sync-review#setFilter" data-status="suggested">
+          Sugeridos <span class="badge bg-info text-dark ms-1"><%= @stat_suggested %></span>
+        </button>
+      <% end %>
+      <% if @stat_unassigned > 0 %>
+        <button type="button" class="btn btn-outline-warning"
+                data-action="click->sync-review#setFilter" data-status="unassigned">
+          Sin asignar <span class="badge bg-warning text-dark ms-1"><%= @stat_unassigned %></span>
+        </button>
+      <% end %>
+      <% if @stat_confirmed > 0 %>
+        <button type="button" class="btn btn-outline-success"
+                data-action="click->sync-review#setFilter" data-status="resolved">
+          Confirmados <span class="badge bg-success ms-1"><%= @stat_confirmed %></span>
+        </button>
+      <% end %>
+      <% if @stat_ignored > 0 %>
+        <button type="button" class="btn btn-outline-secondary"
+                data-action="click->sync-review#setFilter" data-status="ignored">
+          Ignorados <span class="badge bg-secondary ms-1"><%= @stat_ignored %></span>
+        </button>
       <% end %>
     </div>
-
-    <table class="table table-sm align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th style="width:36px;" class="ps-3"></th>
-          <th>Nombre recibido</th>
-          <th>Tipo</th>
-          <% if is_transfer %><th>Sala</th><% end %>
-          <th class="text-center">Cant.</th>
-          <th style="min-width:280px;">Producto a confirmar</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% movements.each do |m| %>
-          <%
-            m_status = if m.status == "resolved" then "resolved"
-                       elsif m.status == "ignored" then "ignored"
-                       elsif m.product_id.present? then "suggested"
-                       else "unassigned"
-                       end
-            row_class = case m_status
-              when "resolved"   then "table-success"
-              when "ignored"    then "table-secondary opacity-75"
-              when "suggested"  then "table-info"
-              when "unassigned" then "table-warning"
-            end
-          %>
-          <tr class="<%= row_class %>"
-              data-sync-review-target="movementRow"
-              data-status="<%= m_status %>">
-            <td class="ps-3">
-              <% if m.status == "unresolved" %>
-                <input class="form-check-input ignore-cb" type="checkbox" value="<%= m.id %>"
-                       data-action="change->sync-review#checkboxChanged">
-              <% end %>
-            </td>
-            <td><code class="small text-dark"><%= m.product_name_raw %></code></td>
-            <td>
-              <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %> small">
-                <%= m.type_label %>
-              </span>
-            </td>
-            <% if is_transfer %>
-              <td><small class="text-muted"><%= m.showroom&.name %></small></td>
-            <% end %>
-            <td class="text-center fw-semibold small"><%= m.quantity %></td>
-            <td>
-              <% if m.status == "resolved" %>
-                <span class="text-success-emphasis fw-semibold small">
-                  <i class="bi bi-check-circle-fill me-1"></i><%= m.product&.name || "—" %>
-                </span>
-              <% elsif m.status == "ignored" %>
-                <span class="text-muted fst-italic small">
-                  <i class="bi bi-eye-slash me-1"></i>Ignorado
-                </span>
-              <% else %>
-                <%= form_with url: inventory_movement_path(m), method: :patch,
-                      class: "d-flex gap-1 align-items-center" do %>
-                  <%= select_tag "inventory_movement[product_id]",
-                        options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
-                        include_blank: "— Seleccionar —",
-                        class: "form-select form-select-sm",
-                        data: { "sync-review-target": "productSelect", "product-select": "true" } %>
-                  <button type="button" class="btn btn-sm btn-outline-secondary"
-                          title="Nuevo producto" data-action="click->sync-review#openQuickCreate">
-                    <i class="bi bi-plus-lg"></i>
-                  </button>
-                  <button type="submit" class="btn btn-sm <%= m.product_id.present? ? 'btn-primary' : 'btn-success' %> text-nowrap">
-                    <i class="bi bi-check-lg"></i> <%= m.product_id.present? ? "Confirmar" : "Asignar" %>
-                  </button>
-                <% end %>
-              <% end %>
-            </td>
-            <td>
-              <% if m.status == "unresolved" %>
-                <%= button_to inventory_movement_path(m), method: :patch,
-                      params: { ignore: true },
-                      class: "btn btn-sm btn-outline-secondary",
-                      title: "Ignorar",
-                      data: { turbo_confirm: "¿Ignorar este ítem?" } do %>
-                  <i class="bi bi-eye-slash"></i>
-                <% end %>
-              <% end %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-<% end %>
-
-<% if @movement_groups.empty? %>
-  <div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5">
-      <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
-      <p class="mb-0 fw-semibold text-muted">Esta sincronización no tiene movimientos.</p>
+    <div class="input-group input-group-sm" style="max-width:280px;">
+      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+      <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar pedido o producto…"
+             data-action="input->sync-review#search">
+      <button class="btn btn-outline-secondary" type="button"
+              data-action="click->sync-review#clearSearch"><i class="bi bi-x"></i></button>
     </div>
   </div>
-<% end %>
+
+  <%# ── Confirmar sugeridos en lote ── %>
+  <% if @stat_suggested > 0 %>
+    <div class="px-3 py-2 bg-info-subtle border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 small">
+      <span><i class="bi bi-lightbulb-fill me-2 text-info-emphasis"></i>
+        <strong><%= @stat_suggested %></strong> movimiento(s) con producto detectado automáticamente.</span>
+      <%= button_to confirm_matched_inventory_sync_path(@sync), method: :patch,
+            class: "btn btn-info btn-sm text-white",
+            data: { turbo_confirm: "¿Confirmar todos los movimientos con producto detectado?" } do %>
+        <i class="bi bi-check-all me-1"></i>Confirmar todos los sugeridos (<%= @stat_suggested %>)
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# ── Acciones en lote (selección) ── %>
+  <% if pending_count > 0 %>
+    <div class="px-3 py-2 border-bottom d-flex align-items-center gap-3 small">
+      <div class="form-check mb-0">
+        <input class="form-check-input" type="checkbox" id="select-all-unresolved"
+               data-sync-review-target="selectAllUnresolved"
+               data-action="change->sync-review#toggleSelectAll">
+        <label class="form-check-label fw-semibold" for="select-all-unresolved">Seleccionar pendientes visibles</label>
+      </div>
+      <span class="text-muted"><span data-sync-review-target="bulkCount"></span> seleccionado(s)</span>
+      <button type="button" class="btn btn-sm btn-outline-primary"
+              data-sync-review-target="bulkAssignBtn"
+              data-bs-toggle="modal" data-bs-target="#bulkAssignProductModal" disabled>
+        <i class="bi bi-box-seam me-1"></i>Asignar producto
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary"
+              data-sync-review-target="bulkIgnoreBtn"
+              data-action="click->sync-review#submitBulkIgnore"
+              data-turbo-confirm="¿Ignorar los movimientos seleccionados?" disabled>
+        <i class="bi bi-eye-slash me-1"></i>Ignorar seleccionados
+      </button>
+      <form id="bulk-ignore-form" action="<%= bulk_ignore_inventory_sync_path(@sync) %>" method="post" class="mb-0">
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      </form>
+      <form id="bulk-assign-product-form" action="<%= bulk_assign_product_inventory_sync_path(@sync) %>" method="post" class="mb-0">
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      </form>
+    </div>
+  <% end %>
+
+  <%# ── TABLA AGRUPADA POR PEDIDO ── %>
+  <div class="card-body p-0">
+    <% if @movement_groups.empty? %>
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+        <p class="mb-0 fw-semibold">Esta sincronización no tiene movimientos.</p>
+      </div>
+    <% else %>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="width:36px;" class="ps-3"></th>
+              <th>Nombre recibido</th>
+              <th>Tipo</th>
+              <th>Sala</th>
+              <th class="text-center">Cant.</th>
+              <th style="min-width:300px;">Producto a confirmar</th>
+              <th></th>
+            </tr>
+          </thead>
+          <% @movement_groups.each do |order_number, movements| %>
+            <% exits           = movements.select { |m| m.movement_type == "exit" } %>
+            <% entries         = movements.select { |m| m.movement_type == "entry" } %>
+            <% is_transfer     = exits.any? && entries.any? %>
+            <% group_date      = movements.first&.delivery_date %>
+            <% pending_in_group = movements.count { |m| m.status == "unresolved" } %>
+            <% client_name     = movements.first&.client_name %>
+            <% delivery_status = movements.first&.delivery_status %>
+            <% delivery_badge  = case delivery_status&.downcase
+                when /entregad|delivered/  then "bg-success"
+                when /cancelad|cancelled/  then "bg-danger"
+                when /parcial|partial/     then "bg-warning text-dark"
+                when /transit|en_ruta/     then "bg-info text-dark"
+                else                            "bg-secondary"
+               end %>
+
+            <tbody data-sync-review-target="orderGroup">
+              <tr class="table-light">
+                <td colspan="7" class="py-2">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <% if is_transfer %>
+                      <i class="bi bi-arrow-left-right text-primary"></i>
+                      <strong class="text-primary-emphasis small">Transferencia</strong>
+                      <span class="badge bg-primary small"><%= exits.first&.showroom&.name || "Por confirmar" %></span>
+                      <i class="bi bi-arrow-right text-primary small"></i>
+                      <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle small">
+                        <%= entries.first&.showroom&.name || "Por confirmar" %>
+                      </span>
+                    <% elsif entries.any? %>
+                      <i class="bi bi-arrow-down-circle text-success"></i>
+                      <strong class="text-success-emphasis small">Entrada</strong>
+                      <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle small">
+                        <%= entries.first&.showroom&.name || "Por confirmar" %>
+                      </span>
+                    <% else %>
+                      <i class="bi bi-arrow-up-circle text-danger"></i>
+                      <strong class="text-danger-emphasis small">Salida</strong>
+                      <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle small">
+                        <%= exits.first&.showroom&.name || "Por confirmar" %>
+                      </span>
+                    <% end %>
+                    <span class="text-muted small">
+                      <%= group_date&.strftime("%d/%m/%Y") %>
+                      &middot; <code class="small"><%= order_number %></code>
+                      <% if client_name.present? %>
+                        &middot; <i class="bi bi-person me-1"></i><%= client_name %>
+                      <% end %>
+                    </span>
+                    <% if delivery_status.present? %>
+                      <span class="badge <%= delivery_badge %> small"><i class="bi bi-truck me-1"></i><%= delivery_status %></span>
+                    <% end %>
+                    <span class="ms-auto">
+                      <% if pending_in_group > 0 %>
+                        <span class="badge bg-warning text-dark small"><i class="bi bi-clock me-1"></i><%= pending_in_group %> pendiente(s)</span>
+                      <% else %>
+                        <span class="badge bg-success small"><i class="bi bi-check-lg me-1"></i>Completo</span>
+                      <% end %>
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              <% movements.each do |m| %>
+                <%
+                  m_status = if m.status == "resolved" then "resolved"
+                             elsif m.status == "ignored" then "ignored"
+                             elsif m.showroom.nil? || m.product_id.nil? then "unassigned"
+                             else "suggested"
+                             end
+                  accent = case m_status
+                    when "resolved"   then "border-success"
+                    when "ignored"    then "border-secondary"
+                    when "suggested"  then "border-info"
+                    when "unassigned" then "border-warning"
+                  end
+                %>
+                <tr class="border-start border-3 <%= accent %> <%= "opacity-50" if m_status == "ignored" %>"
+                    data-sync-review-target="movementRow"
+                    data-status="<%= m_status %>">
+                  <td class="ps-3">
+                    <% if m.status == "unresolved" %>
+                      <input class="form-check-input ignore-cb" type="checkbox" value="<%= m.id %>"
+                             data-action="change->sync-review#checkboxChanged">
+                    <% end %>
+                  </td>
+                  <td><code class="small text-dark"><%= m.product_name_raw %></code></td>
+                  <td>
+                    <span class="badge <%= m.movement_type == 'entry' ? 'bg-success' : 'bg-danger' %> small">
+                      <%= m.type_label %>
+                    </span>
+                  </td>
+                  <td>
+                    <% if m.showroom.present? %>
+                      <small class="text-muted"><%= m.showroom.name %></small>
+                    <% elsif m.status == "unresolved" %>
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle small">
+                        <i class="bi bi-question-circle me-1"></i>Sin sala
+                      </span>
+                    <% else %>
+                      <span class="text-muted small">—</span>
+                    <% end %>
+                  </td>
+                  <td class="text-center fw-semibold small"><%= m.quantity %></td>
+                  <td>
+                    <% if m.status == "resolved" %>
+                      <span class="text-success-emphasis fw-semibold small">
+                        <i class="bi bi-check-circle-fill me-1"></i><%= m.product&.name || "—" %>
+                        <span class="text-muted fw-normal">— <%= m.showroom&.name %></span>
+                      </span>
+                    <% elsif m.status == "ignored" %>
+                      <span class="text-muted fst-italic small">
+                        <i class="bi bi-eye-slash me-1"></i>Ignorado
+                      </span>
+                    <% else %>
+                      <%= form_with url: inventory_movement_path(m), method: :patch,
+                            class: "d-flex flex-column gap-1" do %>
+                        <div class="d-flex gap-1 align-items-center">
+                          <% if m.showroom.nil? %>
+                            <select name="inventory_movement[showroom_id]"
+                                    class="form-select form-select-sm" style="max-width:160px;">
+                              <option value="">— Sala —</option>
+                              <% @showrooms_for_select.each do |s| %>
+                                <option value="<%= s.id %>"><%= s.name %></option>
+                              <% end %>
+                            </select>
+                          <% end %>
+                          <%= select_tag "inventory_movement[product_id]",
+                                options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
+                                include_blank: "— Producto —",
+                                class: "form-select form-select-sm",
+                                data: { "sync-review-target": "productSelect", "product-select": "true" } %>
+                          <button type="button" class="btn btn-sm btn-outline-secondary"
+                                  title="Nuevo producto" data-action="click->sync-review#openQuickCreate">
+                            <i class="bi bi-plus-lg"></i>
+                          </button>
+                          <button type="submit" class="btn btn-sm <%= m.product_id.present? ? 'btn-primary' : 'btn-success' %> text-nowrap">
+                            <i class="bi bi-check-lg"></i> <%= m.product_id.present? ? "Confirmar" : "Asignar" %>
+                          </button>
+                        </div>
+                      <% end %>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if m.status == "unresolved" %>
+                      <%= button_to inventory_movement_path(m), method: :patch,
+                            params: { ignore: true },
+                            class: "btn btn-sm btn-outline-secondary",
+                            title: "Ignorar",
+                            data: { turbo_confirm: "¿Ignorar este ítem?" } do %>
+                        <i class="bi bi-eye-slash"></i>
+                      <% end %>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          <% end %>
+        </table>
+      </div>
+    <% end %>
+  </div>
+</div>
 
 <%# ── MODAL CREAR PRODUCTO RÁPIDO ── %>
 <div class="modal fade" id="quickCreateProductModal" tabindex="-1" aria-hidden="true">

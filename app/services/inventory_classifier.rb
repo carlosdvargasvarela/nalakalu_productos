@@ -17,6 +17,7 @@ class InventoryClassifier
     results = []
     add_inter_sala_results(items, results)
     add_main_restock_results(items, results)
+    add_keyword_exit_results(items, results)
     results
   end
 
@@ -44,6 +45,36 @@ class InventoryClassifier
     showrooms_by_code.each_value do |showroom|
       next unless restock_order?(showroom)
       items.each { |item| results << Result.new(type: "entry", showroom: showroom, item: item) }
+    end
+  end
+
+  # Rule 3: keyword-based exit — independent of Rules 1 and 2.
+  # Only evaluated for order_numbers matching a globally configured "exit order"
+  # prefix (e.g. "PED-4"), since plain client sale orders carry no structured
+  # source_showroom. Within those, each item's product_name is checked against
+  # every active showroom's product_keywords; exactly one match resolves the
+  # showroom, zero matches generate nothing, and 2+ matches are left ambiguous
+  # (showroom: nil) for manual resolution in the review screen.
+  def add_keyword_exit_results(items, results)
+    return unless exit_order?
+
+    items.each do |item|
+      matches = showrooms_matching_product_keyword(item["product_name"])
+      next if matches.empty?
+
+      results << Result.new(type: "exit", showroom: matches.size == 1 ? matches.first : nil, item: item)
+    end
+  end
+
+  def exit_order?
+    prefixes = InventorySyncConfig.current.exit_order_prefixes_array
+    prefixes.any? { |prefix| @order_number.start_with?(prefix) }
+  end
+
+  def showrooms_matching_product_keyword(product_name)
+    name = product_name.to_s.upcase
+    showrooms_by_code.values.select do |showroom|
+      showroom.product_keywords_array.any? { |keyword| name.include?(keyword.upcase) }
     end
   end
 

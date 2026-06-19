@@ -1,9 +1,7 @@
 class Showroom < ApplicationRecord
-  ARRAY_ATTRIBUTES = %w[
-    order_number_prefixes order_number_keywords inter_sala_keywords product_keywords
-  ].freeze
+  include SerializedArrayAttribute
 
-  ARRAY_ATTRIBUTES.each { |attr| serialize attr, coder: JSON }
+  array_attribute :order_number_prefixes, :order_number_keywords, :inter_sala_keywords, :product_keywords
 
   has_many :inventory_movements, dependent: :restrict_with_error
 
@@ -15,10 +13,6 @@ class Showroom < ApplicationRecord
 
   scope :active, -> { where(active: true) }
 
-  ARRAY_ATTRIBUTES.each do |attr|
-    define_method("#{attr}_array") { array_attribute(attr) }
-  end
-
   private
 
   def normalize_code
@@ -27,27 +21,5 @@ class Showroom < ApplicationRecord
 
   def demote_other_mains
     Showroom.where(is_main: true).where.not(id: id).update_all(is_main: false)
-  end
-
-  def array_attribute(attr_name)
-    raw = read_attribute_before_type_cast(attr_name)
-
-    parsed =
-      case raw
-      when nil
-        []
-      when Array
-        raw
-      when String
-        begin
-          JSON.parse(raw)
-        rescue JSON::ParserError
-          [raw]
-        end
-      else
-        Array(raw)
-      end
-
-    Array(parsed).map(&:to_s).map(&:strip).reject(&:blank?)
   end
 end

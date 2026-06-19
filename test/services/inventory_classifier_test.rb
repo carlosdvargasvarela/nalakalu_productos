@@ -113,4 +113,63 @@ class InventoryClassifierTest < ActiveSupport::TestCase
 
     assert_empty InventoryClassifier.classify(d)
   end
+
+  test "genera salida por palabra clave de producto cuando el pedido matchea un prefijo de salida configurado" do
+    InventorySyncConfig.current.update!(exit_order_prefixes: ["PED-4", "PED-5"])
+    @escazu.update!(product_keywords: ["VENDIDO SALA SE"])
+
+    d = delivery(order_number: "PED-4-00123", items: [item("Sofá 3 puestos VENDIDO SALA SE")])
+
+    exits = InventoryClassifier.classify(d).select { |r| r.type == "exit" }
+
+    assert_equal 1, exits.size
+    assert_equal @escazu, exits.first.showroom
+  end
+
+  test "no genera nada por palabra clave si el order_number no matchea ningún prefijo de salida" do
+    InventorySyncConfig.current.update!(exit_order_prefixes: ["PED-4"])
+    @escazu.update!(product_keywords: ["VENDIDO SALA SE"])
+
+    d = delivery(order_number: "2-00045", items: [item("Sofá 3 puestos VENDIDO SALA SE")])
+
+    assert InventoryClassifier.classify(d).none? { |r| r.type == "exit" }
+  end
+
+  test "no genera nada por palabra clave si ningún producto matchea ninguna palabra clave" do
+    InventorySyncConfig.current.update!(exit_order_prefixes: ["PED-4"])
+    @escazu.update!(product_keywords: ["VENDIDO SALA SE"])
+
+    d = delivery(order_number: "PED-4-00123", items: [item("Sofá 3 puestos")])
+
+    assert_empty InventoryClassifier.classify(d)
+  end
+
+  test "deja la sala ambigua (nil) cuando el producto matchea palabras clave de más de una sala" do
+    InventorySyncConfig.current.update!(exit_order_prefixes: ["PED-4"])
+    @escazu.update!(product_keywords: ["VENDIDO"])
+    @guanacaste.update!(product_keywords: ["VENDIDO"])
+
+    d = delivery(order_number: "PED-4-00123", items: [item("Sofá 3 puestos VENDIDO")])
+
+    exits = InventoryClassifier.classify(d).select { |r| r.type == "exit" }
+
+    assert_equal 1, exits.size
+    assert_nil exits.first.showroom
+  end
+
+  test "la regla de palabra clave es independiente de las reglas 1 y 2" do
+    InventorySyncConfig.current.update!(exit_order_prefixes: ["PED-4"])
+    @escazu.update!(product_keywords: ["VENDIDO SALA SE"])
+
+    d = delivery(
+      order_number: "PED-4-00123",
+      items: [item("Sofá 3 puestos VENDIDO SALA SE")],
+      destination_showroom: { "id" => 1, "name" => @palmares.name, "code" => @palmares.code }
+    )
+
+    results = InventoryClassifier.classify(d)
+
+    assert_equal 1, results.count { |r| r.type == "exit"  && r.showroom == @escazu }
+    assert_equal 1, results.count { |r| r.type == "entry" && r.showroom == @palmares }
+  end
 end
