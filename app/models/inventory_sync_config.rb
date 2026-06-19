@@ -37,11 +37,16 @@ class InventorySyncConfig < ApplicationRecord
 
     job_name = "Auto Sync Inventario"
     if schedule_enabled? && schedule_cron.present?
+      # sidekiq-cron envuelve un Hash como UN argumento posicional (`perform_later({})`),
+      # pero SyncInventoryJob#perform solo acepta keyword args — eso generaba
+      # "wrong number of arguments (given 1, expected 0)" en cada corrida automática.
+      # Un Array vacío sí produce `perform_later()`, sin args, dejando que los
+      # defaults internos del job (from/to/user_id) se calculen solos.
       Sidekiq::Cron::Job.create(
         name:  job_name,
         cron:  schedule_cron,
         class: "SyncInventoryJob",
-        args:  {}
+        args:  []
       )
     else
       Sidekiq::Cron::Job.destroy(job_name) rescue nil
