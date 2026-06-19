@@ -8,6 +8,10 @@ class InventoryResolver
     # Each unique product_name is decoded exactly once per sync run, regardless of
     # how many deliveries/items repeat it — reduces ProductDecoder O(n×products) calls.
     @decoded_by_name = Hash.new { |h, name| h[name] = ProductDecoder.decode(name) }
+    # Showrooms and sync config change rarely — fetch once per run instead of once
+    # per delivery (InventoryClassifier would otherwise re-query both on every call).
+    @showrooms_by_code   = Showroom.active.index_by(&:code)
+    @exit_order_prefixes = InventorySyncConfig.current.exit_order_prefixes_array
   end
 
   def resolve(deliveries)
@@ -17,7 +21,9 @@ class InventoryResolver
   private
 
   def resolve_delivery(delivery)
-    classified = InventoryClassifier.classify(delivery)
+    classified = InventoryClassifier.classify(
+      delivery, showrooms_by_code: @showrooms_by_code, exit_order_prefixes: @exit_order_prefixes
+    )
     return [] if classified.empty?
 
     results = []

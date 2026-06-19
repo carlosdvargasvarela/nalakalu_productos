@@ -20,6 +20,15 @@ class Inventory::DashboardController < Inventory::BaseController
   def sync
     from = params[:from] || Date.current.beginning_of_week.to_s
     to   = params[:to]   || Date.current.end_of_week.to_s
+
+    overlapping = InventorySync.pending_logistics_sync_overlapping(from, to)
+    if overlapping
+      return redirect_to inventory_sync_path(overlapping), alert:
+        "Ya hay una sincronización pendiente de revisión (#{overlapping.from_date.strftime('%d/%m/%Y')}–" \
+        "#{overlapping.to_date.strftime('%d/%m/%Y')}) que se superpone con este rango. " \
+        "Confírmala o elimínala antes de volver a sincronizar."
+    end
+
     SyncInventoryJob.perform_later(from: from, to: to, user_id: current_user.id)
     redirect_to inventory_path, notice: "Sincronización iniciada. Refresca en unos segundos."
   end

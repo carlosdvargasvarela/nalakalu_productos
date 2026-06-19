@@ -33,4 +33,30 @@ class InventorySyncTest < ActiveSupport::TestCase
     )
     assert_equal ["Fila 3: sala no encontrada."], sync.reload.import_errors
   end
+
+  test "pending_logistics_sync_overlapping encuentra un pendiente que se superpone en fechas" do
+    existing = InventorySync.create!(from_date: "2026-06-10", to_date: "2026-06-15", status: "pending_review")
+
+    found = InventorySync.pending_logistics_sync_overlapping("2026-06-14", "2026-06-20")
+
+    assert_equal existing, found
+  end
+
+  test "pending_logistics_sync_overlapping ignora rangos que no se tocan" do
+    InventorySync.create!(from_date: "2026-06-01", to_date: "2026-06-05", status: "pending_review")
+
+    assert_nil InventorySync.pending_logistics_sync_overlapping("2026-06-10", "2026-06-15")
+  end
+
+  test "pending_logistics_sync_overlapping ignora syncs ya confirmados" do
+    InventorySync.create!(from_date: "2026-06-10", to_date: "2026-06-15", status: "confirmed")
+
+    assert_nil InventorySync.pending_logistics_sync_overlapping("2026-06-12", "2026-06-13")
+  end
+
+  test "pending_logistics_sync_overlapping ignora cargas masivas (bulk_upload)" do
+    InventorySync.create!(from_date: "2026-06-10", to_date: "2026-06-15", status: "pending_review", kind: "bulk_upload")
+
+    assert_nil InventorySync.pending_logistics_sync_overlapping("2026-06-12", "2026-06-13")
+  end
 end

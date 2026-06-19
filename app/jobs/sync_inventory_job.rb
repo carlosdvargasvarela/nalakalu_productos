@@ -6,6 +6,14 @@ class SyncInventoryJob < ApplicationJob
     from ||= (Date.current - config.schedule_days_back.days).to_s
     to   ||= Date.current.to_s
 
+    if (overlapping = InventorySync.pending_logistics_sync_overlapping(from, to))
+      Rails.logger.info(
+        "[SyncInventoryJob] omitido: sync ##{overlapping.id} (#{overlapping.from_date}..#{overlapping.to_date}) " \
+        "ya está pendiente y se superpone con #{from}..#{to}"
+      )
+      return
+    end
+
     sync = InventorySync.create!(
       from_date: from,
       to_date:   to,

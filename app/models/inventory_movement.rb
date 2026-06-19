@@ -36,7 +36,7 @@ class InventoryMovement < ApplicationRecord
   # de confirmed_only depende de esa columna, no de los movimientos mismos).
   def self.bust_stock_cache!
     Rails.cache.delete("inventory_movements/stock_by_product_and_showroom")
-    Showroom.ids.each { |id| Rails.cache.delete("inventory_movements/stock_by_showroom/#{id}") }
+    Showroom.cached_ids.each { |id| Rails.cache.delete("inventory_movements/stock_by_showroom/#{id}") }
   end
 
   # Agrega TODO el historial de movimientos — no hay filtro selectivo que

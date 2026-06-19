@@ -1,13 +1,15 @@
 class InventoryClassifier
   Result = Struct.new(:type, :showroom, :item, keyword_init: true)
 
-  def self.classify(delivery)
-    new(delivery).classify
+  def self.classify(delivery, showrooms_by_code: nil, exit_order_prefixes: nil)
+    new(delivery, showrooms_by_code: showrooms_by_code, exit_order_prefixes: exit_order_prefixes).classify
   end
 
-  def initialize(delivery)
-    @delivery     = delivery
-    @order_number = delivery["order_number"].to_s
+  def initialize(delivery, showrooms_by_code: nil, exit_order_prefixes: nil)
+    @delivery             = delivery
+    @order_number         = delivery["order_number"].to_s
+    @showrooms_by_code    = showrooms_by_code
+    @exit_order_prefixes  = exit_order_prefixes
   end
 
   def classify
@@ -67,8 +69,11 @@ class InventoryClassifier
   end
 
   def exit_order?
-    prefixes = InventorySyncConfig.current.exit_order_prefixes_array
-    prefixes.any? { |prefix| @order_number.start_with?(prefix) }
+    exit_order_prefixes.any? { |prefix| @order_number.start_with?(prefix) }
+  end
+
+  def exit_order_prefixes
+    @exit_order_prefixes ||= InventorySyncConfig.current.exit_order_prefixes_array
   end
 
   def showrooms_matching_product_keyword(product_name)

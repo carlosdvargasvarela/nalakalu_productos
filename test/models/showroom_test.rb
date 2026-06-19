@@ -48,4 +48,16 @@ class ShowroomTest < ActiveSupport::TestCase
     assert_equal [], showroom.inter_sala_keywords_array
     assert_equal [], showroom.product_keywords_array
   end
+
+  test "cached_ids refleja altas y bajas de salas" do
+    Rails.cache.clear
+    before_ids = Showroom.cached_ids
+
+    created = Showroom.create!(name: "Sala Cache", code: "SC")
+    assert_includes Showroom.cached_ids, created.id
+    refute_includes before_ids, created.id
+
+    created.destroy
+    assert_not_includes Showroom.cached_ids, created.id
+  end
 end

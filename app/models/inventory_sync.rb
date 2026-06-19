@@ -12,6 +12,16 @@ class InventorySync < ApplicationRecord
   scope :confirmed, -> { where(status: "confirmed") }
   scope :ordered, -> { order(synced_at: :desc) }
 
+  # Evita que dos sincronizaciones automáticas pendientes se superpongan en fechas:
+  # si la segunda corre antes de que la primera se confirme, los movimientos de la
+  # primera se reasignan silenciosamente a la segunda y su contador queda obsoleto.
+  def self.pending_logistics_sync_overlapping(from, to)
+    pending.where(kind: "logistics_sync")
+      .where("from_date <= ? AND to_date >= ?", to, from)
+      .order(:from_date)
+      .first
+  end
+
   def confirm!
     return false if inventory_movements.unresolved.any?
     update!(status: "confirmed")
