@@ -1,0 +1,132 @@
+<%# ── HEADER ── %>
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+  <div>
+    <nav aria-label="breadcrumb" class="mb-1">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><%= link_to "Inventario", inventory_path %></li>
+        <li class="breadcrumb-item active">Ajuste de inventario</li>
+      </ol>
+    </nav>
+    <h1 class="fw-bold mb-0 fs-4"><i class="bi bi-pencil-square me-2 text-primary"></i>Ajuste de inventario</h1>
+    <p class="text-muted small mb-0">Ingresa la cantidad real contada. Solo se crean movimientos donde el valor difiera del stock actual.</p>
+  </div>
+</div>
+
+<% if @products.empty? %>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center text-muted py-5">
+      <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+      <p class="fw-semibold mb-1">Sin productos con stock</p>
+      <p class="small mb-0">Carga stock inicial o confirma una sincronización primero.</p>
+    </div>
+  </div>
+<% else %>
+  <%= form_with url: inventory_adjustments_path, method: :post do %>
+    <%# ── Nota del ajuste ── %>
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-3">
+        <label class="form-label small fw-semibold mb-1">Motivo del ajuste <span class="text-muted fw-normal">(opcional)</span></label>
+        <input type="text" name="notes" class="form-control form-control-sm"
+               placeholder="Ej: conteo físico mensual, daño en tránsito, robo…" maxlength="120">
+      </div>
+    </div>
+
+    <%# ── Tabla ── %>
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-table me-2 text-muted"></i>Cantidad real por sala</h6>
+        <div class="input-group input-group-sm" style="max-width:240px;">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" id="adj-search" class="form-control border-start-0 ps-0"
+                 placeholder="Buscar producto…" autocomplete="off">
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0" id="adj-table">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3" style="min-width:200px;">Producto</th>
+                <% @showrooms.each do |s| %>
+                  <th class="text-center" style="min-width:140px;"><%= s.name %></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody id="adj-tbody">
+              <% @products.each do |product| %>
+                <tr data-product-name="<%= product.name.downcase %>">
+                  <td class="ps-3 fw-semibold small"><%= product.name %></td>
+                  <% @showrooms.each do |showroom| %>
+                    <% current = @current_stock[[product.id, showroom.id]] %>
+                    <td class="text-center">
+                      <div class="d-flex flex-column align-items-center gap-1">
+                        <span class="text-muted" style="font-size:.72rem;">
+                          Actual: <strong class="<%= current < 0 ? 'text-danger' : current == 0 ? 'text-muted' : 'text-success-emphasis' %>"><%= current %></strong>
+                        </span>
+                        <input type="number"
+                               name="adjustments[<%= product.id %>][<%= showroom.id %>]"
+                               class="form-control form-control-sm text-center adj-input"
+                               style="max-width:90px;"
+                               min="0" step="1"
+                               placeholder="—"
+                               data-current="<%= current %>">
+                      </div>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="adj-no-results" class="text-center text-muted py-4 d-none">
+        <i class="bi bi-search d-block mb-2 opacity-25 fs-3"></i>Sin productos que coincidan.
+      </div>
+      <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+        <span class="text-muted small" id="adj-changes-count">Sin cambios ingresados</span>
+        <div class="d-flex gap-2">
+          <%= link_to "Cancelar", inventory_path, class: "btn btn-outline-secondary btn-sm" %>
+          <button type="submit" class="btn btn-primary btn-sm fw-semibold"
+                  data-turbo-confirm="¿Aplicar los ajustes? El stock se actualizará de inmediato.">
+            <i class="bi bi-check-circle me-1"></i>Aplicar ajustes
+          </button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<script>
+  (function () {
+    const search  = document.getElementById("adj-search")
+    const tbody   = document.getElementById("adj-tbody")
+    const noRes   = document.getElementById("adj-no-results")
+    const counter = document.getElementById("adj-changes-count")
+
+    if (search) search.addEventListener("input", () => {
+      const term = search.value.toLowerCase().trim()
+      let visible = 0
+      tbody?.querySelectorAll("tr").forEach(row => {
+        const match = !term || row.dataset.productName.includes(term)
+        row.style.display = match ? "" : "none"
+        if (match) visible++
+      })
+      if (noRes) noRes.classList.toggle("d-none", visible > 0)
+    })
+
+    document.querySelectorAll(".adj-input").forEach(inp => {
+      inp.addEventListener("input", updateCounter)
+    })
+
+    function updateCounter() {
+      const changed = [...document.querySelectorAll(".adj-input")]
+        .filter(i => i.value !== "" && parseFloat(i.value) !== parseFloat(i.dataset.current))
+      if (counter) {
+        counter.textContent = changed.length > 0
+          ? `${changed.length} cambio(s) pendiente(s) de aplicar`
+          : "Sin cambios ingresados"
+        counter.className = changed.length > 0 ? "small fw-semibold text-primary" : "text-muted small"
+      }
+    }
+  })()
+</script>

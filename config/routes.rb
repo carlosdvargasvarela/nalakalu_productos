@@ -184,6 +184,9 @@ Rails.application.routes.draw do
     get  "exits/new",  to: "exits#new",    as: :new_inventory_exit
     post "exits",      to: "exits#create", as: :inventory_exits
 
+    get  "adjustments/new", to: "adjustments#new",    as: :new_inventory_adjustment
+    post "adjustments",     to: "adjustments#create", as: :inventory_adjustments
+
     resources :syncs, only: %i[show destroy], as: :inventory_sync do
       member do
         patch :confirm

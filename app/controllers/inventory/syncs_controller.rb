@@ -15,11 +15,7 @@ class Inventory::SyncsController < Inventory::BaseController
     @showrooms_for_select = Showroom.active.order(:name)
     @families = Family.order(:name)
 
-    raw = InventoryMovement.stock_by_product_and_showroom
-    @current_stock = Hash.new(0)
-    raw.each do |(pid, sid, mtype), qty|
-      @current_stock[[pid, sid]] += mtype.in?(%w[entry initial]) ? qty : -qty
-    end
+    @current_stock = InventoryMovement.net_stock_by_product_and_showroom
   end
 
   def confirm_matched

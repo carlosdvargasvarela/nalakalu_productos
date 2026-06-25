@@ -16,6 +16,15 @@ class Inventory::DashboardController < Inventory::BaseController
     @kpi_products = @products.count { |pid, _| @showrooms.any? { |s| @stock[[pid, s.id]].to_i > 0 } }
     @kpi_no_stock = @products.count { |pid, _| @showrooms.sum { |s| @stock[[pid, s.id]].to_i } <= 0 }
     @kpi_units    = @stock.values.sum.round(2)
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data generate_stock_csv,
+          filename: "stock_inventario_#{Date.current.iso8601}.csv",
+          type: "text/csv; charset=utf-8"
+      end
+    end
   end
 
   def sync
@@ -46,6 +55,23 @@ class Inventory::DashboardController < Inventory::BaseController
   end
 
   private
+
+  def generate_stock_csv
+    require "csv"
+    CSV.generate(encoding: "UTF-8") do |csv|
+      csv << ["Producto"] + @showrooms.map(&:name) + ["Total"]
+      @products.each_value do |product|
+        total = 0
+        row   = [product.name]
+        @showrooms.each do |s|
+          qty = @stock[[product.id, s.id]].to_i
+          total += qty
+          row << qty
+        end
+        csv << row + [total]
+      end
+    end
+  end
 
   def build_stock_table(raw)
     stock = Hash.new(0)

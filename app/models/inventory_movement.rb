@@ -63,6 +63,15 @@ class InventoryMovement < ApplicationRecord
     end
   end
 
+  def self.net_stock_by_product_and_showroom
+    raw = stock_by_product_and_showroom
+    net = Hash.new(0)
+    raw.each do |(pid, sid, mtype), qty|
+      net[[pid, sid]] += mtype.in?(%w[entry initial]) ? qty : -qty
+    end
+    net
+  end
+
   def self.current_stock_for(product_id:, showroom_id:)
     sums = confirmed_only
       .resolved
