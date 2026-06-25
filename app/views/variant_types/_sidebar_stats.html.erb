@@ -4,6 +4,10 @@
     .where(variant_types: { id: variant_type.id })
     .distinct
     .order(:name)
+  # ponytail: reuse loaded association from set_variant_type (includes(:variants))
+  _vt_loaded = variant_type.variants.to_a
+  _vt_active  = _vt_loaded.count(&:active?)
+  _vt_total   = _vt_loaded.size
 %>
 <!-- Resumen Estadístico -->
 <div class="card border-0 shadow-sm rounded-4 mb-4">
@@ -16,19 +20,19 @@
     <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
       <span class="small text-muted fw-bold">Total variantes</span>
       <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 fw-bold">
-        <%= variant_type.variants.count %>
+        <%= _vt_total %>
       </span>
     </div>
     <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
       <span class="small text-muted fw-bold">Activas</span>
       <span class="badge bg-success-soft text-success rounded-pill px-3 fw-bold">
-        <%= variant_type.variants.where(active: true).count %>
+        <%= _vt_active %>
       </span>
     </div>
     <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
       <span class="small text-muted fw-bold">Inactivas</span>
       <span class="badge bg-secondary-soft text-secondary rounded-pill px-3 fw-bold">
-        <%= variant_type.variants.where(active: false).count %>
+        <%= _vt_total - _vt_active %>
       </span>
     </div>
     <div class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
@@ -55,13 +59,14 @@
       <i class="bi bi-box-seam me-2 text-primary"></i>Productos que lo usan
     </h6>
     <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2">
-      <%= products_using_type.count %>
+      <%= products_using_type.size %>
     </span>
   </div>
   <div class="card-body p-3">
-    <% if products_using_type.any? %>
+    <% products_arr = products_using_type.to_a %>
+    <% if products_arr.any? %>
       <div class="d-flex flex-column gap-1">
-        <% products_using_type.limit(8).each do |p| %>
+        <% products_arr.first(8).each do |p| %>
           <%= link_to p, class: "text-decoration-none" do %>
             <div class="d-flex align-items-center justify-content-between
                         bg-light rounded-3 px-3 py-2 hover-shadow">
@@ -70,9 +75,9 @@
             </div>
           <% end %>
         <% end %>
-        <% if products_using_type.count > 8 %>
+        <% if products_arr.size > 8 %>
           <p class="text-muted small text-center mb-0 mt-1">
-            +<%= products_using_type.count - 8 %> productos más
+            +<%= products_arr.size - 8 %> productos más
           </p>
         <% end %>
       </div>

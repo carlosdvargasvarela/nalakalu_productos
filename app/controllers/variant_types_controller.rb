@@ -136,7 +136,7 @@ class VariantTypesController < ApplicationController
   private
 
   def set_variant_type
-    @variant_type = VariantType.find(params[:id])
+    @variant_type = VariantType.includes(:variants).find(params[:id])
   end
 
   def variant_type_params

@@ -4,7 +4,7 @@ class FamiliesController < ApplicationController
   before_action :set_family, only: %i[show edit update destroy assign_products unassign_product]
 
   def index
-    @families = Family.all.includes(:family_variant_rules)
+    @families = Family.all.includes(:products, family_variant_rules: :variant_type)
   end
 
   def show

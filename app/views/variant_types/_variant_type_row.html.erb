@@ -1,6 +1,8 @@
 <%# Fila del panel izquierdo del workspace %>
-<% active_count = vt.variants.where(active: true).count %>
-<% total_count  = vt.variants.count %>
+<%# ponytail: in-memory — includes(:variants) already loaded this association %>
+<% loaded       = vt.variants.to_a %>
+<% active_count = loaded.count(&:active?) %>
+<% total_count  = loaded.size %>
 <%= link_to variant_type_path(vt),
     data: { turbo_frame: "vt_workspace" },
     class: "list-group-item list-group-item-action border-0 px-3 py-3 vt-row
@@ -10,7 +12,7 @@
     <div class="flex-grow-1 me-2">
       <div class="fw-bold text-dark small"><%= vt.name %></div>
       <%# Preview de variantes activas %>
-      <% sample = vt.variants.where(active: true).order(:name).limit(3) %>
+      <% sample = loaded.select(&:active?).sort_by(&:name).first(3) %>
       <% if sample.any? %>
         <div class="d-flex flex-wrap gap-1 mt-1">
           <% sample.each do |v| %>
@@ -19,7 +21,7 @@
               <%= v.display_name.presence || v.name %>
             </span>
           <% end %>
-          <% remaining = active_count - sample.count %>
+          <% remaining = active_count - sample.size %>
           <% if remaining > 0 %>
             <span class="badge bg-secondary-soft text-secondary rounded-pill"
                   style="font-size: 0.62rem;">+<%= remaining %></span>

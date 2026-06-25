@@ -1,11 +1,11 @@
 <%
-  ctrl = params[:controller]
+  ctrl          = params[:controller]
   pending_count = InventorySync.pending.count
   alerts_count  = InventoryMovement.flagged.count
 %>
 
 <nav class="inv-sidebar d-none d-lg-flex flex-column py-2">
-  <%# ── Encabezado del módulo ── %>
+  <%# ── Encabezado ── %>
   <div class="d-flex align-items-center gap-2 px-3 py-2 mb-1">
     <i class="bi bi-boxes text-primary fs-5"></i>
     <span class="fw-bold text-dark">Inventario</span>
@@ -17,11 +17,11 @@
   <div class="sidebar-section">Operaciones</div>
 
   <%= link_to inventory_path,
-        class: "sidebar-link #{ctrl == 'inventory/dashboard' && !current_page?(inventory_movements_log_path) ? 'active' : ''}" do %>
+        class: "sidebar-link #{ctrl == 'inventory/dashboard' ? 'active' : ''}" do %>
     <i class="bi bi-speedometer2"></i>
     <span>Dashboard</span>
     <% if pending_count > 0 %>
-      <span class="badge bg-warning text-dark ms-auto" style="font-size:0.68rem;"><%= pending_count %></span>
+      <span class="badge bg-warning text-dark ms-auto" style="font-size:.68rem;"><%= pending_count %></span>
     <% end %>
   <% end %>
 
@@ -43,19 +43,22 @@
     <span>Stock inicial</span>
   <% end %>
 
+  <%= link_to new_inventory_adjustment_path,
+        class: "sidebar-link #{ctrl == 'inventory/adjustments' ? 'active' : ''}" do %>
+    <i class="bi bi-pencil-square"></i>
+    <span>Ajustar inventario</span>
+  <% end %>
+
+  <%= link_to new_inventory_bulk_import_path,
+        class: "sidebar-link #{ctrl == 'inventory/bulk_imports' ? 'active' : ''}" do %>
+    <i class="bi bi-file-earmark-spreadsheet"></i>
+    <span>Carga masiva</span>
+  <% end %>
+
   <div class="sidebar-divider mt-2"></div>
 
   <%# ── Sincronización ── %>
   <div class="sidebar-section">Sincronización</div>
-
-  <%= link_to inventory_path,
-        class: "sidebar-link #{ctrl == 'inventory/syncs' ? 'active' : ''}" do %>
-    <i class="bi bi-arrow-repeat"></i>
-    <span>Pendientes</span>
-    <% if pending_count > 0 %>
-      <span class="badge bg-warning text-dark ms-auto" style="font-size:0.68rem;"><%= pending_count %></span>
-    <% end %>
-  <% end %>
 
   <%= link_to inventory_sync_config_path,
         class: "sidebar-link #{ctrl == 'inventory/config' ? 'active' : ''}" do %>
@@ -63,23 +66,25 @@
     <span>Configuración</span>
   <% end %>
 
-  <% if alerts_count > 0 %>
-    <div class="sidebar-divider mt-2"></div>
-    <div class="sidebar-section" style="color: #dc3545;">Atención</div>
+  <div class="sidebar-divider mt-2"></div>
 
-    <%= link_to inventory_alerts_path,
-          class: "sidebar-link #{ctrl == 'inventory/alerts' ? 'active' : ''}" do %>
+  <%# ── Alertas (siempre visible) ── %>
+  <%= link_to inventory_alerts_path,
+        class: "sidebar-link #{ctrl == 'inventory/alerts' ? 'active' : ''}" do %>
+    <% if alerts_count > 0 %>
       <i class="bi bi-exclamation-triangle" style="color:#dc3545;"></i>
       <span style="color:#dc3545;">Alertas</span>
-      <span class="badge bg-danger ms-auto" style="font-size:0.68rem;"><%= alerts_count %></span>
+      <span class="badge bg-danger ms-auto" style="font-size:.68rem;"><%= alerts_count %></span>
+    <% else %>
+      <i class="bi bi-exclamation-triangle text-muted"></i>
+      <span class="text-muted">Alertas</span>
     <% end %>
   <% end %>
 
   <div class="sidebar-divider mt-2"></div>
 
-  <%# ── Salas ── %>
   <%= link_to showrooms_path, class: "sidebar-link" do %>
     <i class="bi bi-shop"></i>
-    <span class="text-muted">Administración de salas</span>
+    <span class="text-muted">Salas de exhibición</span>
   <% end %>
 </nav>

@@ -6,7 +6,7 @@ class ProductsController < ApplicationController
 
   def index
     scope = Product
-      .includes(:family, :product_variant_rules)
+      .includes(:family, product_variant_rules: :variant_type)
       .order(:name)
 
     if params[:search].present?
@@ -75,12 +75,13 @@ class ProductsController < ApplicationController
 
     @selected_product = Product.find_by(id: params[:selected_id])
 
+    active_counts = Product.group(:active).count
     @stats = {
-      total: Product.count,
-      active: Product.where(active: true).count,
-      procurement_ready: @procurement_ready_map.count { |_, v| v },
-      no_variants: Product.left_joins(:product_variant_rules)
-        .where(product_variant_rules: {id: nil}).count
+      total:              active_counts.values.sum,
+      active:             active_counts[true].to_i,
+      procurement_ready:  @procurement_ready_map.count { |_, v| v },
+      no_variants:        Product.left_joins(:product_variant_rules)
+                            .where(product_variant_rules: {id: nil}).count
     }
   end
 
@@ -102,10 +103,7 @@ class ProductsController < ApplicationController
   def create
     @product = Product.new(product_params)
     if @product.save
-      respond_to do |format|
-        format.html { redirect_to products_path(selected_id: @product.id), notice: "Producto creado exitosamente." }
-        format.turbo_stream { redirect_to products_path(selected_id: @product.id) }
-      end
+      redirect_to products_path(selected_id: @product.id), notice: "Producto creado exitosamente."
     else
       render :new, status: :unprocessable_entity
     end
@@ -113,10 +111,7 @@ class ProductsController < ApplicationController
 
   def update
     if @product.update(product_params)
-      respond_to do |format|
-        format.html { redirect_to products_path(selected_id: @product.id), notice: "Producto actualizado." }
-        format.turbo_stream { redirect_to products_path(selected_id: @product.id) }
-      end
+      redirect_to products_path(selected_id: @product.id), notice: "Producto actualizado."
     else
       render :edit, status: :unprocessable_entity
     end
