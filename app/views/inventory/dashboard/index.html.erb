@@ -25,7 +25,11 @@
         </div>
         <div>
           <div class="fs-4 fw-bold lh-1 mb-1"><%= @kpi_products %></div>
-          <div class="text-muted small">Productos en stock</div>
+          <div class="text-muted small">Productos en stock
+            <% if @kpi_no_stock > 0 %>
+              · <span class="text-danger fw-semibold"><%= @kpi_no_stock %> sin stock</span>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>
@@ -140,13 +144,23 @@
   <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <h6 class="mb-0 fw-semibold"><i class="bi bi-table me-2 text-muted"></i>Stock actual por sala</h6>
     <% if @products.any? %>
-      <div class="input-group input-group-sm" style="max-width:240px;">
-        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input type="text" id="stock-search" class="form-control border-start-0 ps-0"
-               placeholder="Buscar producto…" autocomplete="off">
-        <button class="btn btn-outline-secondary" type="button" onclick="clearStockSearch()">
-          <i class="bi bi-x"></i>
-        </button>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <% if @kpi_no_stock > 0 %>
+          <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-secondary active" id="filter-stock-all"
+                    onclick="filterStockRows('all')">Todos</button>
+            <button type="button" class="btn btn-outline-danger" id="filter-stock-zero"
+                    onclick="filterStockRows('zero')">Sin stock (<%= @kpi_no_stock %>)</button>
+          </div>
+        <% end %>
+        <div class="input-group input-group-sm" style="max-width:240px;">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" id="stock-search" class="form-control border-start-0 ps-0"
+                 placeholder="Buscar producto…" autocomplete="off">
+          <button class="btn btn-outline-secondary" type="button" onclick="clearStockSearch()">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
       </div>
     <% end %>
   </div>
@@ -179,7 +193,7 @@
           <tbody id="stock-tbody">
             <% @products.each_value do |product| %>
               <% row_total = @showrooms.sum { |s| @stock[[product.id, s.id]] || 0 } %>
-              <tr data-product-name="<%= product.name.downcase %>">
+              <tr data-product-name="<%= product.name.downcase %>" data-total-stock="<%= row_total %>">
                 <td class="ps-3 fw-semibold">
                   <a href="#" class="text-decoration-none text-dark"
                      data-bs-toggle="modal" data-bs-target="#productHistoryModal"
@@ -212,6 +226,24 @@
               </tr>
             <% end %>
           </tbody>
+          <tfoot class="table-light">
+            <tr class="fw-semibold small text-muted">
+              <td class="ps-3">Total por sala</td>
+              <% @showrooms.each do |showroom| %>
+                <% col_total = @products.sum { |pid, _| @stock[[pid, showroom.id]].to_i } %>
+                <td class="text-center">
+                  <% if col_total > 0 %>
+                    <span class="text-success-emphasis"><%= col_total %></span>
+                  <% elsif col_total < 0 %>
+                    <span class="text-danger-emphasis"><%= col_total %></span>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+              <% end %>
+              <td class="text-center pe-3 text-body"><%= @kpi_units %></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     <% end %>
@@ -253,6 +285,17 @@
 
     window.clearStockSearch = function () {
       if (searchInput) { searchInput.value = ""; filterStock() }
+    }
+
+    window.filterStockRows = function (mode) {
+      document.getElementById("filter-stock-all")?.classList.toggle("active", mode === "all")
+      document.getElementById("filter-stock-zero")?.classList.toggle("active", mode === "zero")
+      document.querySelectorAll("#stock-tbody tr").forEach(row => {
+        const total = parseInt(row.dataset.totalStock ?? "0", 10)
+        row.style.display = (mode === "zero" && total > 0) ? "none" : ""
+      })
+      const noRes = document.getElementById("no-results-stock")
+      if (noRes) noRes.classList.add("d-none")
     }
 
     const historyModal = document.getElementById("productHistoryModal")

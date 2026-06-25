@@ -13,7 +13,8 @@ class Inventory::DashboardController < Inventory::BaseController
     @from = params[:from] || sync_config.default_from_date.to_s
     @to   = params[:to]   || sync_config.default_to_date.to_s
 
-    @kpi_products = @stock.count { |_, qty| qty > 0 }
+    @kpi_products = @products.count { |pid, _| @showrooms.any? { |s| @stock[[pid, s.id]].to_i > 0 } }
+    @kpi_no_stock = @products.count { |pid, _| @showrooms.sum { |s| @stock[[pid, s.id]].to_i } <= 0 }
     @kpi_units    = @stock.values.sum.round(2)
   end
 

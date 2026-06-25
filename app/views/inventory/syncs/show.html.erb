@@ -318,15 +318,41 @@
                         <i class="bi bi-check-circle-fill me-1"></i><%= m.product&.name || "—" %>
                         <span class="text-muted fw-normal">— <%= m.showroom&.name %></span>
                       </span>
+                      <% if m.product_id && m.showroom_id %>
+                        <% cs    = @current_stock[[m.product_id, m.showroom_id]] %>
+                        <% after = cs + (m.movement_type.in?(%w[entry initial]) ? m.quantity : -m.quantity) %>
+                        <div class="d-flex gap-1 mt-1">
+                          <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size:.68rem;">Stock: <%= cs %></span>
+                          <% if after < 0 %>
+                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle" style="font-size:.68rem;">
+                              <i class="bi bi-exclamation-triangle-fill me-1"></i>Tras sync: <%= after %>
+                            </span>
+                          <% end %>
+                        </div>
+                      <% end %>
                     <% elsif m.status == "ignored" %>
                       <span class="text-muted fst-italic small">
                         <i class="bi bi-eye-slash me-1"></i>Ignorado
                       </span>
                     <% elsif m_status == "suggested" %>
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="small text-info-emphasis">
-                          <i class="bi bi-lightbulb-fill me-1"></i><%= m.product.name %>
-                        </span>
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div>
+                          <span class="small text-info-emphasis">
+                            <i class="bi bi-lightbulb-fill me-1"></i><%= m.product.name %>
+                          </span>
+                          <% cs    = @current_stock[[m.product_id, m.showroom_id]] %>
+                          <% after = cs + (m.movement_type.in?(%w[entry initial]) ? m.quantity : -m.quantity) %>
+                          <div class="d-flex gap-1 mt-1">
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size:.68rem;">Stock: <%= cs %></span>
+                            <% if after < 0 %>
+                              <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle" style="font-size:.68rem;">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Tras sync: <%= after %>
+                              </span>
+                            <% elsif after == 0 %>
+                              <span class="badge bg-warning-subtle text-warning-emphasis" style="font-size:.68rem;">Tras sync: 0</span>
+                            <% end %>
+                          </div>
+                        </div>
                         <%= form_with url: inventory_movement_path(m), method: :patch, class: "d-inline" do %>
                           <%= hidden_field_tag "inventory_movement[product_id]", m.product_id %>
                           <%= hidden_field_tag "inventory_movement[showroom_id]", m.showroom_id %>
