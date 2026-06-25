@@ -3,11 +3,25 @@ module MarkdownHelper
                  "danger" => "bi-x-octagon-fill", "success" => "bi-check-circle-fill" }.freeze
   HINT_COLORS = { "info" => "primary", "warning" => "warning", "danger" => "danger", "success" => "success" }.freeze
 
+  # Rewrites chapter .md links to in-app help routes; external links open in new tab.
+  class Renderer < Redcarpet::Render::HTML
+    def link(link, title, content)
+      if !link.start_with?("http", "mailto", "#") && link.end_with?(".md")
+        chapter = File.basename(link, ".md")
+        %(<a href="/help/inventario/#{chapter}" data-turbo-frame="help_panel_content">#{content}</a>)
+      elsif link.start_with?("http")
+        %(<a href="#{link}" target="_blank" rel="noopener">#{content}</a>)
+      else
+        %(<a href="#{link}">#{content}</a>)
+      end
+    end
+  end
+
   def render_markdown(text)
     html = preprocess(text)
-    renderer = Redcarpet::Render::HTML.new(hard_wrap: false, link_attributes: { target: "_blank", rel: "noopener" })
-    md = Redcarpet::Markdown.new(renderer, tables: true, fenced_code_blocks: true,
-                                            autolink: true, strikethrough: true, no_intra_emphasis: true)
+    md   = Redcarpet::Markdown.new(Renderer.new(hard_wrap: false),
+             tables: true, fenced_code_blocks: true,
+             autolink: true, strikethrough: true, no_intra_emphasis: true)
     md.render(html).html_safe
   end
 
@@ -21,8 +35,9 @@ module MarkdownHelper
   end
 
   def convert_mermaid(text)
+    # Raw div — no code-block wrapper so mermaid.js can parse the text content directly.
     text.gsub(/```mermaid\n(.*?)```/m) do
-      "<div class=\"help-mermaid\">\n\n```\n#{$1.strip}\n```\n\n</div>"
+      "\n<div class=\"help-mermaid\">#{$1.strip}</div>\n"
     end
   end
 
@@ -70,8 +85,8 @@ module MarkdownHelper
   end
 
   def md_fragment(text)
-    renderer = Redcarpet::Render::HTML.new(hard_wrap: false)
-    md = Redcarpet::Markdown.new(renderer, tables: true, fenced_code_blocks: true, strikethrough: true)
+    md = Redcarpet::Markdown.new(Renderer.new(hard_wrap: false),
+           tables: true, fenced_code_blocks: true, strikethrough: true)
     md.render(text)
   end
 end

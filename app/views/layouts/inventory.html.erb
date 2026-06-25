@@ -92,14 +92,16 @@
       }
 
       /* ── Help Panel ───────────────────────────────────────────── */
-      .help-offcanvas { width: 520px; max-width: 100vw; }
+      .help-offcanvas { width: 480px; max-width: 92vw; }
       .help-offcanvas .offcanvas-header {
         background: #0d6efd;
         color: #fff;
-        padding: 1rem 1.25rem;
+        padding: 0.875rem 1.25rem;
+        flex-shrink: 0;
       }
-      .help-offcanvas .offcanvas-header .btn-close { filter: invert(1); }
-      .help-offcanvas .offcanvas-body { padding: 1.5rem; overflow-y: auto; }
+      .help-offcanvas .offcanvas-header .btn-close { filter: invert(1); opacity: .8; }
+      .help-offcanvas .offcanvas-body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1 1 auto; }
+      .help-offcanvas .offcanvas-footer { flex-shrink: 0; }
 
       /* Spinner inicial */
       .help-loading { display: flex; align-items: center; justify-content: center;
@@ -215,12 +217,15 @@
     <script type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
       mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "loose" })
-      document.addEventListener("turbo:frame-load", () => mermaid.run({ querySelector: ".help-mermaid" }))
+      document.addEventListener("turbo:frame-load", (e) => {
+        if (e.target.id === "help_panel_content") mermaid.run({ querySelector: ".help-mermaid" })
+      })
     </script>
 
     <%# ── Help Offcanvas ── %>
     <div class="offcanvas offcanvas-end help-offcanvas" tabindex="-1"
-         id="helpOffcanvas" aria-labelledby="helpOffcanvasLabel">
+         id="helpOffcanvas" aria-labelledby="helpOffcanvasLabel"
+         data-bs-scroll="true" data-bs-backdrop="false">
       <div class="offcanvas-header">
         <div class="d-flex align-items-center gap-2">
           <i class="bi bi-question-circle-fill fs-5"></i>
@@ -228,7 +233,7 @@
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
       </div>
-      <div class="offcanvas-body p-0">
+      <div class="offcanvas-body">
         <turbo-frame id="help_panel_content" loading="lazy">
           <div class="help-loading">
             <span class="spinner-border spinner-border-sm"></span>
