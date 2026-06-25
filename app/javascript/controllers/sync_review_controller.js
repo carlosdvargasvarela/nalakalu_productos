@@ -9,9 +9,15 @@ export default class extends Controller {
   static values = { quickCreateUrl: String }
 
   connect() {
-    this._targetSelect  = null
-    this._activeFilter  = "all"
-    this._searchTerm    = ""
+    this._targetMovementId = null
+    const hasPending       = this.movementRowTargets.some(r =>
+      r.dataset.status === "suggested" || r.dataset.status === "unassigned"
+    )
+    this._activeFilter = hasPending ? "pending" : "all"
+    this._searchTerm   = ""
+    this.element.querySelectorAll("[data-action*='setFilter']").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.status === this._activeFilter)
+    })
     this.#applyFilters()
   }
 
@@ -76,10 +82,8 @@ export default class extends Controller {
 
   openQuickCreate(event) {
     event.preventDefault()
-    const row = event.target.closest("tr")
-    this._targetSelect = row
-      ? row.querySelector("[data-sync-review-target='productSelect']")
-      : null
+    const row = event.target.closest("[data-sync-review-target='movementRow']")
+    this._targetMovementId = row?.dataset.movementId ?? null
 
     this.newProductNameTarget.value = ""
     this.newProductCodeTarget.value = ""
@@ -121,10 +125,15 @@ export default class extends Controller {
 
       if (resp.ok) {
         this.#distributeOption(data.id, data.name)
-        if (this._targetSelect) {
-          this._targetSelect.tomselect
-            ? this._targetSelect.tomselect.setValue(String(data.id))
-            : (this._targetSelect.value = data.id)
+        // Re-query by movement ID instead of using a possibly-stale DOM reference
+        const targetRow = this._targetMovementId
+          ? this.movementRowTargets.find(r => r.dataset.movementId === this._targetMovementId)
+          : null
+        const sel = targetRow?.querySelector("[data-sync-review-target='productSelect']")
+        if (sel) {
+          sel.tomselect
+            ? sel.tomselect.setValue(String(data.id))
+            : (sel.value = String(data.id))
         }
         bootstrap.Modal.getInstance(
           document.getElementById("quickCreateProductModal")

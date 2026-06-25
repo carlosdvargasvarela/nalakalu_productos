@@ -40,7 +40,7 @@
       </button>
     <% end %>
     <%= button_to inventory_sync_path(@sync), method: :delete,
-          class: "btn btn-outline-danger btn-sm",
+          class: "btn btn-link btn-sm text-danger",
           data: { turbo_confirm: "¿Eliminar esta sincronización? Se perderán todos los movimientos." } do %>
       <i class="bi bi-trash me-1"></i>Eliminar
     <% end %>
@@ -93,6 +93,21 @@
 
 <%# ── PANEL PRINCIPAL: filtros + tabla agrupada ── %>
 <% pending_count = @stat_suggested + @stat_unassigned %>
+
+<% if @stat_suggested > 0 %>
+  <div class="alert alert-info d-flex justify-content-between align-items-center mb-3 border-0 shadow-sm gap-3">
+    <span>
+      <i class="bi bi-lightbulb-fill me-2"></i>
+      <strong><%= @stat_suggested %></strong> movimiento(s) con producto detectado automáticamente — revisalos o confírmalos en lote.
+    </span>
+    <%= button_to confirm_matched_inventory_sync_path(@sync), method: :patch,
+          class: "btn btn-info btn-sm text-white fw-semibold text-nowrap",
+          data: { turbo_confirm: "¿Confirmar todos los movimientos con producto detectado?" } do %>
+      <i class="bi bi-check-all me-1"></i>Confirmar todos los sugeridos (<%= @stat_suggested %>)
+    <% end %>
+  </div>
+<% end %>
+
 <div class="card border-0 shadow-sm">
 
   <%# ── Barra de filtros + búsqueda ── %>
@@ -141,19 +156,6 @@
               data-action="click->sync-review#clearSearch"><i class="bi bi-x"></i></button>
     </div>
   </div>
-
-  <%# ── Confirmar sugeridos en lote ── %>
-  <% if @stat_suggested > 0 %>
-    <div class="px-3 py-2 bg-info-subtle border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 small">
-      <span><i class="bi bi-lightbulb-fill me-2 text-info-emphasis"></i>
-        <strong><%= @stat_suggested %></strong> movimiento(s) con producto detectado automáticamente.</span>
-      <%= button_to confirm_matched_inventory_sync_path(@sync), method: :patch,
-            class: "btn btn-info btn-sm text-white",
-            data: { turbo_confirm: "¿Confirmar todos los movimientos con producto detectado?" } do %>
-        <i class="bi bi-check-all me-1"></i>Confirmar todos los sugeridos (<%= @stat_suggested %>)
-      <% end %>
-    </div>
-  <% end %>
 
   <%# ── Acciones en lote (selección) ── %>
   <% if pending_count > 0 %>
@@ -284,7 +286,8 @@
                 %>
                 <tr class="border-start border-3 <%= accent %> <%= "opacity-50" if m_status == "ignored" %>"
                     data-sync-review-target="movementRow"
-                    data-status="<%= m_status %>">
+                    data-status="<%= m_status %>"
+                    data-movement-id="<%= m.id %>">
                   <td class="ps-3">
                     <% if m.status == "unresolved" %>
                       <input class="form-check-input ignore-cb" type="checkbox" value="<%= m.id %>"
@@ -319,6 +322,19 @@
                       <span class="text-muted fst-italic small">
                         <i class="bi bi-eye-slash me-1"></i>Ignorado
                       </span>
+                    <% elsif m_status == "suggested" %>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="small text-info-emphasis">
+                          <i class="bi bi-lightbulb-fill me-1"></i><%= m.product.name %>
+                        </span>
+                        <%= form_with url: inventory_movement_path(m), method: :patch, class: "d-inline" do %>
+                          <%= hidden_field_tag "inventory_movement[product_id]", m.product_id %>
+                          <%= hidden_field_tag "inventory_movement[showroom_id]", m.showroom_id %>
+                          <button type="submit" class="btn btn-sm btn-outline-info text-nowrap">
+                            <i class="bi bi-check-lg"></i> Confirmar
+                          </button>
+                        <% end %>
+                      </div>
                     <% else %>
                       <%= form_with url: inventory_movement_path(m), method: :patch,
                             class: "d-flex flex-column gap-1" do %>
@@ -341,8 +357,8 @@
                                   title="Nuevo producto" data-action="click->sync-review#openQuickCreate">
                             <i class="bi bi-plus-lg"></i>
                           </button>
-                          <button type="submit" class="btn btn-sm <%= m.product_id.present? ? 'btn-primary' : 'btn-success' %> text-nowrap">
-                            <i class="bi bi-check-lg"></i> <%= m.product_id.present? ? "Confirmar" : "Asignar" %>
+                          <button type="submit" class="btn btn-sm btn-success text-nowrap">
+                            <i class="bi bi-check-lg"></i> Asignar
                           </button>
                         </div>
                       <% end %>
