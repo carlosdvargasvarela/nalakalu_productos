@@ -221,6 +221,19 @@
         if (e.target.id === "help_panel_content") mermaid.run({ querySelector: ".help-mermaid" })
       })
     </script>
+    <script>
+      // Bootstrap's data-bs-toggle on <a> calls preventDefault, blocking Turbo frame navigation.
+      // Handle the help trigger manually: set frame src + show offcanvas via JS API.
+      document.addEventListener("click", (e) => {
+        const trigger = e.target.closest(".help-trigger")
+        if (!trigger) return
+        e.preventDefault()
+        const frame = document.getElementById("help_panel_content")
+        const url = trigger.getAttribute("href")
+        if (frame.getAttribute("src") !== url) frame.src = url
+        bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("helpOffcanvas")).show()
+      })
+    </script>
 
     <%# ── Help Offcanvas ── %>
     <div class="offcanvas offcanvas-end help-offcanvas" tabindex="-1"
@@ -234,7 +247,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
       </div>
       <div class="offcanvas-body">
-        <turbo-frame id="help_panel_content" loading="lazy">
+        <turbo-frame id="help_panel_content">
           <div class="help-loading">
             <span class="spinner-border spinner-border-sm"></span>
             <span>Cargando ayuda…</span>
