@@ -2,6 +2,18 @@
   ctrl          = params[:controller]
   pending_count = InventorySync.pending.count
   alerts_count  = InventoryMovement.flagged.count
+  help_chapter  = {
+    "inventory/dashboard"     => "01-dashboard",
+    "inventory/movements"     => "02-movimientos",
+    "inventory/stock"         => "03-stock-por-sala",
+    "inventory/exits"         => "04-registrar-salida",
+    "inventory/initial_stock" => "05-stock-inicial",
+    "inventory/adjustments"   => "06-ajuste",
+    "inventory/bulk_imports"  => "07-carga-masiva",
+    "inventory/syncs"         => "08-revision-sync",
+    "inventory/alerts"        => "09-alertas",
+    "inventory/config"        => "10-configuracion"
+  }.fetch(ctrl, "README")
 %>
 
 <nav class="inv-sidebar d-none d-lg-flex flex-column py-2">
@@ -86,5 +98,14 @@
   <%= link_to showrooms_path, class: "sidebar-link" do %>
     <i class="bi bi-shop"></i>
     <span class="text-muted">Salas de exhibición</span>
+  <% end %>
+
+  <div class="sidebar-divider mt-2"></div>
+
+  <%= link_to inventory_help_path(help_chapter),
+        class: "help-trigger",
+        data: { bs_toggle: "offcanvas", bs_target: "#helpOffcanvas", turbo_frame: "help_panel_content" } do %>
+    <i class="bi bi-question-circle-fill"></i>
+    <span>Ayuda</span>
   <% end %>
 </nav>

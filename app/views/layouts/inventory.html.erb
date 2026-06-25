@@ -90,6 +90,87 @@
       @media (max-width: 991.98px) {
         main.inv-main { padding-bottom: 68px !important; }
       }
+
+      /* ── Help Panel ───────────────────────────────────────────── */
+      .help-offcanvas { width: 520px; max-width: 100vw; }
+      .help-offcanvas .offcanvas-header {
+        background: #0d6efd;
+        color: #fff;
+        padding: 1rem 1.25rem;
+      }
+      .help-offcanvas .offcanvas-header .btn-close { filter: invert(1); }
+      .help-offcanvas .offcanvas-body { padding: 1.5rem; overflow-y: auto; }
+
+      /* Spinner inicial */
+      .help-loading { display: flex; align-items: center; justify-content: center;
+        height: 160px; color: #6c757d; gap: .5rem; }
+
+      /* Tipografía del contenido */
+      .help-doc h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;
+        padding-bottom: .5rem; border-bottom: 2px solid #e9ecef; }
+      .help-doc h2 { font-size: 1.1rem; font-weight: 700; margin-top: 1.75rem;
+        margin-bottom: .6rem; color: #343a40; }
+      .help-doc h3 { font-size: .95rem; font-weight: 600; margin-top: 1.25rem;
+        margin-bottom: .4rem; color: #495057; }
+      .help-doc p  { font-size: .9rem; line-height: 1.65; margin-bottom: .75rem; }
+      .help-doc ul, .help-doc ol { font-size: .9rem; line-height: 1.65;
+        padding-left: 1.4rem; margin-bottom: .75rem; }
+      .help-doc li { margin-bottom: .25rem; }
+      .help-doc a  { color: #0d6efd; }
+
+      /* Tablas */
+      .help-doc table { width: 100%; font-size: .85rem; border-collapse: collapse;
+        margin-bottom: 1rem; }
+      .help-doc thead th { background: #f8f9fa; font-weight: 600;
+        border-bottom: 2px solid #dee2e6; padding: .5rem .75rem; }
+      .help-doc td { padding: .45rem .75rem; border-bottom: 1px solid #f1f3f5;
+        vertical-align: top; }
+      .help-doc tr:last-child td { border-bottom: none; }
+
+      /* Código */
+      .help-doc code { font-size: .82rem; background: #f1f3f5; padding: .1em .35em;
+        border-radius: .25rem; color: #d63384; }
+      .help-doc pre  { background: #1e1e2e; border-radius: .5rem; padding: 1rem;
+        overflow-x: auto; margin-bottom: 1rem; }
+      .help-doc pre code { background: none; color: #cdd6f4; padding: 0; font-size: .82rem; }
+
+      /* kbd */
+      .help-doc kbd { font-size: .8rem; padding: .15em .45em;
+        background: #343a40; color: #fff; border-radius: .3rem; }
+
+      /* Callout hints */
+      .help-hint { border-radius: .5rem; padding: .85rem 1rem;
+        margin-bottom: 1rem; font-size: .88rem; }
+      .help-hint i { font-size: 1rem; margin-top: .1rem; }
+      .help-hint__body > *:last-child { margin-bottom: 0; }
+      .help-hint__body p { margin-bottom: .35rem; }
+
+      /* Mermaid */
+      .help-mermaid { background: #f8f9fa; border-radius: .5rem;
+        padding: .75rem; margin-bottom: 1rem; overflow-x: auto; }
+      .help-mermaid svg { max-width: 100%; height: auto; }
+
+      /* details/summary */
+      .help-doc details { border: 1px solid #dee2e6; border-radius: .5rem;
+        padding: .75rem 1rem; margin-bottom: .75rem; }
+      .help-doc summary { font-weight: 600; font-size: .9rem; cursor: pointer;
+        color: #0d6efd; list-style: none; }
+      .help-doc summary::before { content: "▶  "; font-size: .7rem; }
+      .help-doc details[open] summary::before { content: "▼  "; }
+      .help-doc details[open] { background: #f8f9fa; }
+      .help-doc details > *:not(summary) { margin-top: .75rem; }
+
+      /* Botón ayuda en sidebar */
+      .help-trigger {
+        display: flex; align-items: center; gap: .55rem;
+        padding: .42rem .75rem; margin: .25rem .5rem 0;
+        border-radius: .375rem; font-size: .875rem; color: #0d6efd;
+        text-decoration: none; background: #e7f1ff; font-weight: 600;
+        border: none; width: calc(100% - 1rem); cursor: pointer;
+        transition: background-color .1s;
+      }
+      .help-trigger:hover { background: #cfe2ff; color: #0a58ca; }
+      .help-trigger i { font-size: .95rem; width: 1rem; text-align: center; flex-shrink: 0; }
     </style>
   </head>
   <body class="bg-light d-flex flex-column min-vh-100">
@@ -131,5 +212,37 @@
     <%= render "layouts/footer" %>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
+      mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "loose" })
+      document.addEventListener("turbo:frame-load", () => mermaid.run({ querySelector: ".help-mermaid" }))
+    </script>
+
+    <%# ── Help Offcanvas ── %>
+    <div class="offcanvas offcanvas-end help-offcanvas" tabindex="-1"
+         id="helpOffcanvas" aria-labelledby="helpOffcanvasLabel">
+      <div class="offcanvas-header">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-question-circle-fill fs-5"></i>
+          <h5 class="offcanvas-title mb-0 fw-bold" id="helpOffcanvasLabel">Ayuda — Inventarios</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+      </div>
+      <div class="offcanvas-body p-0">
+        <turbo-frame id="help_panel_content" loading="lazy">
+          <div class="help-loading">
+            <span class="spinner-border spinner-border-sm"></span>
+            <span>Cargando ayuda…</span>
+          </div>
+        </turbo-frame>
+      </div>
+      <div class="offcanvas-footer border-top px-4 py-3 bg-white d-flex justify-content-between align-items-center">
+        <small class="text-muted">Manual de inventarios</small>
+        <a href="<%= inventory_help_path('README') %>" data-turbo-frame="help_panel_content"
+           class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-list-ul me-1"></i>Ver índice
+        </a>
+      </div>
+    </div>
   </body>
 </html>

@@ -158,6 +158,10 @@ Rails.application.routes.draw do
   get "profile", to: "profiles#show", as: :profile
   patch "profile", to: "profiles#update"
 
+  # --- AYUDA CONTEXTUAL ---
+  get "help/inventario/:chapter", to: "help#show", as: :inventory_help,
+      constraints: { chapter: /[\w-]+/ }
+
   # --- INVENTARIO DE SALAS ---
   scope "inventory", module: "inventory" do
     get  "",             to: "dashboard#index",            as: :inventory
