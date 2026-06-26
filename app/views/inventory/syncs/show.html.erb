@@ -335,32 +335,45 @@
                         <i class="bi bi-eye-slash me-1"></i>Ignorado
                       </span>
                     <% elsif m_status == "suggested" %>
-                      <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <div>
-                          <span class="small text-info-emphasis">
-                            <i class="bi bi-lightbulb-fill me-1"></i><%= m.product.name %>
-                          </span>
-                          <% cs    = @current_stock[[m.product_id, m.showroom_id]] %>
-                          <% after = cs + (m.movement_type.in?(%w[entry initial]) ? m.quantity : -m.quantity) %>
-                          <div class="d-flex gap-1 mt-1">
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size:.68rem;">Stock: <%= cs %></span>
-                            <% if after < 0 %>
-                              <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle" style="font-size:.68rem;">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Tras sync: <%= after %>
-                              </span>
-                            <% elsif after == 0 %>
-                              <span class="badge bg-warning-subtle text-warning-emphasis" style="font-size:.68rem;">Tras sync: 0</span>
+                      <%= form_with url: inventory_movement_path(m), method: :patch,
+                            class: "d-flex flex-column gap-1" do %>
+                        <div class="d-flex gap-1 align-items-center flex-wrap">
+                          <small class="text-info-emphasis me-1" title="Sugerido por el sistema">
+                            <i class="bi bi-lightbulb-fill"></i>
+                          </small>
+                          <select name="inventory_movement[showroom_id]"
+                                  class="form-select form-select-sm" style="max-width:160px;">
+                            <option value="">— Sala —</option>
+                            <% @showrooms_for_select.each do |s| %>
+                              <option value="<%= s.id %>"<%= " selected" if s.id == m.showroom_id %>><%= s.name %></option>
                             <% end %>
-                          </div>
-                        </div>
-                        <%= form_with url: inventory_movement_path(m), method: :patch, class: "d-inline" do %>
-                          <%= hidden_field_tag "inventory_movement[product_id]", m.product_id %>
-                          <%= hidden_field_tag "inventory_movement[showroom_id]", m.showroom_id %>
+                          </select>
+                          <%= select_tag "inventory_movement[product_id]",
+                                options_for_select(@products_for_select.map { |p| [p.name, p.id] }, m.product_id),
+                                include_blank: "— Producto —",
+                                class: "form-select form-select-sm",
+                                data: { "sync-review-target": "productSelect", "product-select": "true" } %>
+                          <button type="button" class="btn btn-sm btn-outline-secondary"
+                                  title="Nuevo producto" data-action="click->sync-review#openQuickCreate">
+                            <i class="bi bi-plus-lg"></i>
+                          </button>
                           <button type="submit" class="btn btn-sm btn-outline-info text-nowrap">
                             <i class="bi bi-check-lg"></i> Confirmar
                           </button>
-                        <% end %>
-                      </div>
+                        </div>
+                        <% cs    = @current_stock[[m.product_id, m.showroom_id]] %>
+                        <% after = cs + (m.movement_type.in?(%w[entry initial]) ? m.quantity : -m.quantity) %>
+                        <div class="d-flex gap-1 mt-1">
+                          <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size:.68rem;">Stock: <%= cs %></span>
+                          <% if after < 0 %>
+                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle" style="font-size:.68rem;">
+                              <i class="bi bi-exclamation-triangle-fill me-1"></i>Tras sync: <%= after %>
+                            </span>
+                          <% elsif after == 0 %>
+                            <span class="badge bg-warning-subtle text-warning-emphasis" style="font-size:.68rem;">Tras sync: 0</span>
+                          <% end %>
+                        </div>
+                      <% end %>
                     <% else %>
                       <%= form_with url: inventory_movement_path(m), method: :patch,
                             class: "d-flex flex-column gap-1" do %>

@@ -41,11 +41,20 @@ class ProductDecoder
     text.to_s.downcase.tr("áéíóúüñ", "aeiouun").squeeze(" ").strip
   end
 
+  # Split at letter↔number boundaries so "3P"→"3 p", "oslo3"→"oslo 3",
+  # "160CM"→"160 cm". Finer tokens → better cross-matching with abbreviated codes.
   def self.normalize_loose(text)
     t = text.to_s.downcase.tr("áéíóúüñ", "aeiouun")
-    t = t.gsub(/([a-z]+)[-\s]*([0-9]+)/, '\1\2')
-    t = t.gsub(/[^a-z0-9\s]+/, " ")
+    t = t.gsub(/[^a-z0-9]+/, " ")
+    t = t.gsub(/([a-z])([0-9])/, '\1 \2')
+    t = t.gsub(/([0-9])([a-z])/, '\1 \2')
     t.squeeze(" ").strip
+  end
+
+  STOP_WORDS = %w[de del la el los las un una y con sin para por al a].to_set
+
+  def self.significant_tokens(tokens)
+    tokens.reject { |t| t.length <= 1 || STOP_WORDS.include?(t) }
   end
 
   def self.strip_product_from_string(input_strict, product_strict)
@@ -60,8 +69,7 @@ class ProductDecoder
 
   def self.detect_base_product(full_code)
     strict = normalize_strict(full_code)
-    loose = normalize_loose(full_code)
-    input_tokens = loose.split
+    input_tokens = significant_tokens(normalize_loose(full_code).split)
     return nil if input_tokens.empty?
 
     best_product = nil
@@ -69,17 +77,17 @@ class ProductDecoder
 
     all_products_cache.each do |p|
       p_strict = normalize_strict(p.name)
-      p_loose = normalize_loose(p.name)
 
       if strict.include?(p_strict)
         score = 100 + p.name.length
       else
-        p_tokens = p_loose.split
+        p_tokens = significant_tokens(normalize_loose(p.name).split)
         next if p_tokens.empty?
         inter = input_tokens & p_tokens
         recall = inter.size.to_f / p_tokens.size
         next if recall < 0.6
-        score = recall + (p.name.length / 1000.0)
+        precision = inter.size.to_f / input_tokens.size
+        score = recall + precision * 0.5 + (p.name.length / 100.0)
       end
 
       if score > best_score
@@ -108,16 +116,18 @@ class ProductDecoder
 
       v_name_loose = normalize_loose(v.seller_name)
       v_name_tokens = v_name_loose.split.uniq
-      v_code_loose = v.code.present? ? normalize_loose(v.code) : nil
+      # Code may expand to multiple tokens after splitting (e.g. "3P"→["3","p"]);
+      # require ALL code tokens to be present in the tail.
+      v_code_tokens = v.code.present? ? normalize_loose(v.code).split : []
 
-      code_match = v_code_loose.present? && tail_set.include?(v_code_loose)
+      code_match = v_code_tokens.any? && v_code_tokens.all? { |ct| tail_set.include?(ct) }
       name_match = false
 
       if v_name_tokens.any?
         inter = v_name_tokens & tail_tokens
         coverage = inter.size.to_f / v_name_tokens.size
-        name_match = (v_name_tokens.size == 1) ?
-          tail_set.include?(v_name_tokens.first) : coverage >= 0.6
+        # 1-token variant: exact; multi-token: ≥50% coverage (1 of 2 tokens is enough).
+        name_match = v_name_tokens.size == 1 ? coverage == 1.0 : coverage >= 0.5
       end
 
       next unless code_match || name_match
