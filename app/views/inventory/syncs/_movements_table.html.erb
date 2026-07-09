@@ -1,0 +1,31 @@
+<% if movement_groups.empty? %>
+  <div class="text-center text-muted py-5">
+    <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+    <p class="mb-0 fw-semibold">Esta sincronización no tiene movimientos.</p>
+  </div>
+<% else %>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width:36px;" class="ps-3"></th>
+          <th>Nombre recibido</th>
+          <th>Tipo</th>
+          <th>Sala</th>
+          <th class="text-center">Cant.</th>
+          <th style="min-width:300px;">Producto a confirmar</th>
+          <th></th>
+        </tr>
+      </thead>
+      <% movement_groups.each do |order_number, movements| %>
+        <tbody data-sync-review-target="orderGroup" id="<%= dom_id_for_order_group(order_number) %>">
+          <%= render "inventory/syncs/order_group",
+                order_number: order_number, movements: movements,
+                current_stock: current_stock,
+                showrooms_for_select: showrooms_for_select,
+                products_for_select: products_for_select %>
+        </tbody>
+      <% end %>
+    </table>
+  </div>
+<% end %>

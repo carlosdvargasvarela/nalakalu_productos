@@ -40,4 +40,16 @@ class InventorySync < ApplicationRecord
   def bulk_upload?
     kind == "bulk_upload"
   end
+
+  # Conteos usados por la barra de filtros y el banner de sugeridos en la
+  # vista de revisión — un solo pluck en vez de cargar todos los movimientos.
+  def movement_stats
+    rows = inventory_movements.pluck(:status, :showroom_id, :product_id)
+    {
+      confirmed:  rows.count { |status, _sid, _pid| status == "resolved" },
+      suggested:  rows.count { |status, sid, pid| status == "unresolved" && sid.present? && pid.present? },
+      unassigned: rows.count { |status, sid, pid| status == "unresolved" && (sid.nil? || pid.nil?) },
+      ignored:    rows.count { |status, _sid, _pid| status == "ignored" }
+    }
+  end
 end

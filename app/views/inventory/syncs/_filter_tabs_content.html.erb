@@ -1,0 +1,45 @@
+<%
+  pending_count = stats[:suggested] + stats[:unassigned]
+%>
+<div class="btn-group btn-group-sm" role="group">
+  <button type="button" class="btn btn-outline-secondary"
+          data-sync-review-target="filterTab"
+          data-action="click->sync-review#setFilter" data-status="all">
+    Todos <span class="badge bg-secondary ms-1"><%= sync.movements_count %></span>
+  </button>
+  <% if pending_count > 0 %>
+    <button type="button" class="btn btn-outline-warning"
+            data-sync-review-target="filterTab"
+            data-action="click->sync-review#setFilter" data-status="pending">
+      Pendientes <span class="badge bg-warning text-dark ms-1"><%= pending_count %></span>
+    </button>
+  <% end %>
+  <% if stats[:suggested] > 0 %>
+    <button type="button" class="btn btn-outline-info"
+            data-sync-review-target="filterTab"
+            data-action="click->sync-review#setFilter" data-status="suggested">
+      Sugeridos <span class="badge bg-info text-dark ms-1"><%= stats[:suggested] %></span>
+    </button>
+  <% end %>
+  <% if stats[:unassigned] > 0 %>
+    <button type="button" class="btn btn-outline-warning"
+            data-sync-review-target="filterTab"
+            data-action="click->sync-review#setFilter" data-status="unassigned">
+      Sin asignar <span class="badge bg-warning text-dark ms-1"><%= stats[:unassigned] %></span>
+    </button>
+  <% end %>
+  <% if stats[:confirmed] > 0 %>
+    <button type="button" class="btn btn-outline-success"
+            data-sync-review-target="filterTab"
+            data-action="click->sync-review#setFilter" data-status="resolved">
+      Confirmados <span class="badge bg-success ms-1"><%= stats[:confirmed] %></span>
+    </button>
+  <% end %>
+  <% if stats[:ignored] > 0 %>
+    <button type="button" class="btn btn-outline-secondary"
+            data-sync-review-target="filterTab"
+            data-action="click->sync-review#setFilter" data-status="ignored">
+      Ignorados <span class="badge bg-secondary ms-1"><%= stats[:ignored] %></span>
+    </button>
+  <% end %>
+</div>

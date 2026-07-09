@@ -1,0 +1,13 @@
+<% if stat_suggested > 0 %>
+  <div class="alert alert-info d-flex justify-content-between align-items-center mb-3 border-0 shadow-sm gap-3">
+    <span>
+      <i class="bi bi-lightbulb-fill me-2"></i>
+      <strong><%= stat_suggested %></strong> movimiento(s) con producto detectado automáticamente — revisalos o confírmalos en lote.
+    </span>
+    <%= button_to confirm_matched_inventory_sync_path(sync), method: :patch,
+          class: "btn btn-info btn-sm text-white fw-semibold text-nowrap",
+          data: { turbo_confirm: "¿Confirmar todos los movimientos con producto detectado?" } do %>
+      <i class="bi bi-check-all me-1"></i>Confirmar todos los sugeridos (<%= stat_suggested %>)
+    <% end %>
+  </div>
+<% end %>

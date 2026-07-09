@@ -112,4 +112,49 @@ class InventorySyncsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to inventory_sync_path(sync)
     assert_equal "unresolved", movement.reload.status
   end
+
+  test "bulk_assign_product vía turbo_stream refresca la tabla sin redirigir" do
+    sync = InventorySync.create!(from_date: Date.current, to_date: Date.current, status: "pending_review")
+    product = products(:one)
+    movement = InventoryMovement.create!(
+      inventory_sync: sync, movement_type: "entry", source: "synced", status: "unresolved",
+      showroom: showrooms(:palmares), quantity: 1, order_number: "2-00001", product_name_raw: "Producto sin asignar"
+    )
+
+    post bulk_assign_product_inventory_sync_url(sync),
+      params: { movement_ids: [movement.id], product_id: product.id },
+      as: :turbo_stream
+
+    assert_response :success
+    assert_equal Mime[:turbo_stream].to_s, @response.media_type
+    assert_equal "resolved", movement.reload.status
+    assert_match "turbo-stream", @response.body
+  end
+
+  test "confirm_matched vía turbo_stream confirma los sugeridos y refresca sin redirigir" do
+    sync = InventorySync.create!(from_date: Date.current, to_date: Date.current, status: "pending_review")
+    movement = InventoryMovement.create!(
+      inventory_sync: sync, movement_type: "entry", source: "synced", status: "unresolved",
+      showroom: showrooms(:palmares), product: products(:one),
+      quantity: 1, order_number: "2-00001", product_name_raw: "Producto sugerido"
+    )
+
+    patch confirm_matched_inventory_sync_url(sync), as: :turbo_stream
+
+    assert_response :success
+    assert_equal "resolved", movement.reload.status
+  end
+
+  test "bulk_ignore vía turbo_stream ignora los ítems y refresca sin redirigir" do
+    sync = InventorySync.create!(from_date: Date.current, to_date: Date.current, status: "pending_review")
+    movement = InventoryMovement.create!(
+      inventory_sync: sync, movement_type: "entry", source: "synced", status: "unresolved",
+      quantity: 1, order_number: "2-00001", product_name_raw: "Producto sin asignar"
+    )
+
+    post bulk_ignore_inventory_sync_url(sync), params: { movement_ids: [movement.id] }, as: :turbo_stream
+
+    assert_response :success
+    assert_equal "ignored", movement.reload.status
+  end
 end

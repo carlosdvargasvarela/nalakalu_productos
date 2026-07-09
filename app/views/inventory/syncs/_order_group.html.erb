@@ -1,0 +1,69 @@
+<%
+  exits            = movements.select { |m| m.movement_type == "exit" }
+  entries          = movements.select { |m| m.movement_type == "entry" }
+  is_transfer      = exits.any? && entries.any?
+  group_date       = movements.first&.delivery_date
+  pending_in_group = movements.count { |m| m.status == "unresolved" }
+  client_name      = movements.first&.client_name
+  delivery_status  = movements.first&.delivery_status
+  delivery_badge   = case delivery_status&.downcase
+      when /entregad|delivered/  then "bg-success"
+      when /cancelad|cancelled/  then "bg-danger"
+      when /parcial|partial/     then "bg-warning text-dark"
+      when /transit|en_ruta/     then "bg-info text-dark"
+      else                            "bg-secondary"
+     end
+%>
+<tr class="table-light">
+  <td colspan="7" class="py-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <% if is_transfer %>
+        <i class="bi bi-arrow-left-right text-primary"></i>
+        <strong class="text-primary-emphasis small">Transferencia</strong>
+        <span class="badge bg-primary small"><%= exits.first&.showroom&.name || "Por confirmar" %></span>
+        <i class="bi bi-arrow-right text-primary small"></i>
+        <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle small">
+          <%= entries.first&.showroom&.name || "Por confirmar" %>
+        </span>
+      <% elsif entries.any? %>
+        <i class="bi bi-arrow-down-circle text-success"></i>
+        <strong class="text-success-emphasis small">Entrada</strong>
+        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle small">
+          <%= entries.first&.showroom&.name || "Por confirmar" %>
+        </span>
+      <% else %>
+        <i class="bi bi-arrow-up-circle text-danger"></i>
+        <strong class="text-danger-emphasis small">Salida</strong>
+        <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle small">
+          <%= exits.first&.showroom&.name || "Por confirmar" %>
+        </span>
+      <% end %>
+      <span class="text-muted small">
+        <%= group_date&.strftime("%d/%m/%Y") %>
+        &middot; <code class="small"><%= order_number %></code>
+        <% if client_name.present? %>
+          &middot; <i class="bi bi-person me-1"></i><%= client_name %>
+        <% end %>
+      </span>
+      <% if delivery_status.present? %>
+        <span class="badge <%= delivery_badge %> small"><i class="bi bi-truck me-1"></i><%= delivery_status %></span>
+      <% end %>
+      <span class="ms-auto">
+        <% if pending_in_group > 0 %>
+          <span class="badge bg-warning text-dark small"><i class="bi bi-clock me-1"></i><%= pending_in_group %> pendiente(s)</span>
+        <% else %>
+          <span class="badge bg-success small"><i class="bi bi-check-lg me-1"></i>Completo</span>
+        <% end %>
+      </span>
+    </div>
+  </td>
+</tr>
+
+<% movements.each do |m| %>
+  <%= render "inventory/syncs/movement_row",
+        m: m, current_stock: current_stock,
+        showrooms_for_select: showrooms_for_select,
+        products_for_select: products_for_select,
+        error_movement_id: (defined?(error_movement_id) ? error_movement_id : nil),
+        error_message: (defined?(error_message) ? error_message : nil) %>
+<% end %>

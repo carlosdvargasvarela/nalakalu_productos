@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = [
     "productSelect", "newProductName", "newProductCode", "newProductFamily", "quickCreateError",
     "movementRow", "orderGroup", "bulkCount", "bulkIgnoreBtn", "bulkAssignBtn",
-    "bulkAssignProductSelect", "selectAllUnresolved"
+    "bulkAssignProductSelect", "selectAllUnresolved", "filterTab"
   ]
   static values = { quickCreateUrl: String }
 
@@ -19,6 +19,17 @@ export default class extends Controller {
       btn.classList.toggle("active", btn.dataset.status === this._activeFilter)
     })
     this.#applyFilters()
+  }
+
+  // Turbo Streams reemplaza filas/tabs sin recargar la página: cuando una fila
+  // o tab reaparece en el DOM hay que reaplicar el filtro/estado activo a mano,
+  // porque connect() no vuelve a correr para el controller ya montado.
+  movementRowTargetConnected() {
+    this.#applyFilters()
+  }
+
+  filterTabTargetConnected(element) {
+    element.classList.toggle("active", element.dataset.status === this._activeFilter)
   }
 
   // ── Tabs de filtro ───────────────────────────────────────────────────────────
@@ -76,6 +87,19 @@ export default class extends Controller {
     const productId = this.bulkAssignProductSelectTarget.value
     if (!ids.length || !productId) return
     this.#submitBulkForm("bulk-assign-product-form", ids, { product_id: productId })
+  }
+
+  // ── Fila "sugerido" colapsada ─────────────────────────────────────────────────
+
+  toggleSuggestedEdit(event) {
+    const row = event.currentTarget.closest("[data-sync-review-target='movementRow']")
+    // Bootstrap's "d-none" and "d-flex" both carry !important, so both classes
+    // must flip together — leaving "d-flex" statically in the markup would let
+    // it win the cascade over "d-none" regardless of toggle state.
+    row.querySelectorAll(".suggested-summary, .suggested-edit").forEach(el => {
+      el.classList.toggle("d-none")
+      el.classList.toggle("d-flex")
+    })
   }
 
   // ── Quick-create producto ────────────────────────────────────────────────────
@@ -204,7 +228,9 @@ export default class extends Controller {
       inp.dataset.bulkField = "true"
       form.appendChild(inp)
     })
-    form.submit()
+    // requestSubmit() (no submit()) dispara el evento "submit" real que Turbo
+    // intercepta — con submit() la request escapa a Turbo y llega como HTML plano.
+    form.requestSubmit()
   }
 
   #syncSelectAll() {

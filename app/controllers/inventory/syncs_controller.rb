@@ -2,20 +2,8 @@ class Inventory::SyncsController < Inventory::BaseController
   before_action :set_sync
 
   def show
-    all_movements = @sync.inventory_movements
-      .includes(:product, :showroom)
-      .order(:order_number, :movement_type, :product_name_raw)
-
-    @movement_groups = all_movements.group_by(&:order_number)
-    @stat_confirmed  = all_movements.count { |m| m.status == "resolved" }
-    @stat_suggested  = all_movements.count { |m| m.status == "unresolved" && m.showroom_id.present? && m.product_id.present? }
-    @stat_unassigned = all_movements.count { |m| m.status == "unresolved" && (m.showroom_id.nil? || m.product_id.nil?) }
-    @stat_ignored    = all_movements.count { |m| m.status == "ignored" }
-    @products_for_select  = Product.cached_active_ordered
-    @showrooms_for_select = Showroom.cached_active_ordered
+    load_review_locals
     @families = Family.order(:name)
-
-    @current_stock = InventoryMovement.net_stock_by_product_and_showroom
   end
 
   def confirm_matched
@@ -25,7 +13,10 @@ class Inventory::SyncsController < Inventory::BaseController
       .update_all(status: "resolved")
     @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
     InventoryMovement.bust_stock_cache!
-    redirect_to inventory_sync_path(@sync), notice: "#{count} movimiento(s) con producto detectado fueron confirmados."
+    respond_to do |format|
+      format.html { redirect_to inventory_sync_path(@sync), notice: "#{count} movimiento(s) con producto detectado fueron confirmados." }
+      format.turbo_stream { load_review_locals }
+    end
   end
 
   def confirm
@@ -47,7 +38,10 @@ class Inventory::SyncsController < Inventory::BaseController
     @sync.inventory_movements.where(id: ids, status: "unresolved").update_all(status: "ignored")
     @sync.update!(unresolved_count: @sync.inventory_movements.unresolved.count)
     InventoryMovement.bust_stock_cache!
-    redirect_to inventory_sync_path(@sync), notice: "#{ids.size} ítem(s) ignorados."
+    respond_to do |format|
+      format.html { redirect_to inventory_sync_path(@sync), notice: "#{ids.size} ítem(s) ignorados." }
+      format.turbo_stream { load_review_locals }
+    end
   end
 
   def bulk_assign_product
@@ -67,12 +61,30 @@ class Inventory::SyncsController < Inventory::BaseController
 
     notice = "#{resolved_count} ítem(s) asignados a \"#{product.name}\"."
     notice += " #{pending_showroom_count} quedaron pendientes de seleccionar sala." if pending_showroom_count > 0
-    redirect_to inventory_sync_path(@sync), notice: notice
+
+    respond_to do |format|
+      format.html { redirect_to inventory_sync_path(@sync), notice: notice }
+      format.turbo_stream { load_review_locals }
+    end
   end
 
   private
 
   def set_sync
     @sync = InventorySync.find(params[:id])
+  end
+
+  # Compartido por #show y por las acciones en lote (que responden con
+  # turbo_stream para refrescar la tabla sin recargar la página completa).
+  def load_review_locals
+    @movement_groups = @sync.inventory_movements
+      .includes(:product, :showroom)
+      .order(:order_number, :movement_type, :product_name_raw)
+      .group_by(&:order_number)
+    @stats                = @sync.movement_stats
+    @pending_count         = @stats[:suggested] + @stats[:unassigned]
+    @products_for_select  = Product.cached_active_ordered
+    @showrooms_for_select = Showroom.cached_active_ordered
+    @current_stock        = InventoryMovement.net_stock_by_product_and_showroom
   end
 end

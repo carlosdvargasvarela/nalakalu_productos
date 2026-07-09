@@ -1,0 +1,21 @@
+<%= turbo_stream.update dom_id_for_order_group(@order_number) do %>
+  <%= render "inventory/syncs/order_group",
+        order_number: @order_number, movements: @order_group_movements,
+        current_stock: @current_stock,
+        showrooms_for_select: @showrooms_for_select,
+        products_for_select: @products_for_select,
+        error_movement_id: (@error ? @movement.id : nil),
+        error_message: @error %>
+<% end %>
+
+<%= turbo_stream.update "sync_filter_tabs" do %>
+  <%= render "inventory/syncs/filter_tabs_content", sync: @sync, stats: @stats %>
+<% end %>
+
+<%= turbo_stream.update "sync_suggested_banner" do %>
+  <%= render "inventory/syncs/suggested_banner", sync: @sync, stat_suggested: @stats[:suggested] %>
+<% end %>
+
+<%= turbo_stream.update "sync_bulk_toolbar" do %>
+  <%= render "inventory/syncs/bulk_toolbar", sync: @sync, pending_count: @pending_count %>
+<% end %>

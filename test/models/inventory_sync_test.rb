@@ -59,4 +59,24 @@ class InventorySyncTest < ActiveSupport::TestCase
 
     assert_nil InventorySync.pending_logistics_sync_overlapping("2026-06-12", "2026-06-13")
   end
+
+  test "movement_stats clasifica confirmados, sugeridos, sin asignar e ignorados" do
+    sync = InventorySync.create!(from_date: Date.current, to_date: Date.current, status: "pending_review")
+    showroom = showrooms(:palmares)
+    product  = products(:one)
+
+    InventoryMovement.create!(inventory_sync: sync, movement_type: "entry", source: "synced",
+      status: "resolved", showroom: showroom, product: product, quantity: 1, order_number: "1")
+    InventoryMovement.create!(inventory_sync: sync, movement_type: "entry", source: "synced",
+      status: "unresolved", showroom: showroom, product: product, quantity: 1, order_number: "2")
+    InventoryMovement.create!(inventory_sync: sync, movement_type: "entry", source: "synced",
+      status: "unresolved", showroom: nil, product: nil, quantity: 1, order_number: "3")
+    InventoryMovement.create!(inventory_sync: sync, movement_type: "entry", source: "synced",
+      status: "ignored", showroom: showroom, product: product, quantity: 1, order_number: "4")
+
+    assert_equal(
+      { confirmed: 1, suggested: 1, unassigned: 1, ignored: 1 },
+      sync.movement_stats
+    )
+  end
 end

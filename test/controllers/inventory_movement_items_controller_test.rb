@@ -64,4 +64,34 @@ class InventoryMovementItemsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal "ignored", movement.reload.status
   end
+
+  test "una request turbo_stream resuelve el ítem sin redirigir y actualiza la fila en el DOM" do
+    movement = InventoryMovement.create!(
+      inventory_sync: @sync, movement_type: "exit", source: "synced", status: "unresolved",
+      quantity: 1, order_number: "PED-4-005", showroom: showrooms(:palmares), product_name_raw: "Sofá"
+    )
+
+    patch inventory_movement_url(movement),
+      params: { inventory_movement: { product_id: @product.id } },
+      as: :turbo_stream
+
+    assert_response :success
+    assert_equal Mime[:turbo_stream].to_s, @response.media_type
+    assert_equal "resolved", movement.reload.status
+    assert_match "turbo-stream", @response.body
+    assert_match @product.name, @response.body
+  end
+
+  test "una request turbo_stream sin producto muestra el error dentro de la fila" do
+    movement = InventoryMovement.create!(
+      inventory_sync: @sync, movement_type: "exit", source: "synced", status: "unresolved",
+      quantity: 1, order_number: "PED-4-006", showroom: nil, product_name_raw: "Sofá VENDIDO"
+    )
+
+    patch inventory_movement_url(movement), params: {}, as: :turbo_stream
+
+    assert_response :success
+    assert_equal "unresolved", movement.reload.status
+    assert_match "Debes seleccionar un producto", @response.body
+  end
 end
