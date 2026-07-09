@@ -11,8 +11,8 @@ class Inventory::SyncsController < Inventory::BaseController
     @stat_suggested  = all_movements.count { |m| m.status == "unresolved" && m.showroom_id.present? && m.product_id.present? }
     @stat_unassigned = all_movements.count { |m| m.status == "unresolved" && (m.showroom_id.nil? || m.product_id.nil?) }
     @stat_ignored    = all_movements.count { |m| m.status == "ignored" }
-    @products_for_select  = Product.where(active: true).order(:name)
-    @showrooms_for_select = Showroom.active.order(:name)
+    @products_for_select  = Product.cached_active_ordered
+    @showrooms_for_select = Showroom.cached_active_ordered
     @families = Family.order(:name)
 
     @current_stock = InventoryMovement.net_stock_by_product_and_showroom

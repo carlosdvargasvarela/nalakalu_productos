@@ -12,8 +12,8 @@ class Inventory::MovementsController < Inventory::BaseController
     scope = scope.where("delivery_date <= ?", params[:to])     if params[:to].present?
 
     @movements = scope.limit(300)
-    @showrooms = Showroom.active.order(:name)
-    @products  = Product.where(active: true).order(:name)
+    @showrooms = Showroom.cached_active_ordered
+    @products  = Product.cached_active_ordered
     @filter    = params.permit(:showroom_id, :product_id, :movement_type, :from, :to).to_h
   end
 

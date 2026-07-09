@@ -1,7 +1,7 @@
 class Inventory::InitialStockController < Inventory::BaseController
   def new
-    @products  = Product.where(active: true).order(:name)
-    @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
+    @products  = Product.cached_active_ordered
+    @showrooms = Showroom.cached_active_ordered
     @families  = Family.order(:name)
   end
 

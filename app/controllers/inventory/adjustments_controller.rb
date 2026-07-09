@@ -1,13 +1,13 @@
 class Inventory::AdjustmentsController < Inventory::BaseController
   def new
-    @showrooms     = Showroom.active.order(is_main: :desc, name: :asc)
+    @showrooms     = Showroom.cached_active_ordered
     @current_stock = InventoryMovement.net_stock_by_product_and_showroom
     product_ids    = @current_stock.keys.map(&:first).uniq
     @products      = Product.where(active: true, id: product_ids).order(:name)
   end
 
   def create
-    @showrooms     = Showroom.active.order(is_main: :desc, name: :asc)
+    @showrooms     = Showroom.cached_active_ordered
     @current_stock = InventoryMovement.net_stock_by_product_and_showroom
     adjustments    = params[:adjustments]&.to_unsafe_h || {}
     note_suffix    = params[:notes].presence ? " — #{params[:notes]}" : ""

@@ -10,18 +10,28 @@ class Showroom < ApplicationRecord
 
   before_validation :normalize_code
   before_save :demote_other_mains, if: -> { is_main? && (new_record? || is_main_changed?) }
-  after_commit :bust_ids_cache, on: [:create, :destroy]
+  after_commit :bust_ids_cache, on: [:create, :update, :destroy]
 
   scope :active, -> { where(active: true) }
 
   IDS_CACHE_KEY = "showrooms/ids"
   IDS_CACHE_TTL = 10.minutes
+  ACTIVE_CACHE_KEY = "showrooms/active_ordered"
 
   # Salas casi nunca cambian, pero InventoryMovement#bust_stock_cache! recorre
   # todas sus IDs en cada movimiento guardado — cachear evita pegarle a la tabla
   # una vez por movimiento durante un sync grande.
   def self.cached_ids
     Rails.cache.fetch(IDS_CACHE_KEY, expires_in: IDS_CACHE_TTL) { ids }
+  end
+
+  # Todas las vistas del módulo de inventario piden esta misma lista (para
+  # tablas y selects) en cada request — cachear evita repetir la query en
+  # cada carga de página.
+  def self.cached_active_ordered
+    Rails.cache.fetch(ACTIVE_CACHE_KEY, expires_in: IDS_CACHE_TTL) do
+      active.order(is_main: :desc, name: :asc).to_a
+    end
   end
 
   private
@@ -36,5 +46,6 @@ class Showroom < ApplicationRecord
 
   def bust_ids_cache
     Rails.cache.delete(IDS_CACHE_KEY)
+    Rails.cache.delete(ACTIVE_CACHE_KEY)
   end
 end

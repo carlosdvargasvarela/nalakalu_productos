@@ -6,7 +6,7 @@ class Inventory::DashboardController < Inventory::BaseController
     raw = InventoryMovement.stock_by_product_and_showroom
     @stock, @product_ids = build_stock_table(raw)
     @products  = Product.where(id: @product_ids).order(:name).index_by(&:id)
-    @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
+    @showrooms = Showroom.cached_active_ordered
     @flagged_count = InventoryMovement.flagged.count
 
     sync_config = InventorySyncConfig.current

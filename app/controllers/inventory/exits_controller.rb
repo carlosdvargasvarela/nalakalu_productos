@@ -2,16 +2,16 @@ class Inventory::ExitsController < Inventory::BaseController
   def new
     @showroom_id  = params[:showroom_id]
     @order_number = params[:order_number]
-    @showrooms    = Showroom.active.order(is_main: :desc, name: :asc)
-    @products     = Product.where(active: true).order(:name)
+    @showrooms    = Showroom.cached_active_ordered
+    @products     = Product.cached_active_ordered
     @families     = Family.order(:name)
     @items        = [{ product_id: nil, quantity: nil, notes: nil }]
     load_delivery_preview
   end
 
   def create
-    @showrooms    = Showroom.active.order(is_main: :desc, name: :asc)
-    @products     = Product.where(active: true).order(:name)
+    @showrooms    = Showroom.cached_active_ordered
+    @products     = Product.cached_active_ordered
     @families     = Family.order(:name)
     @showroom_id  = params[:showroom_id]
     @order_number = params[:order_number]

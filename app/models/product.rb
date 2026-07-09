@@ -27,6 +27,19 @@ class Product < ApplicationRecord
   }
 
   after_commit :bust_decoder_cache
+  after_commit :bust_active_cache
+
+  ACTIVE_CACHE_KEY = "products/active_ordered"
+  ACTIVE_CACHE_TTL = 10.minutes
+
+  # Igual que Showroom.cached_active_ordered: esta lista se repite en cada
+  # vista del módulo de inventario (selects, tablas) — cachearla evita
+  # golpear la tabla de productos en cada carga de página.
+  def self.cached_active_ordered
+    Rails.cache.fetch(ACTIVE_CACHE_KEY, expires_in: ACTIVE_CACHE_TTL) do
+      where(active: true).order(:name).to_a
+    end
+  end
 
   # --------- Helpers de variantes ----------
 
@@ -167,5 +180,9 @@ class Product < ApplicationRecord
 
   def bust_decoder_cache
     ProductDecoder.clear_cache! if defined?(ProductDecoder)
+  end
+
+  def bust_active_cache
+    Rails.cache.delete(ACTIVE_CACHE_KEY)
   end
 end

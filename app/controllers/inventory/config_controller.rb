@@ -3,7 +3,7 @@ class Inventory::ConfigController < Inventory::BaseController
 
   def show
     @config    = InventorySyncConfig.current
-    @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
+    @showrooms = Showroom.cached_active_ordered
   end
 
   def update_prefixes

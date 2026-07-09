@@ -1,7 +1,7 @@
 class Inventory::StockController < Inventory::BaseController
   def showroom
     @showroom  = Showroom.find(params[:showroom_id])
-    @showrooms = Showroom.active.order(is_main: :desc, name: :asc)
+    @showrooms = Showroom.cached_active_ordered
 
     raw = InventoryMovement.stock_by_showroom(@showroom.id)
 
