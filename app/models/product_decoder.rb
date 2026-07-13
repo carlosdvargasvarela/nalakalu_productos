@@ -1,7 +1,15 @@
+require "fuzzy_match"
+
 class ProductDecoder
   CACHE_KEY_PRODUCTS = "decoder:products:v1"
   CACHE_KEY_VARIANTS = "decoder:variants:v1"
   CACHE_TTL = 30.minutes
+
+  # Umbral mínimo de similitud (Dice's Coefficient, vía fuzzy_match) para aceptar
+  # una detección de producto. Calibrado a mano contra el catálogo real: texto
+  # sin relación real anota ~0.3-0.4, coincidencias legítimas (incluso abreviadas)
+  # rondan 0.6+. Ver test/models/product_decoder_test.rb.
+  MIN_MATCH_SCORE = 0.6
 
   Result = Struct.new(
     :has_variants, :base_product, :variants, :unrecognized_codes,
@@ -51,12 +59,6 @@ class ProductDecoder
     t.squeeze(" ").strip
   end
 
-  STOP_WORDS = %w[de del la el los las un una y con sin para por al a].to_set
-
-  def self.significant_tokens(tokens)
-    tokens.reject { |t| t.length <= 1 || STOP_WORDS.include?(t) }
-  end
-
   def self.strip_product_from_string(input_strict, product_strict)
     return input_strict if product_strict.blank?
     if (idx = input_strict.index(product_strict))
@@ -68,35 +70,28 @@ class ProductDecoder
   # ── PRODUCT DETECTION ────────────────────────────────────────────────────
 
   def self.detect_base_product(full_code)
-    strict = normalize_strict(full_code)
-    input_tokens = significant_tokens(normalize_loose(full_code).split)
-    return nil if input_tokens.empty?
+    needle = normalize_strict(full_code)
+    return nil if needle.blank?
 
-    best_product = nil
-    best_score = -1.0
+    # Camino rápido: el nombre del producto aparece tal cual dentro del texto
+    # (el caso más común). fuzzy_match usa Dice's Coefficient sobre el string
+    # completo, así que texto de más alrededor del nombre (pedido, notas, etc.)
+    # diluye el score — por eso el substring match va primero, no como respaldo.
+    exact_matches = all_products_cache.select { |p| needle.include?(normalize_strict(p.name)) }
+    return exact_matches.max_by { |p| p.name.length } if exact_matches.any?
 
-    all_products_cache.each do |p|
-      p_strict = normalize_strict(p.name)
+    match, score, = product_matcher.find_with_score(needle)
+    return nil unless match && score && score >= MIN_MATCH_SCORE
 
-      if strict.include?(p_strict)
-        score = 100 + p.name.length
-      else
-        p_tokens = significant_tokens(normalize_loose(p.name).split)
-        next if p_tokens.empty?
-        inter = input_tokens & p_tokens
-        recall = inter.size.to_f / p_tokens.size
-        next if recall < 0.6
-        precision = inter.size.to_f / input_tokens.size
-        score = recall + precision * 0.5 + (p.name.length / 100.0)
-      end
+    match
+  end
 
-      if score > best_score
-        best_product = p
-        best_score = score
-      end
-    end
-
-    best_product
+  # fuzzy_match (Dice's Coefficient + Levenshtein) reemplaza el scoring manual
+  # de recall/precision por tokens. Reconstruir el índice es barato (~0.4ms
+  # para 550 productos) así que no vale la pena cachear el objeto FuzzyMatch en
+  # sí — basta con que all_products_cache ya esté cacheado.
+  def self.product_matcher
+    FuzzyMatch.new(all_products_cache, read: ->(p) { normalize_strict(p.name) })
   end
 
   # ── VARIANT DETECTION ────────────────────────────────────────────────────
