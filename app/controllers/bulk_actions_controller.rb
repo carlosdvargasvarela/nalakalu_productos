@@ -7,13 +7,27 @@ class BulkActionsController < ApplicationController
   class Refused < StandardError; end # se muestra tal cual como aviso
 
   KINDS = DeletionsController::KINDS
-  ACTIONS = %w[approve pending needs_changes hide show delete assign_family unassign_family move_type move_provider].freeze
+  ACTIONS = %w[approve pending needs_changes hide show delete merge assign_family unassign_family move_type move_provider].freeze
+  MERGEABLE = %w[family variant_type provider].freeze
 
   def confirm_delete_page
     @impact = Hash.new(0)
     @records.first(2000).each { |r| DeleteImpact.for(r).each { |text, n, loses| @impact[[text, loses]] += n } }
     @sample = @records.first(12)
     render :confirm_delete
+  end
+
+  # unir sin confirmar: elegir cuál se conserva y ver qué pasa
+  def confirm_merge_page
+    raise Refused, "Unir solo aplica a familias, tipos de variante y proveedores." unless MERGEABLE.include?(@kind)
+    raise Refused, "Elige al menos 2 para unirlos." if @records.size < 2
+
+    @stats = @records.index_with { |r| merge_stats(r) }
+    @default_target = @records.max_by { |r| @stats[r][:main] }
+    @warnings = merge_warnings
+    render :confirm_merge
+  rescue Refused => e
+    back(alert: e.message)
   end
 
   # delete sin confirmar muestra el impacto total y ofrece ocultar en su lugar (confirm_delete_page)
@@ -23,8 +37,9 @@ class BulkActionsController < ApplicationController
     return back(alert: "No elegiste ningún registro.") if @records.empty?
 
     return confirm_delete_page if action == "delete" && params[:confirmed] != "1"
+    return confirm_merge_page if action == "merge" && params[:confirmed] != "1"
 
-    message = send("do_#{action}")
+    message = ActiveRecord::Base.transaction { send("do_#{action}") } # todo o nada
     back(notice: "#{message} Puedes deshacerlo desde el Historial.")
   rescue Refused => e
     back(alert: e.message)
@@ -92,6 +107,71 @@ class BulkActionsController < ApplicationController
     msg = "#{n_(@records.size - failed.size, "eliminado")}."
     msg += " No se pudo eliminar #{n_(failed.size, "registro")} (tiene dependencias que lo impiden)." if failed.any?
     msg
+  end
+
+  # ── Unir ───────────────────────────────────────────────────────────────
+  def do_merge
+    raise Refused, "Unir solo aplica a familias, tipos de variante y proveedores." unless MERGEABLE.include?(@kind)
+
+    target = @records.find { _1.id == params[:target_id].to_i } or raise Refused, "Elige cuál se conserva."
+    sources = @records - [target]
+    raise Refused, "Elige al menos 2 para unirlos." if sources.empty?
+
+    new_name = params[:new_name].to_s.strip
+    case target
+    when Family then merge_families(target, sources)
+    when VariantType then sources.each { _1.merge_into!(target) }
+    when Provider then merge_providers(target, sources)
+    end
+    sources.each { _1.update!(active: false) unless _1.is_a?(VariantType) } # merge_into! ya oculta los tipos
+    target.update!(name: new_name) if new_name.present? && new_name != target.name
+    "Se unieron #{sources.size + 1} #{@model.model_name.human(count: 2).downcase} en «#{target.reload.name}». #{n_(sources.size, "quedó oculto", "quedaron ocultos")}: #{sources.map(&:name).to_sentence}."
+  end
+
+  def merge_families(target, sources)
+    sources.each do |src|
+      ChangeLog.bulk_update(Product.where(family_id: src.id), family_id: target.id) # solo agrupa: los productos conservan sus reglas
+      # los tipos de variante que le faltan al destino se agregan SIN propagarlos a sus productos (el callback los llenaría de variantes)
+      have = target.family_variant_rules.map { [_1.variant_type_id, _1.label] }
+      pos = target.family_variant_rules.maximum(:position).to_i
+      src.family_variant_rules.order(:position).each do |fr|
+        next if have.include?([fr.variant_type_id, fr.label])
+
+        pos += 1
+        now = Time.current
+        id = FamilyVariantRule.insert_all([{family_id: target.id, variant_type_id: fr.variant_type_id, position: pos, required: fr.required,
+          separator: fr.separator, label: fr.label, created_at: now, updated_at: now}], returning: %w[id]).rows.first.first
+        rule = FamilyVariantRule.find(id)
+        ChangeLog.log(rule, "create", nil, rule.attributes)
+        have << [fr.variant_type_id, fr.label]
+      end
+    end
+  end
+
+  def merge_providers(target, sources)
+    sources.each { |src| ChangeLog.bulk_update(SupplierItem.where(provider_id: src.id), provider_id: target.id) }
+  rescue ActiveRecord::RecordNotUnique
+    raise Refused, "No se pudo unir: hay piezas con el mismo código en más de un proveedor. Resuélvelo primero (elimina o cambia el código de una)."
+  end
+
+  def merge_stats(r)
+    case r
+    when Family then {main: r.products.count, text: "#{n_(r.products.count, "producto")} · #{n_(r.family_variant_rules.count, "tipo de variante", "tipos de variante")}"}
+    when VariantType then {main: r.variants.count, text: "#{n_(r.variants.count, "variante")} · #{n_(r.product_variant_rules.count, "producto lo usa", "productos lo usan")}"}
+    when Provider then {main: r.supplier_items.count, text: n_(r.supplier_items.count, "pieza")}
+    end
+  end
+
+  def merge_warnings
+    w = []
+    types = @records.select { _1.is_a?(VariantType) }
+    if types.size > 1
+      names = Variant.where(variant_type_id: types.map(&:id)).map { _1.seller_name.to_s.squish.downcase }
+      dup = names.tally.count { _2 > 1 }
+      w << "#{n_(dup, "variante tiene", "variantes tienen")} el mismo nombre en más de un tipo: quedarán repetidas dentro del tipo unido (Calidad las lista para corregirlas)." if dup > 0
+      w << "Los tipos no coinciden en «código de proveedor propio»: se conserva el del tipo que elijas." if types.map(&:own_supplier_code).uniq.size > 1
+    end
+    w
   end
 
   # ── Productos: familia ─────────────────────────────────────────────────

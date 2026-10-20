@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Selección en masa en las listas. Las casillas de cada fila envían su id con el formulario #bulk-form (atributo form=).
 // «Seleccionar los N resultados» recoge los ids de todo el filtro (no solo de la página visible).
 export default class extends Controller {
-  static targets = ["all", "row", "bar", "count", "everyone", "allMode", "allIds"]
+  static targets = ["all", "row", "bar", "count", "everyone", "allMode", "allIds", "merge"]
   static values = { allIds: Array }
 
   connect() { this.update() }
@@ -46,6 +46,7 @@ export default class extends Controller {
     const n = allMode ? total : checked
 
     this.barTarget.classList.toggle("d-none", n === 0)
+    if (this.hasMergeTarget) { this.mergeTarget.disabled = n < 2; this.mergeTarget.title = n < 2 ? "Selecciona al menos 2 para unirlos" : "Une los seleccionados en uno solo (los demás quedan ocultos)" }
     this.countTarget.textContent = n === 1 ? "1 seleccionado" : `${n} seleccionados`
     this.allTarget.checked = checked > 0 && checked === this.rowTargets.length
     this.allTarget.indeterminate = checked > 0 && checked < this.rowTargets.length

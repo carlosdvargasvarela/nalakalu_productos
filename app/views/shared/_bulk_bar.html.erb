@@ -31,6 +31,10 @@
         <select name="target_id" data-no-tomselect class="form-select form-select-sm" style="width: 210px;"><option value="">Proveedor…</option><%= options_from_collection_for_select(Provider.order(:name), :id, :name) %></select>
         <button name="bulk_action" value="move_provider" class="btn btn-sm btn-outline-info">Mover a proveedor</button>
       <% end %>
+      <% if %w[family variant_type provider].include?(kind) %>
+        <span class="vr mx-1"></span>
+        <button name="bulk_action" value="merge" class="btn btn-sm btn-info" data-bulk-actions-target="merge" title="Une los seleccionados en uno solo (los demás quedan ocultos)"><i class="bi bi-intersect"></i> Unir</button>
+      <% end %>
       <span class="flex-grow-1"></span>
       <button name="bulk_action" value="delete" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Eliminar…</button>
     </div>

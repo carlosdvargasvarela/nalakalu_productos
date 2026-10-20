@@ -56,7 +56,9 @@ class ChangeLog < ApplicationRecord
       rows.each do |r|
         klass = r.record_type.constantize
         case r.action
-        when "create" then klass.find_by(id: r.record_id)&.destroy
+        when "create"
+          # FamilyVariantRule: su before_destroy borra las reglas de los productos de la familia (efecto lateral que no corresponde al deshacer)
+          (klass == FamilyVariantRule) ? klass.where(id: r.record_id).delete_all : klass.find_by(id: r.record_id)&.destroy
         when "update" then klass.where(id: r.record_id).update_all(r.before_data)
         when "destroy" then klass.insert_all!([r.before_data])
         end

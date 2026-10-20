@@ -64,6 +64,37 @@ class VariantType < ApplicationRecord
     end
   end
 
+  # Une este tipo con otro (target): las variantes pasan a target y todo lo que usaba este tipo pasa a usar target
+  # sin perder las variantes que ya tenían permitidas. Este tipo queda oculto (inactivo), no se borra.
+  def merge_into!(target)
+    raise ArgumentError, "no se puede unir un tipo consigo mismo" if target.id == id
+
+    transaction do
+      # 1) reglas de producto: si el producto ya usa el tipo destino (misma etiqueta) se funden; si no, se re-apuntan
+      ProductVariantRule.where(variant_type_id: id).find_each do |rule|
+        keep = ProductVariantRule.find_by(product_id: rule.product_id, variant_type_id: target.id, label: rule.label)
+        if keep
+          have = Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: keep.id).pluck(:variant_id).to_set
+          Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: rule.id).each { |c| c.update!(compatible_id: keep.id) unless have.include?(c.variant_id) }
+          rule.reload.destroy
+        else
+          rule.update!(variant_type_id: target.id) # sus variantes permitidas quedan atadas a la misma regla
+        end
+      end
+      # 2) reglas de familia (el orden importa: las de producto ya apuntan al destino, así borrar una de familia no toca productos)
+      FamilyVariantRule.where(variant_type_id: id).find_each do |fr|
+        if FamilyVariantRule.exists?(family_id: fr.family_id, variant_type_id: target.id, label: fr.label)
+          fr.destroy
+        else
+          fr.update!(variant_type_id: target.id)
+        end
+      end
+      # 3) variantes
+      variants.reload.each { _1.update!(variant_type_id: target.id) }
+      update!(active: false)
+    end
+  end
+
   private
 
   def assign_position
