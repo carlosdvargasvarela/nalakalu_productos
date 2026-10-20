@@ -15,7 +15,7 @@ module ApplicationHelper
 
   # Casilla de selección en masa (se envía con el formulario #bulk-form de shared/_bulk_bar)
   def bulk_check(record)
-    tag.input(type: "checkbox", name: "ids[]", value: record.id, form: "bulk-form", class: "form-check-input",
+    tag.input(type: "checkbox", name: "ids[]", value: record.respond_to?(:id) ? record.id : record, form: "bulk-form", class: "form-check-input",
       data: {bulk_actions_target: "row", action: "change->bulk-actions#rowChanged"})
   end
 

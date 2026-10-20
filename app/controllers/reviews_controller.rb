@@ -6,6 +6,9 @@ class ReviewsController < ApplicationController
   def index
     @reviews = Review.where(status: "needs_changes").includes(:user, :reviewable).order(updated_at: :desc)
     @reviews = @reviews.where(reviewable_type: params[:type]) if Reviewable::MODELS.include?(params[:type])
+    # la selección en masa solo se ofrece cuando la lista es de un único tipo de registro
+    @bulk_kind = params[:type].presence && Reviewable::MODELS.include?(params[:type]) ? params[:type].underscore : nil
+    @all_ids = @reviews.map(&:reviewable_id) if @bulk_kind
   end
 
   def create

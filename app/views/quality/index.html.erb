@@ -13,16 +13,27 @@
   </div>
   <div class="col-lg-7">
     <% if @selected %>
-      <h5 class="fw-bold"><%= @checks[@selected][:title] %></h5>
-      <% if @results[@selected].empty? %>
-        <p class="text-success"><i class="bi bi-check-circle"></i> Sin problemas.</p>
-      <% else %>
-        <ul class="list-group shadow-sm">
-          <% @results[@selected].each do |label, path| %>
-            <li class="list-group-item"><%= link_to label, path %></li>
-          <% end %>
-        </ul>
-      <% end %>
+      <% check = @checks[@selected]; rows = @results[@selected]; kind = check[:kind] %>
+      <div <%= tag.attributes(data: (kind && rows.any? ? {controller: "bulk-actions", bulk_actions_all_ids_value: rows.map { _1[2] }.to_json} : {})) %> class="pb-5">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <% if kind && rows.any? %><%= bulk_check_all %><% end %>
+          <h5 class="fw-bold mb-0"><%= check[:title] %></h5>
+        </div>
+        <% if rows.empty? %>
+          <p class="text-success"><i class="bi bi-check-circle"></i> Sin problemas.</p>
+        <% else %>
+          <% if kind %><p class="small text-muted">Marca los que quieras y usa la barra de abajo para ocultarlos, eliminarlos o marcarlos de una vez.</p><% end %>
+          <ul class="list-group shadow-sm">
+            <% rows.each do |label, path, id| %>
+              <li class="list-group-item d-flex align-items-center gap-2">
+                <% if kind %><%= bulk_check(id) %><% end %>
+                <%= link_to label, path %>
+              </li>
+            <% end %>
+          </ul>
+          <%= render "shared/bulk_bar", kind: kind, all_ids: rows.map { _1[2] } if kind %>
+        <% end %>
+      </div>
     <% else %>
       <p class="text-muted">Elige una revisión de la lista.</p>
     <% end %>

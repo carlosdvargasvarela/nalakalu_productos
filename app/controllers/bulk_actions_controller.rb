@@ -69,7 +69,7 @@ class BulkActionsController < ApplicationController
       review = r.review || r.build_review
       before = review.persisted? ? review.attributes.slice("status", "note", "user_id") : nil
       review.assign_attributes(status: status, user: current_user)
-      review.note = note if note
+      review.note = note # approve/pending: se limpia; needs_changes: el comentario nuevo
       review.save!
       # Review no es Tracked; en lote sí se registra para poder deshacerlo.
       before ? ChangeLog.log(review, "update", before, review.attributes.slice("status", "note", "user_id")) : ChangeLog.log(review, "create", nil, review.attributes)
