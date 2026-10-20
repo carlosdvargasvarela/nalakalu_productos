@@ -22,7 +22,10 @@ Rails.application.routes.draw do
   root "home#index"
 
   resources :products do
-    member { post :update_compatibilities }
+    member do
+      post :update_compatibilities
+      post :duplicate
+    end
     collection do
       post :import
       patch :bulk_activate
@@ -40,7 +43,10 @@ Rails.application.routes.draw do
   end
 
   resources :variants do
-    member { patch :move_to_type }
+    member do
+      patch :move_to_type
+      post :duplicate
+    end
     collection { post :import }
   end
 
@@ -76,6 +82,10 @@ Rails.application.routes.draw do
   # Descarga de los CSV de importación para Odoo
   get "odoo_exports", to: "odoo_exports#index", as: :odoo_exports
   get "odoo_exports/:file", to: "odoo_exports#show", as: :odoo_export, constraints: {file: /[\w.]+/}
+
+  # Reorganizar: mover productos / variantes / piezas entre grupos (o a un grupo nuevo = duplicar el grupo)
+  get "reorganizar/:kind/:id", to: "groupings#new", as: :reorganize, constraints: {kind: /family|variant_type|provider/}
+  post "reorganizar/:kind/:id", to: "groupings#create", constraints: {kind: /family|variant_type|provider/}
 
   get "profile", to: "profiles#show", as: :profile
   patch "profile", to: "profiles#update"

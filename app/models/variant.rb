@@ -58,6 +58,21 @@ class Variant < ApplicationRecord
     variant_type.consolidated?
   end
 
+  # Copia con las mismas compatibilidades (con reglas de producto y con otras variantes). El código queda vacío.
+  def duplicate!
+    transaction do
+      n = 1
+      n += 1 while Variant.exists?(variant_type_id: variant_type_id, name: (candidate = "#{name} (copia#{" #{n}" if n > 1})"))
+      copy = Variant.create!(variant_type_id: variant_type_id, name: candidate, display_name: display_name.presence && "#{display_name} (copia)",
+        technical_description: technical_description, active: active)
+      Compatibility.where(variant_id: copy.id).delete_all # las que creó el callback automático
+      now = Time.current
+      rows = compatibilities.map { {variant_id: copy.id, compatible_type: _1.compatible_type, compatible_id: _1.compatible_id, created_at: now, updated_at: now} }
+      Compatibility.insert_all(rows) if rows.any?
+      copy
+    end
+  end
+
   private
 
   def auto_link_to_rules

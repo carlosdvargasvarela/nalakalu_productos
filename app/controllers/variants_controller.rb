@@ -1,7 +1,7 @@
 class VariantsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_catalog_editor!
-  before_action :set_variant, only: %i[show edit update destroy move_to_type]
+  before_action :set_variant, only: %i[show edit update destroy move_to_type duplicate]
 
   helper_method :compatible_products_for
 
@@ -21,6 +21,11 @@ class VariantsController < ApplicationController
   def new
     @variant = Variant.new(variant_type_id: params[:variant_type_id], active: true)
       end
+
+  def duplicate
+    copy = @variant.duplicate!
+    redirect_to edit_variant_path(copy), notice: "Copia creada. Cambia el nombre y el código."
+  end
 
   def edit
       end

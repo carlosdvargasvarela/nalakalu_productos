@@ -1,0 +1,80 @@
+<%
+  title = ->(c) { @kind.title.call(c) }
+  sub = ->(c) { @kind.sub.call(c) }
+  back = polymorphic_path(@group)
+%>
+<div class="container-fluid px-4 py-4" style="max-width: 1200px;">
+  <%= link_to back, class: "btn btn-sm btn-light mb-3" do %><i class="bi bi-arrow-left"></i> Volver a «<%= @group.name %>»<% end %>
+  <h2 class="h4 fw-bold mb-1">Reorganizar <%= @kind.noun %>: <%= @group.name %></h2>
+  <p class="text-muted">Pasa de lista los <%= @kind.child_noun %> que quieras mover con un clic. Lo que quede en <b>«Se quedan»</b> no se toca.
+    Nada se duplica: los <%= @kind.child_noun %> se <b>mueven</b>.</p>
+
+  <%= form_with url: reorganize_path(params[:kind], @group), method: :post, data: {controller: "grouping"} do |f| %>
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3">¿A dónde van los que se vayan?</h6>
+        <div class="form-check mb-2 d-flex align-items-center gap-2">
+          <%= radio_button_tag :dest, "new", true, class: "form-check-input mt-0" %>
+          <label class="form-check-label fw-bold" for="dest_new">Un <%= @kind.noun %> nuevo (duplica la estructura)</label>
+          <%= text_field_tag :new_name, "#{@group.name} (copia)", class: "form-control form-control-sm", style: "max-width: 340px;" %>
+        </div>
+        <% if @group.is_a?(VariantType) %>
+          <div class="form-check ms-4 mb-3 small">
+            <%= check_box_tag :carry_to_products, "1", true, class: "form-check-input" %>
+            <label class="form-check-label" for="carry_to_products">Agregar el tipo nuevo a los productos que usaban este (con las mismas variantes permitidas, al final del código y opcional).
+              Si lo desmarcas, las variantes movidas dejan de estar disponibles en esos productos.</label>
+          </div>
+        <% end %>
+        <div class="form-check mb-2 d-flex align-items-center gap-2">
+          <%= radio_button_tag :dest, "existing", false, class: "form-check-input mt-0" %>
+          <label class="form-check-label fw-bold" for="dest_existing">Otro <%= @kind.noun %> que ya existe</label>
+          <%= select_tag :target_id, options_from_collection_for_select(@others, :id, :name), include_blank: "— elige —", class: "form-select form-select-sm", style: "max-width: 340px;" %>
+        </div>
+        <% if @group.is_a?(Family) %>
+          <div class="form-check ms-4 mb-2 small">
+            <%= check_box_tag :apply_rules, "1", false, class: "form-check-input" %>
+            <label class="form-check-label" for="apply_rules">Reemplazar las reglas de código de los productos por las de la familia destino
+              (por defecto solo se agrupan y conservan sus reglas y variantes).</label>
+          </div>
+          <div class="form-check d-flex align-items-center gap-2">
+            <%= radio_button_tag :dest, "none", false, class: "form-check-input mt-0" %>
+            <label class="form-check-label fw-bold" for="dest_none">Dejarlos sin familia (desagrupar)</label>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+      <input type="search" class="form-control form-control-sm" style="max-width: 320px;" placeholder="Filtrar por nombre o código…" data-grouping-target="search" data-action="input->grouping#filter">
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="grouping#moveAll" data-grouping-dir-param="go">Mover todos →</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="grouping#moveAll" data-grouping-dir-param="stay">← Volver todos</button>
+    </div>
+    <div class="row g-3">
+      <% [["stay", "Se quedan en «#{@group.name}»", "secondary"], ["go", "Se van", "success"]].each do |side, label, color| %>
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between">
+              <span class="text-<%= color %>"><%= label %></span>
+              <span class="badge bg-<%= color %>" data-grouping-target="<%= side %>Count">0</span>
+            </div>
+            <div class="list-group list-group-flush" style="max-height: 460px; overflow-y: auto;" data-grouping-target="<%= side %>">
+              <% if side == "stay" %>
+                <% @children.each do |c| %>
+                  <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" role="button" data-row data-action="click->grouping#toggle">
+                    <span><%= title.(c) %> <code class="text-muted ms-1"><%= sub.(c) %></code></span>
+                    <%= hidden_field_tag "child_ids[]", c.id, disabled: true, id: nil %>
+                    <span class="text-success fw-bold" data-arrow>→</span>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <%= f.submit "Aplicar", class: "btn btn-primary px-4", data: {turbo_confirm: "¿Aplicar esta reorganización?"} %>
+      <%= link_to "Cancelar", back, class: "btn btn-light" %>
+    </div>
+  <% end %>
+</div>

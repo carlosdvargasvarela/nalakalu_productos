@@ -2,7 +2,7 @@
 class ProductsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_catalog_editor!
-  before_action :set_product, only: %i[show edit update destroy update_compatibilities]
+  before_action :set_product, only: %i[show edit update destroy update_compatibilities duplicate]
 
   def index
     scope = Product.includes(:family, :review, :product_variant_rules, :supplier_links).order(:name)
@@ -19,6 +19,11 @@ class ProductsController < ApplicationController
       format.html
       format.json { render :show }
     end
+  end
+
+  def duplicate
+    copy = @product.duplicate!
+    redirect_to edit_product_path(copy), notice: "Copia creada. Cambia el nombre y el código base."
   end
 
   def new

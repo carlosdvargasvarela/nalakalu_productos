@@ -1,4 +1,4 @@
-<%= render "reviews/bar", record: @family, back_path: families_path, back_label: "Familias", edit_path: edit_family_path(@family) %>
+<%= render "reviews/bar", record: @family, back_path: families_path, back_label: "Familias", edit_path: edit_family_path(@family), dup_path: reorganize_path("family", @family) %>
 <div class="container-fluid py-4">
   <!-- Header -->
   <div class="card border-0 shadow-sm rounded-4 mb-4">

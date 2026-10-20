@@ -1,4 +1,4 @@
-<%= render "reviews/bar", record: @variant_type, back_path: variant_types_path, back_label: "Tipos de variante", edit_path: edit_variant_type_path(@variant_type) %>
+<%= render "reviews/bar", record: @variant_type, back_path: variant_types_path, back_label: "Tipos de variante", edit_path: edit_variant_type_path(@variant_type), dup_path: reorganize_path("variant_type", @variant_type) %>
 <div class="container-fluid px-4 py-4">
   <%= render "variant_types/detail_panel", variant_type: @variant_type %>
 </div>

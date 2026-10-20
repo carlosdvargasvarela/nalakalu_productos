@@ -1,7 +1,0 @@
-[  582015ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3055/products/7:0
-[  582017ms] TypeError: Failed to fetch
-    at $ (http://localhost:3055/assets/turbo.min-3e48f1801baf343469811ff2c47889596fb8b7eb6d8fa63c4d81d0b94dc8c16d.js:5:8409)
-    at X.perform (http://localhost:3055/assets/turbo.min-3e48f1801baf343469811ff2c47889596fb8b7eb6d8fa63c4d81d0b94dc8c16d.js:5:10188)
-[  582309ms] TypeError: Failed to fetch
-    at $ (http://localhost:3055/assets/turbo.min-3e48f1801baf343469811ff2c47889596fb8b7eb6d8fa63c4d81d0b94dc8c16d.js:5:8409)
-    at X.perform (http://localhost:3055/assets/turbo.min-3e48f1801baf343469811ff2c47889596fb8b7eb6d8fa63c4d81d0b94dc8c16d.js:5:10188)

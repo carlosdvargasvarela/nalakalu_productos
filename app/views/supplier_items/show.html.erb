@@ -62,7 +62,8 @@
     <div class="card-body bg-light">
       <%= form_with url: duplicate_supplier_item_path(@supplier_item), class: "row g-2 align-items-end" do |f| %>
         <div class="col-md-9"><%= f.select :variant_ids, Variant.joins(:variant_type).includes(:variant_type).order("variant_types.name", "variants.name").map { ["#{_1.variant_type.name} → #{_1.seller_name}", _1.id] }, {}, multiple: true, class: "form-select form-select-sm" %></div>
-        <div class="col-md-3"><%= f.submit "Duplicar", class: "btn btn-sm btn-primary w-100" %></div>
+        <div class="col-md-3 d-flex gap-2"><%= f.submit "Duplicar", class: "btn btn-sm btn-primary flex-fill" %>
+          <%= f.submit "Copia simple", name: "plain", class: "btn btn-sm btn-outline-secondary flex-fill", title: "Una sola copia, sin variantes" %></div>
       <% end %>
     </div>
   </div>

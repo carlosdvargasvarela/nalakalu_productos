@@ -26,6 +26,13 @@ class SupplierItemsController < ApplicationController
   # El código (sku) queda vacío: cada variante tiene el suyo.
   def duplicate
     variants = Variant.where(id: Array(params[:variant_ids]).compact_blank).includes(:variant_type)
+    if variants.empty? && params[:plain]
+      copy = @supplier_item.dup
+      copy.assign_attributes(name: "#{@supplier_item.name} (copia)", sku: nil)
+      copy.save!
+      @supplier_item.supplier_links.each { copy.supplier_links.create!(product_id: _1.product_id, variant_id: _1.variant_id) }
+      return redirect_to edit_supplier_item_path(copy), notice: "Copia creada. Cambia el nombre y el código."
+    end
     return redirect_to(@supplier_item, alert: "Elige al menos una variante.") if variants.empty?
 
     product_ids = @supplier_item.supplier_links.where.not(product_id: nil).where(variant_id: nil).pluck(:product_id)

@@ -156,7 +156,34 @@ class Product < ApplicationRecord
     end
   end
 
+  # Copia profunda: reglas de código y variantes permitidas por regla. No copia piezas de proveedor.
+  # Se insertan sin callbacks para conservar exactamente las variantes elegidas (los callbacks las recalcularían).
+  def duplicate!
+    transaction do
+      copy = Product.create!(name: copy_name, base_code: "#{base_code}-COPIA", description: description, active: active, list_price: list_price)
+      copy.update_columns(family_id: family_id)
+      now = Time.current
+      product_variant_rules.each do |r|
+        rid = ProductVariantRule.insert_all(
+          [r.attributes.slice("variant_type_id", "position", "required", "separator", "label").merge("product_id" => copy.id, "created_at" => now, "updated_at" => now)],
+          returning: %w[id]
+        ).rows.first.first
+        rows = Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: r.id).pluck(:variant_id).map do |vid|
+          {variant_id: vid, compatible_type: "ProductVariantRule", compatible_id: rid, created_at: now, updated_at: now}
+        end
+        Compatibility.insert_all(rows) if rows.any?
+      end
+      copy
+    end
+  end
+
   private
+
+  def copy_name
+    n = 1
+    n += 1 while Product.exists?(name: (candidate = "#{name} (copia#{" #{n}" if n > 1})"))
+    candidate
+  end
 
   def flag_family_change
     @should_sync_rules = will_save_change_to_family_id? && family_id.present?
