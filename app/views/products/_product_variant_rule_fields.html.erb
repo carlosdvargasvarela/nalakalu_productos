@@ -1,46 +1,37 @@
-<div class="nested-form-wrapper nested-fields mb-3 p-3 bg-white rounded-4 border position-relative">
+<%# Un tipo de variante del producto. Etiqueta, separador y obligatoriedad (solo afectan al código de venta) van plegados. %>
+<% type_counts = (@variant_type_counts ||= Variant.group(:variant_type_id).count) %>
+<div class="nested-form-wrapper nested-fields mb-2 p-3 bg-white rounded-4 border position-relative">
   <%= f.hidden_field :id %>
   <%= f.hidden_field :_destroy %>
-  <div class="row g-3 align-items-end">
-    <div class="col-md-4">
-      <%= f.label :variant_type_id, "Tipo de Variante", class: "form-label x-small fw-bold text-muted" %>
-      <%= f.collection_select :variant_type_id,
-          VariantType.where(active: true).order(:name), :id, :name,
-          { prompt: "Seleccionar tipo..." },
-          { class: "form-select border-2 shadow-none" } %>
-    </div>
-    <div class="col-md-3">
-      <%= f.label :label, "Etiqueta en Código", class: "form-label x-small fw-bold text-muted" %>
-      <%= f.text_field :label,
-          class: "form-control border-2 shadow-none text-uppercase",
-          placeholder: "Ej: TELA, SOB, MAD..." %>
-      <div class="form-text x-small">
-        Prefijo que aparece en el generador de códigos.
-      </div>
-    </div>
-    <div class="col-md-2">
-      <%= f.label :separator, "Separador", class: "form-label x-small fw-bold text-muted" %>
-      <%= f.text_field :separator,
-          class: "form-control border-2 shadow-none text-center fw-bold font-monospace",
-          placeholder: "-",
-          maxlength: 3 %>
-    </div>
-    <div class="col-md-2">
-      <div class="form-check form-switch mt-4 pt-1">
-        <%= f.check_box :required, class: "form-check-input" %>
-        <%= f.label :required, "Obligatorio", class: "form-check-label small fw-bold" %>
-      </div>
-    </div>
-    <div class="col-md-1 text-end">
-      <button type="button"
-              class="btn btn-outline-danger border-0 rounded-circle p-2"
-              data-action="nested-form#remove"
-              title="Eliminar paso">
-        <i class="bi bi-trash"></i>
-      </button>
-    </div>
-  </div>
   <%= f.hidden_field :position, data: { role: "position" } %>
+  <div class="d-flex align-items-center gap-3">
+    <div class="flex-grow-1">
+      <%= f.select :variant_type_id, VariantType.where(active: true).order(:name).map { |t| ["#{t.name} (#{type_counts[t.id].to_i} variantes)", t.id] },
+          { prompt: "Elige un tipo de variante…" }, { class: "form-select border-2 shadow-none fw-bold" } %>
+    </div>
+    <button type="button" class="btn btn-outline-danger border-0 rounded-circle p-2" data-action="nested-form#remove" title="Quitar este tipo de variante">
+      <i class="bi bi-trash"></i>
+    </button>
+  </div>
+  <details class="mt-2 small">
+    <summary class="text-muted" style="cursor: pointer;">Opciones avanzadas</summary>
+    <div class="row g-2 mt-1 align-items-end">
+      <div class="col-md-5">
+        <%= f.label :label, "Etiqueta (solo si el mismo tipo se usa dos veces)", class: "form-label x-small fw-bold text-muted" %>
+        <%= f.text_field :label, class: "form-control form-control-sm text-uppercase", placeholder: "Ej: TELA, SOB, MAD…" %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :separator, "Separador", class: "form-label x-small fw-bold text-muted" %>
+        <%= f.text_field :separator, class: "form-control form-control-sm text-center font-monospace", placeholder: "-", maxlength: 3 %>
+      </div>
+      <div class="col-md-5">
+        <div class="form-check form-switch">
+          <%= f.check_box :required, class: "form-check-input" %>
+          <%= f.label :required, "Debe elegir una variante de este tipo", class: "form-check-label" %>
+        </div>
+      </div>
+    </div>
+  </details>
 </div>
 <style>
   .x-small { font-size: 0.72rem; }

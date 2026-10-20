@@ -20,14 +20,17 @@
         </div>
       </div>
     </div>
-    <!-- Columna DNA Builder -->
+    <!-- Tipos de variante -->
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm rounded-4">
         <div class="card-header bg-white py-3 border-bottom">
           <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-diagram-3 me-2"></i>Constructor de Estructura (DNA)</h5>
-            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-action="nested-form#add">
-              <i class="bi bi-plus-lg me-1"></i>Agregar Paso
+            <div>
+              <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-palette me-2"></i>Variantes de la familia</h5>
+              <div class="small text-muted">Elige los tipos de variante (tela, madera, piedra…) que pueden tener los productos de esta familia.</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 text-nowrap" data-action="nested-form#add">
+              <i class="bi bi-plus-lg me-1"></i>Agregar tipo de variante
             </button>
           </div>
         </div>
@@ -44,8 +47,9 @@
           </template>
           <% if family.family_variant_rules.empty? %>
             <div class="text-center py-5 border-2 border-dashed rounded-4 text-muted">
-              <i class="bi bi-stack fs-1 d-block mb-2 opacity-25"></i>
-              Aún no has definido pasos para esta estructura.
+              <i class="bi bi-palette fs-1 d-block mb-2 opacity-25"></i>
+              Esta familia no tiene variantes asociadas todavía.<br>
+              <span class="small">Si sus productos no tienen opciones, déjala así.</span>
             </div>
           <% end %>
         </div>

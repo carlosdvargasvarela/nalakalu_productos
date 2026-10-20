@@ -59,4 +59,29 @@ class ReviewPanelTest < ActionDispatch::IntegrationTest
     get products_url
     assert_select "tr[data-controller=row-link][data-row-link-url-value=?]", product_path(p)
   end
+
+  test "familias: la lista, el detalle y los formularios hablan de variantes, no de estructura de código" do
+    fam = Family.create!(name: "Bancos")
+    tipo = VariantType.create!(name: "Textiles")
+    Variant.create!(variant_type: tipo, name: "Lino", active: false)
+    fam.family_variant_rules.create!(variant_type: tipo, position: 1)
+    Family.create!(name: "Sin nada")
+
+    get families_url
+    assert_match "Textiles", response.body
+    assert_match "Sin variantes", response.body
+
+    get family_url(fam)
+    assert_match "Variantes de la familia", response.body
+    assert_no_match(/Estructura de Código Base/, response.body)
+
+    get edit_family_url(fam)
+    assert_match "Agregar tipo de variante", response.body
+    assert_match "Opciones avanzadas", response.body
+    assert_no_match(/Constructor de Estructura|DNA/, response.body)
+
+    get edit_product_url(Product.create!(name: "P", base_code: "P1"))
+    assert_match "Variantes del producto", response.body
+    assert_no_match(/Estructura DNA|Agregar Paso/, response.body)
+  end
 end

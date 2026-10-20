@@ -20,7 +20,7 @@ class ReviewGuide
     },
     "Family" => {
       what: "Un grupo de productos parecidos, por ejemplo «Mesas de comedor». Define qué tipos de variante usan. En Odoo será una «categoría de producto».",
-      look: ["El nombre es claro.", "Todos sus productos pertenecen ahí (y no falta ninguno).", "Sus tipos de variante son los correctos.",
+      look: ["El nombre es claro.", "Todos sus productos pertenecen ahí (y no falta ninguno).", "Tiene los tipos de variante correctos (telas, maderas…).",
         "No hay otra familia casi igual: si la hay, usa Reorganizar → Unir."]
     },
     "Provider" => {
@@ -107,7 +107,7 @@ class ReviewGuide
     prods = f.products.to_a
     out = []
     out << (prods.any? ? ok("Tiene #{pl(prods.size, "producto")}") : warn("No tiene productos", "Una familia vacía crea una categoría vacía en Odoo. Asígnale productos o ocúltala."))
-    out << (f.family_variant_rules.any? ? ok("Tipos de variante: #{f.family_variant_rules.includes(:variant_type).map { _1.label.presence || _1.variant_type.name }.to_sentence}") : warn("No define tipos de variante", "Está bien si sus productos no usan variantes."))
+    out << (f.family_variant_rules.any? ? ok("Variantes: #{f.family_variant_rules.includes(:variant_type).map { _1.label.presence || _1.variant_type.name }.to_sentence}") : warn("No tiene variantes asociadas", "Está bien si sus productos no tienen opciones (telas, maderas…). Si sí las tienen, asocia los tipos desde Editar."))
     out << (f.description.present? ? ok("Tiene descripción") : info("Sin descripción (opcional)"))
     out
   end

@@ -4,7 +4,7 @@ class FamiliesController < ApplicationController
   before_action :set_family, only: %i[show edit update destroy assign_products unassign_product]
 
   def index
-    scope = Family.includes(:products, :review).order(:name)
+    scope = Family.includes(:products, :review, family_variant_rules: :variant_type).order(:name)
     scope = scope.where("name LIKE ?", "%#{params[:search].strip}%") if params[:search].present?
     scope = scope.where(active: true) unless params[:hidden] == "1" # los grupos ocultos (inactivos) no estorban
     @families = scope.review_is(params[:review]).review_by(params[:reviewer])

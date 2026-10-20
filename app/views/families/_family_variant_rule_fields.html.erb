@@ -1,35 +1,28 @@
-<div class="nested-fields mb-3 p-3 border-2 rounded-4 bg-white position-relative shadow-sm transition-all" 
-     data-new-record="<%= f.object.new_record? %>"
-  style="border-style: solid !important;">
-  <div class="row g-3 align-items-center">
-    <%= f.hidden_field :position, data: { role: "position" } %>
-    <!-- Indicador de Orden -->
-    <div class="col-auto">
-      <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
-           style="width: 32px; height: 32px; font-size: 0.8rem;">
-        <span class="pos-label">#</span>
-      </div>
+<%# Un tipo de variante de la familia. Etiqueta, separador y obligatoriedad (afectan solo al código) quedan plegados. %>
+<% type_counts = (@variant_type_counts ||= Variant.group(:variant_type_id).count) %>
+<div class="nested-fields mb-2 p-3 border rounded-4 bg-white position-relative shadow-sm"
+     data-new-record="<%= f.object.new_record? %>">
+  <%= f.hidden_field :position, data: { role: "position" } %>
+  <div class="d-flex align-items-center gap-3">
+    <div class="flex-grow-1">
+      <%= f.select :variant_type_id, VariantType.order(:name).map { |t| ["#{t.name} (#{type_counts[t.id].to_i} variantes)", t.id] }, { prompt: "Elige un tipo de variante…" }, { class: "form-select border-0 bg-light fw-bold" } %>
     </div>
-    <div class="col-md-4">
-      <%= f.collection_select :variant_type_id, VariantType.all, :id, :name, { prompt: "Tipo de Variante..." }, { class: "form-select border-0 bg-light fw-bold" } %>
-    </div>
-    <div class="col-md-3">
-      <%= f.text_field :label, class: "form-control border-0 bg-light", placeholder: "Etiqueta (ej: Base)" %>
-    </div>
-    <div class="col-md-1">
-      <%= f.text_field :separator, class: "form-control border-0 bg-light text-center fw-bold", placeholder: "-" %>
-    </div>
-    <div class="col-md-2">
-      <div class="form-check form-switch">
-        <%= f.check_box :required, class: "form-check-input" %>
-        <%= f.label :required, "Oblig.", class: "form-check-label small fw-bold text-muted" %>
-      </div>
-    </div>
-    <div class="col-md-1 text-end">
-      <%= f.hidden_field :_destroy %>
-      <button type="button" class="btn btn-link text-danger p-0" data-action="nested-form#remove">
-        <i class="bi bi-x-circle-fill fs-5"></i>
-      </button>
-    </div>
+    <%= f.hidden_field :_destroy %>
+    <button type="button" class="btn btn-link text-danger p-0" title="Quitar este tipo" data-action="nested-form#remove">
+      <i class="bi bi-x-circle-fill fs-5"></i>
+    </button>
   </div>
+  <details class="mt-2 small">
+    <summary class="text-muted" style="cursor: pointer;">Opciones avanzadas</summary>
+    <div class="row g-2 mt-1 align-items-center">
+      <div class="col-md-5"><%= f.text_field :label, class: "form-control form-control-sm", placeholder: "Etiqueta (solo si el mismo tipo se usa dos veces)" %></div>
+      <div class="col-md-2"><%= f.text_field :separator, class: "form-control form-control-sm text-center", placeholder: "-" %></div>
+      <div class="col-md-5">
+        <div class="form-check form-switch">
+          <%= f.check_box :required, class: "form-check-input" %>
+          <%= f.label :required, "El producto debe elegir una variante de este tipo", class: "form-check-label" %>
+        </div>
+      </div>
+    </div>
+  </details>
 </div>
