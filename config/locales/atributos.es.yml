@@ -9,6 +9,7 @@ es:
       supplier_item: {one: Pieza de proveedor, other: Piezas de proveedor}
       supplier_link: {one: Vínculo, other: Vínculos}
       compatibility: {one: Compatibilidad, other: Compatibilidades}
+      review: {one: Revisión, other: Revisiones}
       product_variant_rule: {one: Regla de código, other: Reglas de código}
       family_variant_rule: {one: Regla de familia, other: Reglas de familia}
     attributes:

@@ -69,6 +69,7 @@ class ReviewGuide
       empty = rules.select { |r| !Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: r.id).exists? }
       empty.each { |r| out << bad("«#{r.variant_type.name}» no tiene ninguna variante permitida", "Se crearía un atributo vacío en Odoo. Elige las variantes o quita ese paso.") }
     end
+    out.concat(qb_product_checks(p))
     out << info(p.supplier_links.count.zero? ? "Sin piezas de proveedor vinculadas" : "#{pl(p.supplier_links.count, "pieza")} de proveedor vinculadas")
     out << info("Está inactivo: se exporta como no activo.") unless p.active
     out
@@ -128,6 +129,34 @@ class ReviewGuide
     links = i.supplier_links.to_a
     out << (links.any? ? ok("Vinculada a #{pl(links.size, "producto o variante", "productos o variantes")}") : bad("No está vinculada a ningún producto ni variante", "Sin vínculo no se puede exportar. Agrégalo en «Dónde se usa»."))
     out << info("Proveedor: #{i.provider.name}")
+    out.concat(qb_item_checks(i))
+    out
+  end
+
+  # QuickBooks es la fuente de verdad: solo se verifica si ya se cargó su export.
+  def qb_product_checks(p)
+    return [] unless QbItem.exists?
+
+    q = QbItem.for_code(p.base_code)
+    return [bad("No existe en QuickBooks con el código «#{p.base_code}»", "QuickBooks es la fuente de verdad. Revisa si el código está mal escrito o si este producto no debería estar.")] unless q
+
+    out = [ok("Existe en QuickBooks: «#{q.name}»")]
+    if q.price.to_f.positive? && p.list_price && p.list_price != q.price
+      out << warn("El precio de QuickBooks es #{money(q.price)} y aquí hay #{money(p.list_price)}", "QuickBooks gana: corrige el precio aquí.")
+    end
+    out << info("El nombre en QuickBooks es «#{q.name}»") if I18n.transliterate(q.name.downcase.squish) != I18n.transliterate(p.name.downcase.squish)
+    out
+  end
+
+  def qb_item_checks(i)
+    return [] unless QbItem.exists? && i.sku.present?
+
+    q = QbItem.for_code(i.sku)
+    return [warn("El código «#{i.sku}» no está en QuickBooks", "Revisa si está bien escrito.")] unless q
+
+    out = [ok("Existe en QuickBooks: «#{q.name}»")]
+    out << warn("El costo de QuickBooks es #{money(q.cost)} y aquí hay #{money(i.default_cost)}", "QuickBooks gana.") if q.cost.to_f.positive? && i.default_cost && i.default_cost != q.cost
+    out << info("Proveedor en QuickBooks: #{q.vendor}") if q.vendor.present? && q.vendor != i.provider.name
     out
   end
 end

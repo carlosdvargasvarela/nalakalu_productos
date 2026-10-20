@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_21_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_21_130000) do
   create_table "change_logs", force: :cascade do |t|
     t.string "batch_id", null: false
     t.integer "user_id"
@@ -245,6 +245,20 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_21_120000) do
     t.index ["provider_id"], name: "index_purchase_orders_on_provider_id"
   end
 
+  create_table "qb_items", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "description"
+    t.string "raw_description"
+    t.string "item_type"
+    t.decimal "cost", precision: 15, scale: 2
+    t.decimal "price", precision: 15, scale: 2
+    t.string "vendor"
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_qb_items_on_code", unique: true
+  end
+
   create_table "recommendations", force: :cascade do |t|
     t.string "recommendation_type", null: false
     t.string "status", default: "pending", null: false
@@ -311,6 +325,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_21_120000) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "source"
     t.index ["provider_id", "sku"], name: "index_supplier_items_on_provider_id_and_sku", unique: true, where: "sku IS NOT NULL"
     t.index ["provider_id"], name: "index_supplier_items_on_provider_id"
   end
