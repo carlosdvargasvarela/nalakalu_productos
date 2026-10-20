@@ -6,5 +6,5 @@ class Review < ApplicationRecord
   belongs_to :user, optional: true
 
   validates :status, inclusion: {in: STATUSES}
-  validates :note, presence: true, if: -> { status == "needs_changes" }
+  validates :note, presence: {message: "es obligatorio si requiere cambios"}, if: -> { status == "needs_changes" }
 end

@@ -13,7 +13,7 @@ class ReviewsController < ApplicationController
     if review.save
       redirect_back_or_to polymorphic_path(record), notice: "Revisión guardada: #{Review::LABELS[review.status]}."
     else
-      redirect_back_or_to polymorphic_path(record), alert: review.errors.full_messages.to_sentence
+      redirect_back_or_to polymorphic_path(record), alert: "Comentario: #{review.errors[:note].to_sentence}"
     end
   end
 end
