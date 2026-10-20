@@ -1,4 +1,4 @@
-<%= render layout: "shared/index", locals: {bulk: "family", all_ids: @families.map(&:id), title: "Familias", subtitle: "Grupos de productos que comparten estructura de código.", model: Family, new_path: new_family_path, new_label: "Nueva familia", hideable: true} do %>
+<%= render layout: "shared/index", locals: {bulk: "family", all_ids: @families.map(&:id), title: "Familias", subtitle: "Grupos de productos parecidos, con los mismos tipos de variante.", model: Family, new_path: new_family_path, new_label: "Nueva familia", hideable: true} do %>
   <table class="table table-hover align-middle mb-0 small">
     <thead class="bg-light"><tr><th class="ps-3" style="width: 34px;"><%= bulk_check_all %></th><th>Familia</th><th class="text-center">Productos</th><th>Revisión</th></tr></thead>
     <tbody>

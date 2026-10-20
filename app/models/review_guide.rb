@@ -6,7 +6,7 @@ class ReviewGuide
     "Product" => {
       what: "Lo que se vende, por ejemplo una mesa de comedor. En Odoo será un «producto» con su categoría (la familia), su precio y sus atributos (los tipos de variante).",
       look: ["El nombre es claro y no tiene errores.", "El código base es correcto y no se repite.", "Está en la familia correcta.", "Tiene precio de venta.",
-        "En cada tipo de variante solo están las opciones que de verdad se ofrecen para este producto (por ejemplo, solo las telas que existen para esa silla)."]
+        "Tiene las variantes que de verdad se ofrecen. En cada tipo de variante solo están las opciones que de verdad se ofrecen para este producto (por ejemplo, solo las telas que existen para esa silla)."]
     },
     "Variant" => {
       what: "Una opción concreta, por ejemplo la tela «Lino gris». Pertenece a un tipo (Telas). En Odoo será un «valor de atributo».",
@@ -20,7 +20,7 @@ class ReviewGuide
     },
     "Family" => {
       what: "Un grupo de productos parecidos, por ejemplo «Mesas de comedor». Define qué tipos de variante usan. En Odoo será una «categoría de producto».",
-      look: ["El nombre es claro.", "Todos sus productos pertenecen ahí (y no falta ninguno).", "Su estructura de código es correcta.",
+      look: ["El nombre es claro.", "Todos sus productos pertenecen ahí (y no falta ninguno).", "Sus tipos de variante son los correctos.",
         "No hay otra familia casi igual: si la hay, usa Reorganizar → Unir."]
     },
     "Provider" => {
@@ -38,7 +38,7 @@ class ReviewGuide
     "Product" => ["Falta el precio", "Nombre confuso o con errores", "Código incorrecto", "Familia incorrecta", "Faltan variantes", "Sobran variantes", "Duplicado"],
     "Variant" => ["Nombre con errores", "Tipo incorrecto", "Falta el código", "Duplicada", "Falta la pieza de proveedor"],
     "VariantType" => ["Nombre confuso", "Mezcla variantes distintas (dividir)", "Duplicado (unir)", "Falta marcar código propio"],
-    "Family" => ["Nombre confuso", "Faltan productos", "Sobran productos", "Estructura de código incorrecta", "Duplicada (unir)"],
+    "Family" => ["Nombre confuso", "Faltan productos", "Sobran productos", "Tipos de variante incorrectos", "Duplicada (unir)"],
     "Provider" => ["Nombre distinto al de Odoo", "Falta contacto", "Categoría incorrecta", "Duplicado"],
     "SupplierItem" => ["Falta el código", "Falta el costo", "Costo incorrecto", "Mal vinculada", "Falta duplicar por variante"]
   }.freeze
@@ -63,9 +63,9 @@ class ReviewGuide
     out << (p.list_price ? ok("Precio de venta: #{money(p.list_price)}") : bad("Sin precio de venta", "Odoo lo necesita para vender. Escríbelo en la lista (columna Precio) o súbelo con «Cargar precios»."))
     out << (Product.where(base_code: p.base_code).where.not(id: p.id).exists? ? bad("El código base «#{p.base_code}» está repetido", "Cada producto debe tener un código único.") : ok("Código base único: #{p.base_code}"))
     if rules.empty?
-      out << warn("No tiene estructura de código", "Está bien solo si este producto no tiene opciones (telas, maderas…). Si sí las tiene, define su estructura desde Editar.")
+      out << warn("No tiene variantes asociadas", "Está bien solo si este producto no tiene opciones (telas, maderas…). Si sí las tiene, asócialas desde Editar.")
     else
-      out << ok("Estructura de código: #{rules.map { _1.label.presence || _1.variant_type.name }.to_sentence}")
+      out << ok("Variantes de: #{rules.map { _1.label.presence || _1.variant_type.name }.to_sentence}")
       empty = rules.select { |r| !Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: r.id).exists? }
       empty.each { |r| out << bad("«#{r.variant_type.name}» no tiene ninguna variante permitida", "Se crearía un atributo vacío en Odoo. Elige las variantes o quita ese paso.") }
     end
@@ -107,7 +107,7 @@ class ReviewGuide
     prods = f.products.to_a
     out = []
     out << (prods.any? ? ok("Tiene #{pl(prods.size, "producto")}") : warn("No tiene productos", "Una familia vacía crea una categoría vacía en Odoo. Asígnale productos o ocúltala."))
-    out << (f.family_variant_rules.any? ? ok("Estructura de código: #{f.family_variant_rules.includes(:variant_type).map { _1.label.presence || _1.variant_type.name }.to_sentence}") : warn("No define estructura de código", "Está bien si sus productos no usan variantes."))
+    out << (f.family_variant_rules.any? ? ok("Tipos de variante: #{f.family_variant_rules.includes(:variant_type).map { _1.label.presence || _1.variant_type.name }.to_sentence}") : warn("No define tipos de variante", "Está bien si sus productos no usan variantes."))
     out << (f.description.present? ? ok("Tiene descripción") : info("Sin descripción (opcional)"))
     out
   end

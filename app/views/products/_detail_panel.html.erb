@@ -33,63 +33,53 @@
   </div>
   <div class="card-body p-0">
     <%# ── DNA ── %>
-    <%= render "dna_section", product: product %>
-    <%# ── VARIANTES COMPATIBLES ── %>
+    <%# ── VARIANTES ASOCIADAS ── %>
     <% rules = product.effective_rules %>
-    <% if rules.any? %>
-      <div class="p-4 border-top">
-        <h6 class="fw-bold mb-3">
-          <i class="bi bi-palette me-2 text-info"></i>Opciones que se pueden elegir en cada paso
-        </h6>
+    <div class="p-4 border-top">
+      <% if rules.any? %>
+        <% per_rule = rules.map { |rule| [rule, product.compatible_variants_for(rule.variant_type).where(active: true).includes(:variant_type).order(:name).to_a] } %>
+        <h6 class="fw-bold mb-1"><i class="bi bi-palette me-2 text-info"></i>Variantes asociadas</h6>
+        <p class="small text-muted mb-3">Tiene <%= pluralize(rules.size, "tipo de variante", plural: "tipos de variante") %> y <%= pluralize(per_rule.sum { _2.size }, "variante", plural: "variantes") %> en total.</p>
         <div class="d-flex flex-column gap-3">
-          <% rules.each do |rule| %>
-            <% compatible = product.compatible_variants_for(rule.variant_type).where(active: true) %>
+          <% per_rule.each do |rule, variants| %>
             <div>
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="badge bg-primary rounded-pill px-2 small">
-                    <%= rule.label.presence || rule.variant_type.name %>
-                  </span>
-                  <span class="text-muted x-small"><%= rule.variant_type.name %></span>
-                  <% if rule.variant_type.respond_to?(:individual?) %>
-                    <span class="badge x-small rounded-pill
-                      <%= rule.variant_type.individual? ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-warning bg-opacity-10 text-warning' %>">
-                      <%= rule.variant_type.individual? ? 'individual' : 'consolidado' %>
-                    </span>
-                  <% end %>
+                <div>
+                  <span class="fw-bold"><%= rule.label.presence || rule.variant_type.name %></span>
+                  <% if rule.label.present? && rule.label != rule.variant_type.name %><span class="text-muted small">· tipo «<%= rule.variant_type.name %>»</span><% end %>
+                  <span class="badge bg-light text-dark border rounded-pill ms-1"><%= variants.size %></span>
                 </div>
-                <button type="button"
-                        class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modalRule<%= rule.id %>">
+                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0" data-bs-toggle="modal" data-bs-target="#modalRule<%= rule.id %>">
                   <i class="bi bi-gear-fill me-1"></i><span class="x-small">Gestionar</span>
                 </button>
               </div>
-              <% if compatible.any? %>
+              <% if variants.any? %>
+                <% shown, rest = variants.first(30), variants.drop(30) %>
                 <div class="d-flex flex-wrap gap-1">
-                  <% compatible.limit(12).each do |v| %>
-                    <span class="badge bg-light text-dark border rounded-pill px-2 x-small">
-                      <%= v.display_name.presence || v.name %>
-                      <code class="text-primary ms-1"><%= v.code %></code>
-                    </span>
-                  <% end %>
-                  <% if compatible.count > 12 %>
-                    <span class="text-muted x-small align-self-center">
-                      +<%= compatible.count - 12 %> más
-                    </span>
+                  <% shown.each do |v| %>
+                    <%= link_to (v.display_name.presence || v.name), variant_path(v), class: "badge bg-light text-dark border rounded-pill px-2 py-1 fw-normal text-decoration-none" %>
                   <% end %>
                 </div>
+                <% if rest.any? %>
+                  <details class="mt-1 small"><summary class="text-primary" style="cursor: pointer;">Ver las <%= rest.size %> restantes</summary>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                      <% rest.each do |v| %><%= link_to (v.display_name.presence || v.name), variant_path(v), class: "badge bg-light text-dark border rounded-pill px-2 py-1 fw-normal text-decoration-none" %><% end %>
+                    </div>
+                  </details>
+                <% end %>
               <% else %>
-                <div class="text-warning x-small fw-bold">
-                  <i class="bi bi-exclamation-triangle me-1"></i>Sin variantes asignadas
-                </div>
+                <div class="text-danger small fw-bold"><i class="bi bi-exclamation-triangle me-1"></i>Sin ninguna variante asociada</div>
               <% end %>
             </div>
             <%= render "compatibility_modal", product: product, rule: rule %>
           <% end %>
         </div>
-      </div>
-    <% end %>
+      <% else %>
+        <h6 class="fw-bold mb-1"><i class="bi bi-palette me-2 text-info"></i>Variantes asociadas</h6>
+        <p class="small text-muted mb-2">Este producto no tiene variantes asociadas.</p>
+        <%= link_to edit_product_path(product), class: "btn btn-sm btn-outline-primary rounded-pill px-3" do %><i class="bi bi-plus-lg me-1"></i>Asociar variantes<% end %>
+      <% end %>
+    </div>
     <%# ── PIEZAS DE PROVEEDOR ── %>
     <div class="p-4 border-top bg-light bg-opacity-50 rounded-bottom-4">
       <h6 class="fw-bold mb-3"><i class="bi bi-box-seam me-2 text-success"></i>Piezas de proveedor</h6>
