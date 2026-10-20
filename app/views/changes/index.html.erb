@@ -1,0 +1,43 @@
+<div class="container-fluid px-4 py-4" style="max-width: 1100px;">
+  <% if @record %>
+    <%= link_to polymorphic_path(@record), class: "btn btn-sm btn-light mb-3" do %><i class="bi bi-arrow-left"></i> Volver a «<%= record_title(@record) %>»<% end %>
+  <% end %>
+  <h1 class="h3 fw-bold mb-1">Historial de cambios<%= " de «#{record_title(@record)}»" if @record %></h1>
+  <p class="text-muted small">Cada acción queda registrada. «Deshacer» devuelve todo lo que esa acción cambió, siempre que no haya cambios posteriores sobre los mismos registros.</p>
+  <% if @batches.empty? %>
+    <p class="text-muted fst-italic">Todavía no hay cambios registrados.</p>
+  <% else %>
+    <div class="card border-0 shadow-sm rounded-4">
+      <ul class="list-group list-group-flush">
+        <% @batches.each do |batch_id, rows| %>
+          <% main = batch_main(rows) %>
+          <% undone = rows.all?(&:undone_at) %>
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <div class="<%= "text-decoration-line-through text-muted" if undone %>">
+                  <b><%= (rows.first.user&.email || "sistema").split("@").first %></b> <%= main.summary %>
+                  <% extra = rows.size - 1 %><% if extra > 0 %><span class="text-muted">y <%= extra %> cambio(s) relacionados</span><% end %>
+                </div>
+                <div class="small text-muted"><%= l rows.last.created_at.in_time_zone("Central America"), format: :short %>
+                  <% if undone %> · deshecho por <%= rows.first.undone_by&.email %><% end %></div>
+                <details class="small mt-1"><summary class="text-primary" style="cursor: pointer;">Ver detalle</summary>
+                  <ul class="mb-0 mt-1">
+                    <% rows.reverse.each do |r| %><li><%= r.summary %> <span class="text-muted"><%= change_detail(r) %></span></li><% end %>
+                  </ul>
+                </details>
+              </div>
+              <% unless undone %>
+                <% if @undoable[batch_id] %>
+                  <%= button_to undo_change_path(batch_id), method: :post, class: "btn btn-sm btn-outline-secondary", data: {turbo_confirm: "¿Deshacer este cambio?"} do %><i class="bi bi-arrow-counterclockwise"></i> Deshacer<% end %>
+                <% else %>
+                  <span class="badge bg-light text-muted border" title="Hay cambios posteriores sobre estos registros: deshazlos primero.">No se puede deshacer</span>
+                <% end %>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>

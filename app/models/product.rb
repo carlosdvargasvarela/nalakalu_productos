@@ -1,4 +1,5 @@
 class Product < ApplicationRecord
+  include Tracked
   include Reviewable
   belongs_to :family, optional: true
 

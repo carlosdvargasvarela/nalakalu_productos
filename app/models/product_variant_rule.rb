@@ -1,4 +1,5 @@
 class ProductVariantRule < ApplicationRecord
+  include Tracked
   belongs_to :product
   belongs_to :variant_type
 

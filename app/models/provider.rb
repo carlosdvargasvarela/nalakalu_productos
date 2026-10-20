@@ -1,4 +1,5 @@
 class Provider < ApplicationRecord
+  include Tracked
   include Reviewable
   has_many :supplier_items, dependent: :destroy
   has_many :purchase_orders, dependent: :restrict_with_error

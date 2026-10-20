@@ -10,7 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_21_100000) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_21_120000) do
+  create_table "change_logs", force: :cascade do |t|
+    t.string "batch_id", null: false
+    t.integer "user_id"
+    t.string "record_type", null: false
+    t.integer "record_id", null: false
+    t.string "record_label"
+    t.string "action", null: false
+    t.json "before_data"
+    t.json "after_data"
+    t.string "label"
+    t.datetime "undone_at"
+    t.integer "undone_by_id"
+    t.datetime "created_at", null: false
+    t.index ["batch_id"], name: "index_change_logs_on_batch_id"
+    t.index ["record_type", "record_id"], name: "index_change_logs_on_record_type_and_record_id"
+    t.index ["undone_by_id"], name: "index_change_logs_on_undone_by_id"
+    t.index ["user_id"], name: "index_change_logs_on_user_id"
+  end
+
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -377,6 +396,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_21_100000) do
     t.index ["variant_type_id"], name: "index_variants_on_variant_type_id"
   end
 
+  add_foreign_key "change_logs", "users"
+  add_foreign_key "change_logs", "users", column: "undone_by_id"
   add_foreign_key "compatibilities", "variants"
   add_foreign_key "family_variant_rules", "families"
   add_foreign_key "family_variant_rules", "variant_types"

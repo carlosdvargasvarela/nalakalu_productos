@@ -1,4 +1,5 @@
 class FamilyVariantRule < ApplicationRecord
+  include Tracked
   belongs_to :family
   belongs_to :variant_type
 

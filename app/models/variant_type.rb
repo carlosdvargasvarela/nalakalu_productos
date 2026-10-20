@@ -1,4 +1,5 @@
 class VariantType < ApplicationRecord
+  include Tracked
   include Reviewable
   has_many :variants, dependent: :destroy
   has_many :supply_rules, dependent: :destroy
@@ -38,6 +39,7 @@ class VariantType < ApplicationRecord
       old_rule_ids = ProductVariantRule.where(variant_type_id: id).select(:id)
       scope = Compatibility.where(compatible_type: "ProductVariantRule", compatible_id: old_rule_ids, variant_id: moved_ids)
       allowed = scope.pluck(:compatible_id, :variant_id).group_by(&:first).transform_values { |a| a.map(&:last) }
+      scope.each { ChangeLog.log(_1, "destroy", _1.attributes, nil) }
       scope.delete_all
       moved.each { _1.update!(variant_type: target) }
 
@@ -51,6 +53,7 @@ class VariantType < ApplicationRecord
             returning: %w[id]
           ).rows.first.first
           Compatibility.insert_all(vids.map { {variant_id: _1, compatible_type: "ProductVariantRule", compatible_id: rid, created_at: now, updated_at: now} })
+          ChangeLog.log(ProductVariantRule.find(rid), "create", nil, ProductVariantRule.find(rid).attributes) # sus compatibilidades se eliminan en cascada al deshacer
         end
       else
         ProductVariantRule.where(variant_type_id: target.id).pluck(:id).each do |rid|

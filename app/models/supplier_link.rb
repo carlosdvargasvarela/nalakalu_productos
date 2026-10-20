@@ -1,4 +1,5 @@
 class SupplierLink < ApplicationRecord
+  include Tracked
   belongs_to :supplier_item
   belongs_to :product, optional: true
   belongs_to :variant, optional: true

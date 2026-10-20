@@ -16,6 +16,7 @@
       <%= f.button name: "status", value: "approved", formaction: reviews_path(advance: 1), class: "btn btn-sm btn-success fw-bold" do %><i class="bi bi-check-lg"></i> Aprobar y siguiente<% end %>
       <%= f.button name: "status", value: "needs_changes", class: "btn btn-sm btn-danger" do %><i class="bi bi-flag"></i> Requiere cambios<% end %>
       <%= link_to next_review_path(type: record.class.name, after: record.id), class: "btn btn-sm btn-outline-secondary", title: "Ir al siguiente pendiente sin cambiar el estado" do %>Saltar <i class="bi bi-arrow-right"></i><% end %>
+      <%= link_to changes_path(type: record.class.name, id: record.id), class: "btn btn-sm btn-outline-secondary", title: "Historial de este registro" do %><i class="bi bi-clock-history"></i><% end %>
       <% if local_assigns[:dup_path] %>
         <% if local_assigns[:dup_post] %>
           <%= f.button formaction: dup_path, formmethod: :post, class: "btn btn-sm btn-outline-primary", data: {turbo_confirm: "¿Crear una copia?"} do %><i class="bi bi-copy"></i> Duplicar<% end %>

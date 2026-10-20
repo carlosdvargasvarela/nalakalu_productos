@@ -1,4 +1,5 @@
 class Compatibility < ApplicationRecord
+  include Tracked
   belongs_to :variant
   # Ahora puede ser compatible con otra Variante o con un Producto
   belongs_to :compatible, polymorphic: true

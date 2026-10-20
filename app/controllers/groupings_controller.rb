@@ -55,14 +55,14 @@ class GroupingsController < ApplicationController
       if target && params[:apply_rules] == "1"
         Product.where(id: ids, family_id: @group.id).each { _1.update!(family_id: target.id) } # clona las reglas de la familia destino
       else
-        Product.where(id: ids, family_id: @group.id).update_all(family_id: target&.id, updated_at: Time.current) # solo agrupa, conserva sus reglas
+        ChangeLog.bulk_update(Product.where(id: ids, family_id: @group.id), family_id: target&.id) # solo agrupa, conserva sus reglas
       end
     when VariantType
       raise ActiveRecord::RecordNotFound, "elige un destino" unless target
       @group.move_variants_to!(target, ids, carry_to_products: params[:dest] == "new" && params[:carry_to_products] == "1")
     when Provider
       raise ActiveRecord::RecordNotFound, "elige un destino" unless target
-      SupplierItem.where(id: ids, provider_id: @group.id).update_all(provider_id: target.id, updated_at: Time.current)
+      ChangeLog.bulk_update(SupplierItem.where(id: ids, provider_id: @group.id), provider_id: target.id)
     end
   end
 end

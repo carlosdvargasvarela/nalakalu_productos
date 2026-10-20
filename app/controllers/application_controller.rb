@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   layout :layout_by_resource
+  before_action :set_change_context
 
   def authorize_admin!
     unless current_user&.admin?
@@ -24,6 +25,12 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  # Cada petición que escribe es un "lote" en el historial (ver ChangeLog).
+  def set_change_context
+    Current.user = current_user
+    Current.batch_id = SecureRandom.uuid unless request.get? || request.head?
+  end
 
   def layout_by_resource
     if devise_controller?

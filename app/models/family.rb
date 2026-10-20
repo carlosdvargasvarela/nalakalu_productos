@@ -1,4 +1,5 @@
 class Family < ApplicationRecord
+  include Tracked
   include Reviewable
   has_many :products, dependent: :nullify
   has_many :family_variant_rules, -> { order(:position) }, dependent: :destroy

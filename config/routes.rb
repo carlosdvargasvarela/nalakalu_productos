@@ -76,6 +76,10 @@ Rails.application.routes.draw do
   get "reviews/next", to: "reviews#next", as: :next_review
   resources :reviews, only: [:create]
 
+  # Historial de cambios y deshacer
+  get "historial", to: "changes#index", as: :changes
+  post "historial/:id/deshacer", to: "changes#undo", as: :undo_change
+
   # Problemas de calidad de datos antes de migrar a Odoo
   get "quality", to: "quality#index", as: :quality
 

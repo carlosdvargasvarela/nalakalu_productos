@@ -1,4 +1,5 @@
 class Variant < ApplicationRecord
+  include Tracked
   include Reviewable
   belongs_to :variant_type
 

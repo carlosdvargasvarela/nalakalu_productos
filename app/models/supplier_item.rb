@@ -1,4 +1,5 @@
 class SupplierItem < ApplicationRecord
+  include Tracked
   include Reviewable
   belongs_to :provider
 
