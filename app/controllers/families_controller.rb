@@ -1,6 +1,6 @@
 class FamiliesController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_catalog_editor!
   before_action :set_family, only: %i[show edit update destroy assign_products unassign_product]
 
   def index

@@ -1,0 +1,30 @@
+<h1 class="h3 fw-bold mb-3">Problemas de calidad</h1>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="list-group shadow-sm">
+      <% @checks.each do |key, c| %>
+        <% n = @results[key].size %>
+        <%= link_to quality_path(check: key), class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center #{'active' if key == @selected}" do %>
+          <span><%= c[:title] %></span>
+          <span class="badge rounded-pill bg-<%= n.zero? ? 'success' : 'danger' %>"><%= n %></span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <% if @selected %>
+      <h5 class="fw-bold"><%= @checks[@selected][:title] %></h5>
+      <% if @results[@selected].empty? %>
+        <p class="text-success"><i class="bi bi-check-circle"></i> Sin problemas.</p>
+      <% else %>
+        <ul class="list-group shadow-sm">
+          <% @results[@selected].each do |label, path| %>
+            <li class="list-group-item"><%= link_to label, path %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% else %>
+      <p class="text-muted">Elige una revisión de la lista.</p>
+    <% end %>
+  </div>
+</div>

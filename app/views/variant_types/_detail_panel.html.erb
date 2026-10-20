@@ -5,6 +5,7 @@
 <% vt_total_count  = all_variants.size %>
 <% vt_inactive_count = vt_total_count - vt_active_count %>
 <div data-controller="variant-modal bulk-select">
+  <%= render "reviews/box", record: variant_type %>
 
   <%# ── HEADER DEL PANEL ── %>
   <div class="card border-0 shadow-sm rounded-4 mb-3">

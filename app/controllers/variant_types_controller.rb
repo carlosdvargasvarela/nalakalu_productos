@@ -1,6 +1,6 @@
 class VariantTypesController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_catalog_editor!
   before_action :set_variant_type, only: %i[show edit update destroy variants]
 
   def index

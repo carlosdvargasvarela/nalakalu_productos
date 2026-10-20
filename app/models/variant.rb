@@ -1,4 +1,5 @@
 class Variant < ApplicationRecord
+  include Reviewable
   belongs_to :variant_type
 
   # EAV eliminado — properties ya no aplican a variantes

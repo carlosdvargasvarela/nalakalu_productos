@@ -1,148 +1,33 @@
+<%
+  items = [
+    ["Familias", families_path, "bi-collection", "families", Family],
+    ["Productos", products_path, "bi-box", "products", Product],
+    ["Tipos de variante", variant_types_path, "bi-tags", "variant_types", VariantType],
+    ["Variantes", variants_path, "bi-palette", "variants", Variant],
+    ["Proveedores", providers_path, "bi-building", "providers", Provider],
+    ["Piezas", supplier_items_path, "bi-box-seam", "supplier_items", SupplierItem]
+  ]
+%>
+<% items.each do |label, path, icon, ctrl, model| %>
+  <li class="nav-item">
+    <%= link_to path, class: "nav-link d-flex align-items-center gap-2 #{'active' if controller_name == ctrl}" do %>
+      <i class="bi <%= icon %>"></i><span><%= label %></span>
+      <span class="badge bg-secondary small"><%= model.count %></span>
+    <% end %>
+  </li>
+<% end %>
 <li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
-     href="#" role="button" data-bs-toggle="dropdown">
-    <i class="bi bi-gear-fill text-warning"></i>
-    <span>Administración</span>
+  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+    <i class="bi bi-clipboard-check me-1"></i>Revisión
   </a>
-  <ul class="dropdown-menu dropdown-menu-dark border-0 shadow-lg" style="min-width: 260px;">
-    <!-- ───────── CATÁLOGO ───────── -->
-    <li><span class="dropdown-header small text-uppercase opacity-50">Catálogo</span></li>
-    <li>
-      <%= link_to families_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'families'}" do %>
-        <span><i class="bi bi-collection me-2"></i>Familias</span>
-        <span class="badge bg-light text-dark small"><%= Family.count %></span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to products_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'products'}" do %>
-        <span><i class="bi bi-box me-2"></i>Productos Base</span>
-        <span class="badge bg-light text-dark small"><%= Product.count %></span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to properties_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'properties'}" do %>
-        <span><i class="bi bi-sliders me-2"></i>Propiedades (EAV)</span>
-        <span class="badge bg-primary small"><%= Property.count %></span>
-      <% end %>
-    </li>
-    <li><hr class="dropdown-divider opacity-25"></li>
-    <!-- ───────── VARIANTES ───────── -->
-    <li><span class="dropdown-header small text-uppercase opacity-50">Variantes</span></li>
-    <li>
-      <%= link_to variant_types_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'variant_types'}" do %>
-        <span><i class="bi bi-tags me-2"></i>Tipos de Variante</span>
-        <span class="badge bg-light text-dark small"><%= VariantType.count %></span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to variants_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'variants'}" do %>
-        <span><i class="bi bi-palette me-2"></i>Variantes</span>
-        <span class="badge bg-info text-dark small fw-bold"><%= Variant.count %></span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to providers_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'providers'}" do %>
-        <span><i class="bi bi-building me-2"></i>Proveedores</span>
-        <span class="badge bg-light text-dark small"><%= Provider.count %></span>
-      <% end %>
-    </li>
-    <li><hr class="dropdown-divider opacity-25"></li>
-    <!-- ───────── PROVEEDURÍA ───────── -->
-    <li><span class="dropdown-header small text-uppercase opacity-50">Proveeduría</span></li>
-    <li>
-      <%= link_to inventory_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name.in?(%w[inventories inventory_syncs inventory_exits inventory_alerts])}" do %>
-        <span><i class="bi bi-boxes me-2"></i>Inventario de Salas</span>
-        <% pending_inv = InventorySync.pending.count %>
-        <% if pending_inv > 0 %>
-          <span class="badge bg-warning text-dark small"><%= pending_inv %></span>
-        <% end %>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to showrooms_path,
-          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'showrooms'}" do %>
-        <span><i class="bi bi-shop me-2"></i>Administración de Salas</span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to inventory_sync_config_path,
-          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'inventory_sync_configs'}" do %>
-        <span><i class="bi bi-sliders me-2"></i>Config. de Sincronización</span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to supply_managements_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'supply_managements'}" do %>
-        <span><i class="bi bi-cart-check me-2"></i>Gestión de Abastecimiento</span>
-        <% pending_count = ProcurementRequirement.pending.count %>
-        <% if pending_count > 0 %>
-          <span class="badge bg-warning text-dark small"><%= pending_count %></span>
-        <% end %>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to purchase_orders_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'purchase_orders'}" do %>
-        <span><i class="bi bi-file-earmark-text me-2"></i>Órdenes de Compra</span>
-        <% draft_count = PurchaseOrder.where(status: 'borrador').count %>
-        <% if draft_count > 0 %>
-          <span class="badge bg-danger small"><%= draft_count %></span>
-        <% end %>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to supplier_items_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'supplier_items'}" do %>
-        <span><i class="bi bi-box-seam me-2"></i>Piezas de Proveedor</span>
-        <span class="badge bg-light text-dark small"><%= SupplierItem.count %></span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to procurement_config_root_path,
-      class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if params[:controller]&.start_with?('procurement_config')}" do %>
-        <span><i class="bi bi-diagram-3 me-2"></i>Reglas de Abastecimiento</span>
-        <span class="badge bg-light text-dark small"><%= SupplyRule.count %></span>
-      <% end %>
-    </li>
-    <li><hr class="dropdown-divider opacity-25"></li>
-    <!-- ───────── SISTEMA ───────── -->
-    <li><span class="dropdown-header small text-uppercase opacity-50">Sistema</span></li>
-    <li>
-      <%= link_to users_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'users'}" do %>
-        <span><i class="bi bi-people me-2"></i>Usuarios</span>
-        <span class="badge bg-secondary small"><%= User.count %></span>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to recommendations_path,
-          class: "dropdown-item d-flex justify-content-between align-items-center #{'active' if controller_name == 'recommendations'}" do %>
-        <span><i class="bi bi-lightbulb me-2"></i>Recomendaciones</span>
-        <% pending_rec_count = Recommendation.pending.count %>
-        <% if pending_rec_count > 0 %>
-          <span class="badge bg-warning text-dark small"><%= pending_rec_count %></span>
-        <% end %>
-      <% end %>
-    </li>
-    <li>
-      <%= link_to edit_code_setting_path,
-          class: "dropdown-item d-flex align-items-center #{'active' if controller_name == 'code_settings'}" do %>
-        <i class="bi bi-gear me-2 text-muted"></i>Configuración CRM
-      <% end %>
-    </li>
-    <li>
-      <%= link_to "/sidekiq",
-          class: "dropdown-item d-flex align-items-center",
-          target: "_blank" do %>
-        <i class="bi bi-activity me-2 text-danger"></i>Sidekiq Jobs
-      <% end %>
-    </li>
+  <ul class="dropdown-menu dropdown-menu-dark border-0 shadow-lg">
+    <li><%= link_to root_path, class: "dropdown-item" do %><i class="bi bi-speedometer2 me-2"></i>Progreso<% end %></li>
+    <li><%= link_to quality_path, class: "dropdown-item" do %><i class="bi bi-shield-exclamation me-2"></i>Problemas de calidad<% end %></li>
+    <li><%= link_to odoo_exports_path, class: "dropdown-item" do %><i class="bi bi-download me-2"></i>CSV para Odoo<% end %></li>
+    <% if current_user.admin? %>
+      <li><hr class="dropdown-divider opacity-25"></li>
+      <li><%= link_to users_path, class: "dropdown-item" do %><i class="bi bi-people me-2"></i>Usuarios<% end %></li>
+      <li><%= link_to "/sidekiq", class: "dropdown-item", target: "_blank" do %><i class="bi bi-activity me-2"></i>Sidekiq<% end %></li>
+    <% end %>
   </ul>
 </li>

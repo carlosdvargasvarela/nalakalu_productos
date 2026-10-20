@@ -1,6 +1,6 @@
 class ProvidersController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_catalog_editor!
   before_action :set_provider, only: %i[show edit update destroy]
 
   def index

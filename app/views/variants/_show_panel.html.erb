@@ -48,7 +48,7 @@
   <div class="row g-3">
     <div class="col-lg-4">
       <%= render "variants/variant_data_card", variant: variant %>
-      <%= render "variants/technical_specs_card", variant: variant %>
+      <%= render "reviews/box", record: variant %>
       <% if variant.technical_description.present? %>
         <div class="card border-0 shadow-sm rounded-4">
           <div class="card-header bg-white py-3 border-bottom">

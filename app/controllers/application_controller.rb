@@ -11,6 +11,12 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def authorize_catalog_editor!
+    unless current_user&.catalog_editor?
+      redirect_to root_path, alert: "No tienes permisos para realizar esta acción."
+    end
+  end
+
   def authorize_sala_admin!
     unless current_user&.sala_admin?
       redirect_to root_path, alert: "No tienes permisos para realizar esta acción."

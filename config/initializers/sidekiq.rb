@@ -5,12 +5,8 @@ Sidekiq.configure_server do |config|
     ssl_params: {verify_mode: OpenSSL::SSL::VERIFY_NONE}
   }
 
-  if defined?(Sidekiq::Cron::Job)
-    config.on(:startup) do
-      config = InventorySyncConfig.current
-      config.apply_schedule! if config.schedule_enabled?
-    end
-  end
+  # Ya no hay jobs recurrentes: borra el cron de inventario que pudo quedar guardado en Redis.
+  config.on(:startup) { Sidekiq::Cron::Job.destroy_all! if defined?(Sidekiq::Cron::Job) }
 end
 
 Sidekiq.configure_client do |config|

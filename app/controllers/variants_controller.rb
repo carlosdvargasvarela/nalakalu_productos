@@ -1,6 +1,6 @@
 class VariantsController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_catalog_editor!
   before_action :set_variant, only: %i[show edit update destroy move_to_type]
 
   helper_method :compatible_products_for
@@ -22,8 +22,10 @@ class VariantsController < ApplicationController
     case params[:status]
     when "active" then scope = scope.where(active: true)
     when "inactive" then scope = scope.where(active: false)
-    when "no_rule"
-      scope = scope.left_joins(:supply_rules).where(supply_rules: {id: nil})
+    when "approved", "needs_changes"
+      scope = scope.where(id: Review.where(reviewable_type: "Variant", status: params[:status]).select(:reviewable_id))
+    when "pending"
+      scope = scope.where.not(id: Review.where(reviewable_type: "Variant").where.not(status: "pending").select(:reviewable_id))
     end
 
     @pagy, @variants = pagy(scope, limit: 100)
@@ -33,8 +35,7 @@ class VariantsController < ApplicationController
     @stats = {
       total: Variant.count,
       active: Variant.where(active: true).count,
-      types: VariantType.count,
-      no_rules: Variant.left_joins(:supply_rules).where(supply_rules: {id: nil}).count
+      types: VariantType.count
     }
   end
 

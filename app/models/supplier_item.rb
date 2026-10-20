@@ -1,10 +1,12 @@
 class SupplierItem < ApplicationRecord
+  include Reviewable
   belongs_to :provider
 
   has_many :supplier_item_properties, -> { order(:position) }, dependent: :destroy
   has_many :property_values, through: :supplier_item_properties
   has_many :properties, through: :property_values
 
+  has_and_belongs_to_many :products, join_table: :product_supplier_items
   has_many :supply_rules, dependent: :destroy
   has_many :procurement_requirements, dependent: :destroy
   has_many :purchase_order_items, dependent: :nullify

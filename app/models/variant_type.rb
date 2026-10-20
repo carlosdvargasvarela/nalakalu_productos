@@ -1,4 +1,5 @@
 class VariantType < ApplicationRecord
+  include Reviewable
   has_many :variants, dependent: :destroy
   has_many :supply_rules, dependent: :destroy
   has_many :product_variant_rules, dependent: :destroy

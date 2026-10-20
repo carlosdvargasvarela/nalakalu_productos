@@ -1,0 +1,23 @@
+<%# Caja de revisión: locals record %>
+<% review = record.review %>
+<div class="card border-0 shadow-sm rounded-4 mb-3 border-start border-4 border-<%= {"approved" => "success", "needs_changes" => "danger"}.fetch(record.review_status, "secondary") %>">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-1"></i>Revisión: <%= Review::LABELS[record.review_status] %></h6>
+      <% if review %><span class="small text-muted"><%= review.user&.email %> · <%= l review.updated_at, format: :short %></span><% end %>
+    </div>
+    <% if record.review_stale? %>
+      <div class="alert alert-warning py-1 small mb-2">Se editó después de aprobarse. Vuelve a revisarlo.</div>
+    <% end %>
+    <%= form_with url: reviews_path, data: {turbo_frame: "_top"} do |f| %>
+      <%= f.hidden_field :reviewable_type, value: record.class.name %>
+      <%= f.hidden_field :reviewable_id, value: record.id %>
+      <%= f.text_area :note, value: review&.note, rows: 2, class: "form-control form-control-sm mb-2", placeholder: "Comentario (obligatorio si requiere cambios)" %>
+      <div class="d-flex gap-2">
+        <%= f.button "Aprobar", name: "status", value: "approved", class: "btn btn-sm btn-success" %>
+        <%= f.button "Requiere cambios", name: "status", value: "needs_changes", class: "btn btn-sm btn-danger" %>
+        <%= f.button "Pendiente", name: "status", value: "pending", class: "btn btn-sm btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

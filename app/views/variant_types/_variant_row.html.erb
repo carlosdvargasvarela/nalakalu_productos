@@ -18,15 +18,7 @@
     <code class="bg-light px-2 py-1 rounded text-primary fw-bold"><%= variant.code %></code>
   </td>
   <td class="py-3">
-    <% if variant.has_supply_rules? %>
-      <span class="badge bg-success-soft text-success rounded-pill px-2" style="font-size: 0.65rem;">
-        <i class="bi bi-check-circle me-1"></i>Con regla
-      </span>
-    <% else %>
-      <span class="badge bg-warning-soft text-warning rounded-pill px-2" style="font-size: 0.65rem;">
-        <i class="bi bi-exclamation-circle me-1"></i>Sin regla
-      </span>
-    <% end %>
+    <%= render "reviews/badge", record: variant %>
   </td>
   <td class="py-3 text-center">
     <span class="badge <%= variant.active ? 'bg-success-soft text-success' : 'bg-secondary-soft text-secondary' %> rounded-pill">

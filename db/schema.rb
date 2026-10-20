@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_19_142607) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_20_100000) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -144,6 +144,16 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_19_142607) do
     t.index ["supply_rule_id"], name: "index_procurement_requirements_on_supply_rule_id"
   end
 
+  create_table "product_supplier_items", force: :cascade do |t|
+    t.integer "product_id", null: false
+    t.integer "supplier_item_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "supplier_item_id"], name: "index_product_supplier_items_unique", unique: true
+    t.index ["product_id"], name: "index_product_supplier_items_on_product_id"
+    t.index ["supplier_item_id"], name: "index_product_supplier_items_on_supplier_item_id"
+  end
+
   create_table "product_variant_rules", force: :cascade do |t|
     t.integer "product_id", null: false
     t.integer "variant_type_id", null: false
@@ -165,6 +175,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_19_142607) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "family_id"
+    t.decimal "list_price", precision: 15, scale: 2
     t.index ["family_id"], name: "index_products_on_family_id"
   end
 
@@ -239,6 +250,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_19_142607) do
     t.index ["product_id"], name: "index_recommendations_on_product_id"
     t.index ["status"], name: "index_recommendations_on_status"
     t.index ["variant_type_id"], name: "index_recommendations_on_variant_type_id"
+  end
+
+  create_table "reviews", force: :cascade do |t|
+    t.string "reviewable_type", null: false
+    t.integer "reviewable_id", null: false
+    t.integer "user_id"
+    t.string "status", default: "pending", null: false
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reviewable_type", "reviewable_id"], name: "index_reviews_on_reviewable_type_and_reviewable_id", unique: true
+    t.index ["user_id"], name: "index_reviews_on_user_id"
   end
 
   create_table "showrooms", force: :cascade do |t|
@@ -360,6 +383,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_19_142607) do
   add_foreign_key "inventory_movements", "showrooms"
   add_foreign_key "procurement_requirements", "purchase_order_items"
   add_foreign_key "procurement_requirements", "supplier_items"
+  add_foreign_key "product_supplier_items", "products"
+  add_foreign_key "product_supplier_items", "supplier_items"
   add_foreign_key "product_variant_rules", "products"
   add_foreign_key "product_variant_rules", "variant_types"
   add_foreign_key "products", "families"
@@ -369,6 +394,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_19_142607) do
   add_foreign_key "purchase_orders", "providers"
   add_foreign_key "recommendations", "products"
   add_foreign_key "recommendations", "variant_types"
+  add_foreign_key "reviews", "users"
   add_foreign_key "supplier_item_properties", "property_values"
   add_foreign_key "supplier_item_properties", "supplier_items"
   add_foreign_key "supplier_items", "providers"

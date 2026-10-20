@@ -1,4 +1,5 @@
 class Product < ApplicationRecord
+  include Reviewable
   belongs_to :family, optional: true
 
   has_many :product_variant_rules, -> { order(:position) }, dependent: :destroy
@@ -7,7 +8,7 @@ class Product < ApplicationRecord
 
   # Relaciones de proveeduría
   has_many :supply_rules, dependent: :destroy
-  has_many :supplier_items, through: :supply_rules
+  has_and_belongs_to_many :supplier_items, join_table: :product_supplier_items
 
   before_save :flag_family_change, if: :will_save_change_to_family_id?
   after_save :sync_variant_rules_from_family, if: -> { @should_sync_rules }

@@ -1,0 +1,8 @@
+<%# locals: record %>
+<% st = record.review_status %>
+<% if st != "pending" %>
+  <span class="badge rounded-pill px-2 x-small bg-<%= st == "approved" ? (record.review_stale? ? "warning" : "success") : "danger" %> bg-opacity-10 text-<%= st == "approved" ? (record.review_stale? ? "warning" : "success") : "danger" %>"
+        title="<%= record.review&.note %>">
+    <%= record.review_stale? ? "Editado tras aprobar" : Review::LABELS[st] %>
+  </span>
+<% end %>

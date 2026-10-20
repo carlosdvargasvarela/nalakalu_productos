@@ -41,6 +41,10 @@
         </div>
       </div>
     </div>
+    <div class="col-md-4">
+      <%= f.label :list_price, "Precio de venta (₡)", class: "form-label small fw-bold text-muted" %>
+      <%= f.number_field :list_price, step: "0.01", min: 0, class: "form-control border-2 shadow-none", placeholder: "Sin precio" %>
+    </div>
     <div class="col-12">
       <%= f.label :family_id, "Familia de Producto", class: "form-label small fw-bold text-muted" %>
       <%= f.collection_select :family_id,

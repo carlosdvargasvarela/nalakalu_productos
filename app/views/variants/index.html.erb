@@ -7,11 +7,6 @@
         <%= @stats[:types] %> tipos ·
         <span class="text-success fw-bold"><%= @stats[:active] %> activas</span>
         de <%= @stats[:total] %> totales
-        <% if @stats[:no_rules] > 0 %>
-          · <span class="text-warning fw-bold">
-            <i class="bi bi-exclamation-circle me-1"></i><%= @stats[:no_rules] %> sin regla
-          </span>
-        <% end %>
       </p>
     </div>
     <div class="d-flex gap-2">
@@ -57,7 +52,7 @@
                     class: "form-select form-select-sm bg-light border-0 shadow-none rounded-3",
                     data: { action: "change->variant-filters#submit" } %>
                 <%= f.select :status,
-                    [["Activas","active"],["Inactivas","inactive"],["Sin regla","no_rule"]],
+                    [["Activas","active"],["Inactivas","inactive"],["Pendientes de revisión","pending"],["Aprobadas","approved"],["Requieren cambios","needs_changes"]],
                     { include_blank: "Todos", selected: params[:status] },
                     class: "form-select form-select-sm bg-light border-0 shadow-none rounded-3",
                     data: { action: "change->variant-filters#submit" } %>

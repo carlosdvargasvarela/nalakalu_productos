@@ -1,18 +1,38 @@
-<% content = capture do %>
-  <%= render "detail_panel", supplier_item: @supplier_item, supply_rules: @supply_rules %>
-<% end %>
-<% if turbo_frame_request? %>
-  <%= turbo_frame_tag "supplier_item_workspace" do %>
-    <%= content %>
-  <% end %>
-<% else %>
-  <div class="container-fluid py-4">
-    <nav aria-label="breadcrumb" class="mb-3">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><%= link_to "Piezas de Proveedor", supplier_items_path, class: "text-decoration-none" %></li>
-        <li class="breadcrumb-item active fw-bold"><%= @supplier_item.name %></li>
-      </ol>
-    </nav>
-    <%= content %>
+<div class="container-fluid py-3" style="max-width: 900px;">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><%= link_to "Piezas de proveedor", supplier_items_path %></li>
+    <li class="breadcrumb-item active"><%= @supplier_item.name %></li>
+  </ol></nav>
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h2 class="fw-bold mb-1"><%= @supplier_item.name %></h2>
+      <span class="text-muted"><i class="bi bi-building me-1"></i><%= link_to @supplier_item.provider.name, provider_path(@supplier_item.provider) %></span>
+      <span class="badge bg-<%= @supplier_item.active ? "success" : "secondary" %> ms-2"><%= @supplier_item.active ? "Activo" : "Inactivo" %></span>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to edit_supplier_item_path(@supplier_item), class: "btn btn-primary rounded-pill px-4" do %><i class="bi bi-pencil-square me-1"></i>Editar<% end %>
+      <%= button_to supplier_item_path(@supplier_item), method: :delete, class: "btn btn-outline-danger rounded-pill", data: {turbo_confirm: "¿Eliminar esta pieza?"} do %><i class="bi bi-trash"></i><% end %>
+    </div>
   </div>
-<% end %>
+  <%= render "reviews/box", record: @supplier_item %>
+  <div class="card border-0 shadow-sm rounded-4 mb-3">
+    <div class="card-body row g-3">
+      <div class="col-md-4"><div class="small text-muted">Código</div><code><%= @supplier_item.sku.presence || "—" %></code></div>
+      <div class="col-md-4"><div class="small text-muted">Unidad</div><%= @supplier_item.unit %></div>
+      <div class="col-md-4"><div class="small text-muted">Costo</div>
+        <%= @supplier_item.default_cost ? number_to_currency(@supplier_item.default_cost, unit: "₡") : content_tag(:span, "Sin costo", class: "badge bg-danger bg-opacity-10 text-danger") %></div>
+    </div>
+  </div>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white fw-bold"><i class="bi bi-box me-2"></i>Productos relacionados (<%= @supplier_item.products.size %>)</div>
+    <% if @supplier_item.products.any? %>
+      <ul class="list-group list-group-flush">
+        <% @supplier_item.products.order(:name).each do |p| %>
+          <li class="list-group-item"><%= link_to p.name, product_path(p) %> <code class="text-muted"><%= p.base_code %></code></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="card-body text-muted fst-italic">Sin productos relacionados. Edita la pieza para agregarlos.</div>
+    <% end %>
+  </div>
+</div>

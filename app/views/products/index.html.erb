@@ -3,7 +3,7 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h1 class="fw-bold mb-0">Productos Base</h1>
-      <p class="text-muted mb-0 small">Catálogo, estructura de códigos y configuración de abastecimiento.</p>
+      <p class="text-muted mb-0 small">Catálogo y estructura de códigos para revisar antes de subir a Odoo.</p>
     </div>
     <%= link_to new_product_path, class: "btn btn-primary rounded-pill px-4 fw-bold shadow-sm",
         data: { turbo_frame: "product_workspace" } do %>
@@ -15,7 +15,7 @@
     <% [
       ["Total",              @stats[:total],              "bi-box-seam",           "primary"],
       ["Activos",            @stats[:active],             "bi-check-circle",       "success"],
-      ["Listos para compra", @stats[:procurement_ready],  "bi-cart-check",         "info"],
+      ["Sin precio",         @stats[:no_price],           "bi-currency-dollar",    "danger"],
       ["Sin variantes",      @stats[:no_variants],        "bi-exclamation-circle", "warning"],
     ].each do |label, value, icon, color| %>
       <div class="col-6 col-xl-3">
@@ -63,8 +63,8 @@
               </div>
               <div class="col-6">
                 <%= f.select :status,
-                    [["Activos","active"],["Inactivos","inactive"],
-                     ["Listos para compra","ready"],["Incompletos","incomplete"]],
+                    [["Activos","active"],["Inactivos","inactive"],["Sin precio","no_price"],
+                     ["Pendientes de revisión","pending"],["Aprobados","approved"],["Requieren cambios","needs_changes"]],
                     { include_blank: "Todos los estados", selected: params[:status] },
                     class: "form-select form-select-sm border-0 bg-light shadow-none",
                     data: { action: "change->product-filters#submit" } %>
@@ -120,9 +120,7 @@
               <% @products.each do |product| %>
                 <%= render "product_row",
                       product: product,
-                      selected: @selected_product&.id == product.id,
-                      supplier_type_map: @supplier_type_map,
-                      procurement_ready_map: @procurement_ready_map %>
+                      selected: @selected_product&.id == product.id %>
               <% end %>
             <% end %>
           </div>

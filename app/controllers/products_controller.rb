@@ -1,7 +1,7 @@
 # app/controllers/products_controller.rb
 class ProductsController < ApplicationController
   before_action :authenticate_user!
-  before_action :authorize_admin!
+  before_action :authorize_catalog_editor!
   before_action :set_product, only: %i[show edit update destroy update_compatibilities]
 
   def index
@@ -19,59 +19,13 @@ class ProductsController < ApplicationController
     case params[:status]
     when "active" then scope = scope.where(active: true)
     when "inactive" then scope = scope.where(active: false)
+    when "no_price" then scope = scope.where(list_price: nil)
+    when "pending", "approved", "needs_changes"
+      ids = Review.where(reviewable_type: "Product", status: params[:status]).select(:reviewable_id)
+      scope = (params[:status] == "pending") ? scope.where.not(id: Review.where(reviewable_type: "Product").where.not(status: "pending").select(:reviewable_id)) : scope.where(id: ids)
     end
 
-    # ready/incomplete se resuelven post-query (dependen del mapa)
-    filter_by_readiness = params[:status].in?(%w[ready incomplete])
-
-    @pagy, @products = pagy(scope, limit: 150)
-
-    product_ids = @products.map(&:id)
-
-    # supplier_type map
-    categories_by_product = SupplierItem
-      .joins(:supply_rules, :provider)
-      .where(supply_rules: {product_id: product_ids})
-      .pluck("supply_rules.product_id", "providers.category")
-      .group_by(&:first)
-      .transform_values { |rows| rows.map(&:last).uniq }
-
-    @supplier_type_map = product_ids.index_with do |pid|
-      cats = categories_by_product[pid] || []
-      if cats.include?("interno") && cats.include?("externo") then "mixto"
-      elsif cats.include?("externo") then "externo"
-      elsif cats.include?("interno") then "interno"
-      else "sin_definir"
-      end
-    end
-
-    # procurement_ready map
-    variant_type_ids_by_product = ProductVariantRule
-      .where(product_id: product_ids)
-      .pluck(:product_id, :variant_type_id)
-      .group_by(&:first)
-      .transform_values { |rows| rows.map(&:last) }
-
-    covered_pairs = SupplyRule
-      .where(product_id: product_ids)
-      .where.not(variant_type_id: nil)
-      .pluck(:product_id, :variant_type_id)
-      .to_set
-
-    @procurement_ready_map = product_ids.index_with do |pid|
-      required = variant_type_ids_by_product[pid] || []
-      required.any? && required.all? { |vtid| covered_pairs.include?([pid, vtid]) }
-    end
-
-    # Filtro post-query para ready/incomplete
-    if filter_by_readiness
-      keep_ids = if params[:status] == "ready"
-        @procurement_ready_map.select { |_, v| v }.keys
-      else
-        @procurement_ready_map.reject { |_, v| v }.keys
-      end
-      @products = @products.select { |p| keep_ids.include?(p.id) }
-    end
+    @pagy, @products = pagy(scope.includes(:review), limit: 150)
 
     @selected_product = Product.find_by(id: params[:selected_id])
 
@@ -79,7 +33,7 @@ class ProductsController < ApplicationController
     @stats = {
       total:              active_counts.values.sum,
       active:             active_counts[true].to_i,
-      procurement_ready:  @procurement_ready_map.count { |_, v| v },
+      no_price:           Product.where(list_price: nil).count,
       no_variants:        Product.left_joins(:product_variant_rules)
                             .where(product_variant_rules: {id: nil}).count
     }
@@ -188,7 +142,7 @@ class ProductsController < ApplicationController
   end
 
   def product_params
-    params.require(:product).permit(
+    params.require(:product).permit(:list_price, 
       :name, :base_code, :description, :active, :family_id,
       product_variant_rules_attributes: [
         :id, :variant_type_id, :position, :required, :separator, :label, :_destroy

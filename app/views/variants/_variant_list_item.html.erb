@@ -4,7 +4,6 @@
       variant_id:     variant.id,
       type_id:        variant.variant_type_id,
       status:         variant.active ? "active" : "inactive",
-      has_rule:       variant.has_supply_rules? ? "true" : "false",
       variant_name:   (variant.display_name.presence || variant.name).downcase
     },
     class: "list-group-item list-group-item-action border-0 px-3 py-2 variant-row
@@ -32,17 +31,7 @@
         <span class="badge bg-secondary-soft text-secondary rounded-pill px-2"
               style="font-size: 0.6rem;">Inactiva</span>
       <% end %>
-      <% if variant.has_supply_rules? %>
-        <span class="badge bg-light text-success border rounded-pill px-2"
-              style="font-size: 0.6rem;">
-          <i class="bi bi-check-circle"></i>
-        </span>
-      <% else %>
-        <span class="badge bg-warning-soft text-warning rounded-pill px-2"
-              style="font-size: 0.6rem;">
-          <i class="bi bi-exclamation-circle"></i>
-        </span>
-      <% end %>
+      <%= render "reviews/badge", record: variant %>
     </div>
   </div>
 <% end %>

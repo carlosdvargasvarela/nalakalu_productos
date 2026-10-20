@@ -9,15 +9,15 @@
             <%= product.active? ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary' %>">
             <%= product.active? ? 'Activo' : 'Inactivo' %>
           </span>
-          <% sup_color = product.supplier_type_color %>
-          <% if product.supplier_type != "sin_definir" %>
-            <span class="badge rounded-pill px-3 bg-<%= sup_color %> bg-opacity-10 text-<%= sup_color %>">
-              <%= product.supplier_type.capitalize %>
-            </span>
-          <% end %>
+          <%= render "reviews/badge", record: product %>
         </div>
         <div class="d-flex align-items-center gap-3 flex-wrap">
           <code class="text-muted small"><%= product.base_code %></code>
+          <% if product.list_price.nil? %>
+            <span class="badge bg-danger bg-opacity-10 text-danger">Sin precio</span>
+          <% else %>
+            <span class="text-muted small"><%= number_to_currency(product.list_price, unit: "₡") %></span>
+          <% end %>
           <% if product.family.present? %>
             <span class="text-muted small">
               <i class="bi bi-diagram-3 me-1 text-info"></i>
@@ -38,8 +38,7 @@
   <div class="card-body p-0">
     <%# ── DNA ── %>
     <%= render "dna_section", product: product %>
-    <%# ── PROCUREMENT PREVIEW ── %>
-    <%= render "procurement_preview", product: product %>
+    <div class="p-4 border-top"><%= render "reviews/box", record: product %></div>
     <%# ── VARIANTES COMPATIBLES ── %>
     <% rules = product.effective_rules %>
     <% if rules.any? %>
@@ -96,27 +95,20 @@
         </div>
       </div>
     <% end %>
-    <%# ── IMPACTO ── %>
-    <% supply_rules_count = product.supply_rules.count %>
-    <% supplier_items_count = product.supplier_items.distinct.count %>
+    <%# ── PIEZAS DE PROVEEDOR ── %>
     <div class="p-4 border-top bg-light bg-opacity-50 rounded-bottom-4">
-      <h6 class="fw-bold mb-3">
-        <i class="bi bi-graph-up me-2 text-warning"></i>Impacto en Abastecimiento
-      </h6>
-      <div class="row g-3">
-        <% [
-          ["Reglas de compra", supply_rules_count, "bi-list-check", "primary"],
-          ["Supplier Items", supplier_items_count, "bi-box2", "success"],
-        ].each do |label, val, icon, color| %>
-          <div class="col-6">
-            <div class="bg-white rounded-3 p-3 text-center shadow-sm">
-              <i class="bi <%= icon %> fs-4 text-<%= color %> d-block mb-1"></i>
-              <div class="fw-bold fs-5"><%= val %></div>
-              <div class="x-small text-muted"><%= label %></div>
-            </div>
-          </div>
-        <% end %>
-      </div>
+      <h6 class="fw-bold mb-3"><i class="bi bi-box-seam me-2 text-success"></i>Piezas de proveedor</h6>
+      <% items = product.supplier_items.includes(:provider).order(:name) %>
+      <% if items.empty? %>
+        <p class="small text-muted fst-italic mb-0">Sin piezas relacionadas.</p>
+      <% else %>
+        <ul class="list-unstyled small mb-0">
+          <% items.each do |i| %>
+            <li><%= link_to i.name, supplier_item_path(i), data: {turbo_frame: "_top"} %>
+              <span class="text-muted">· <%= i.provider.name %> · <%= i.sku %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : "sin costo" %></span></li>
+          <% end %>
+        </ul>
+      <% end %>
       <%# Zona peligro %>
       <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
         <span class="x-small text-danger fw-bold">Zona de Peligro</span>
