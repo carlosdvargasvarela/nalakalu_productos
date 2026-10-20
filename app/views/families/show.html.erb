@@ -1,5 +1,5 @@
-<%= render "reviews/bar", record: @family, back_path: families_path, back_label: "Familias", edit_path: edit_family_path(@family), dup_path: reorganize_path("family", @family) %>
-<div class="container-fluid py-4">
+<%= render layout: "reviews/layout", locals: {record: @family, back_path: families_path, back_label: "Familias", edit_path: edit_family_path(@family), dup_path: reorganize_path("family", @family), dup_post: false} do %>
+<div>
   <!-- Header -->
   <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body p-4">
@@ -146,3 +146,4 @@
   .x-small { font-size: 0.7rem; }
   .bg-warning-soft { background-color: #fff8e6; }
 </style>
+<% end %>

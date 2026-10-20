@@ -27,6 +27,18 @@ class ReviewsController < ApplicationController
     go_next(params[:after].present? ? model.find_by(id: params[:after]) : nil)
   end
 
+  # Registro anterior en el orden de la lista (sin importar su estado), para corregir un error al avanzar
+  def prev
+    current = model.find(params[:before])
+    ids = model.order(:name, :id).pluck(:id)
+    i = ids.index(current.id).to_i
+    if i > 0
+      redirect_to polymorphic_path(model.find(ids[i - 1]))
+    else
+      redirect_to polymorphic_path(model), notice: "Este es el primero de la lista."
+    end
+  end
+
   private
 
   def model

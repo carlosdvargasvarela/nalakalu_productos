@@ -3,7 +3,7 @@
     <thead class="bg-light"><tr><th class="ps-3">Familia</th><th class="text-center">Productos</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @families.each do |f| %>
-        <tr>
+        <tr data-controller="row-link" data-row-link-url-value="<%= family_path(f) %>" data-action="click->row-link#go">
           <td class="ps-3" style="min-width: 300px;"><%= quick_name("family", f, family_path(f)) %><%= content_tag(:span, "Oculto", class: "badge bg-secondary ms-2") unless f.active %><div class="text-muted"><%= f.description %></div></td>
           <td class="text-center"><%= f.products.size %></td>
           <td><%= render "reviews/badge", record: f %></td>

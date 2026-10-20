@@ -10,4 +10,14 @@ module ReviewHelper
   def record_title(record)
     record.try(:seller_name) || record.name
   end
+
+  # Posición del registro en el orden de la lista: [n, total]
+  def review_position(record)
+    ids = record.class.order(:name, :id).pluck(:id)
+    [ids.index(record.id).to_i + 1, ids.size]
+  end
+
+  def check_icon(level)
+    {ok: "bi-check-circle-fill text-success", bad: "bi-x-circle-fill text-danger", warn: "bi-exclamation-triangle-fill text-warning", info: "bi-info-circle text-secondary"}.fetch(level)
+  end
 end

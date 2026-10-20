@@ -7,7 +7,7 @@
     <thead class="bg-light"><tr><th class="ps-3">Producto</th><th>Familia</th><th class="text-end">Precio</th><th class="text-center">Variantes</th><th class="text-center">Piezas</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @products.each do |p| %>
-        <tr class="<%= "text-muted" unless p.active %>">
+        <tr class="<%= "text-muted" unless p.active %>" data-controller="row-link" data-row-link-url-value="<%= product_path(p) %>" data-action="click->row-link#go">
           <td class="ps-3" style="min-width: 320px;"><%= quick_name("product", p, product_path(p)) %><code class="text-muted ms-2"><%= p.base_code %></code></td>
           <td><%= p.family&.name || content_tag(:span, "Sin familia", class: "text-warning") %></td>
           <td class="text-end" style="width: 170px;"><%= quick_field("product", p, "list_price", type: "number", step: "0.01", placeholder: "Sin precio", css: "text-end") %></td>

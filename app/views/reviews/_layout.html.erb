@@ -1,0 +1,12 @@
+<%# Página de detalle de un registro revisable: barra superior + contenido + panel de revisión a la derecha.
+    locals: record, back_path, back_label, edit_path, dup_path?, dup_post? %>
+<div data-controller="review-panel">
+  <%= render "reviews/bar", record: record, back_path: back_path, back_label: back_label, edit_path: edit_path,
+        dup_path: local_assigns[:dup_path], dup_post: local_assigns[:dup_post] %>
+  <div class="container-fluid px-4 py-4">
+    <div class="row g-4">
+      <div class="col-xl-9"><%= yield %></div>
+      <div class="col-xl-3"><%= render "reviews/panel", record: record %></div>
+    </div>
+  </div>
+</div>

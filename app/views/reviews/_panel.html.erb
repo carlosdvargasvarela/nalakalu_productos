@@ -1,0 +1,71 @@
+<%# Panel de revisión: avance, verificaciones automáticas, decisión y ayuda. local: record %>
+<% review = record.review %>
+<% st = record.review_status %>
+<% checks = ReviewGuide.checks(record) %>
+<% problems = checks.count { _1.level == :bad } %>
+<% guide = ReviewGuide.guide(record) %>
+<% pos, total = review_position(record) %>
+<% pr = review_progress(record.class) %>
+<% color = {"approved" => "success", "needs_changes" => "danger"}.fetch(st, "secondary") %>
+<div class="card border-0 shadow-sm rounded-4" style="position: sticky; top: 124px; max-height: calc(100vh - 140px); overflow-y: auto;">
+  <div class="card-body p-3">
+    <%# 1. Avance %>
+    <div class="d-flex justify-content-between small text-muted mb-1">
+      <span>Registro <b><%= pos %></b> de <%= total %></span>
+      <span>Faltan <b><%= pr[:pending] %></b> por revisar</span>
+    </div>
+    <div class="progress mb-3" style="height: 6px;" title="<%= pr[:approved] %> aprobados · <%= pr[:needs_changes] %> con cambios">
+      <div class="progress-bar bg-success" style="width: <%= pr[:total].zero? ? 0 : (pr[:approved] * 100.0 / pr[:total]).round %>%"></div>
+      <div class="progress-bar bg-danger" style="width: <%= pr[:total].zero? ? 0 : (pr[:needs_changes] * 100.0 / pr[:total]).round %>%"></div>
+    </div>
+
+    <%# 2. Estado actual %>
+    <div class="mb-3">
+      <span class="badge bg-<%= color %> fs-6"><%= record.review_stale? ? "Editado tras aprobar" : Review::LABELS[st] %></span>
+      <% if review&.user %><div class="small text-muted mt-1"><%= review.user.email.split("@").first %> · <%= l review.updated_at.in_time_zone("Central America"), format: :short %></div><% end %>
+      <% if review&.note.present? %><div class="small mt-1 p-2 bg-light rounded">«<%= review.note %>»</div><% end %>
+      <% if record.review_stale? %><div class="small text-warning mt-1">Se editó después de aprobarse: vuelve a revisarlo.</div><% end %>
+    </div>
+
+    <%# 3. Verificaciones automáticas %>
+    <h6 class="fw-bold mb-2">¿Está listo para Odoo?</h6>
+    <% ok_count = checks.count { _1.level == :ok } %>
+    <div class="small text-muted mb-2"><%= problems.zero? ? "Sin problemas detectados." : (problems == 1 ? "1 problema por resolver." : "#{problems} problemas por resolver.") %></div>
+    <ul class="list-unstyled small mb-3">
+      <% checks.each do |c| %>
+        <li class="mb-2 d-flex gap-2">
+          <i class="bi <%= check_icon(c.level) %> mt-1"></i>
+          <div><%= c.text %><% if c.hint %><div class="text-muted" style="font-size: .75rem;"><%= c.hint %></div><% end %></div>
+        </li>
+      <% end %>
+    </ul>
+
+    <%# 4. Decisión %>
+    <%= form_with url: reviews_path, id: "review-form", data: {review_panel_target: "form"} do |f| %>
+      <%= f.hidden_field :reviewable_type, value: record.class.name %>
+      <%= f.hidden_field :reviewable_id, value: record.id %>
+      <div class="d-flex flex-wrap gap-1 mb-1">
+        <% ReviewGuide.reasons(record).each do |r| %>
+          <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: .72rem;" data-action="review-panel#reason" data-review-panel-text-param="<%= r %>"><%= r %></button>
+        <% end %>
+      </div>
+      <%= f.text_area :note, value: review&.note, rows: 2, class: "form-control form-control-sm mb-2", placeholder: "Qué hay que corregir (obligatorio si pides cambios). Toca un motivo de arriba para empezar.", data: {review_panel_target: "note"} %>
+      <div class="d-grid gap-2">
+        <%= f.button name: "status", value: "approved", formaction: reviews_path(advance: 1), class: "btn btn-success fw-bold", data: {review_panel_target: "approve", turbo_confirm: (problems > 0 ? "Todavía #{problems == 1 ? "hay 1 problema sin resolver" : "hay #{problems} problemas sin resolver"}. ¿Aprobar de todos modos?" : nil)}.compact do %><i class="bi bi-check-lg"></i> Está bien · Aprobar y siguiente <kbd class="ms-1">A</kbd><% end %>
+        <%= f.button name: "status", value: "needs_changes", class: "btn btn-outline-danger", data: {review_panel_target: "changes"} do %><i class="bi bi-flag"></i> Requiere cambios <kbd class="ms-1">C</kbd><% end %>
+        <% if st != "pending" %><%= f.button name: "status", value: "pending", class: "btn btn-sm btn-link text-muted" do %>Volver a pendiente<% end %><% end %>
+      </div>
+    <% end %>
+
+    <%# 5. Ayuda %>
+    <details class="mt-3 small">
+      <summary class="fw-bold text-primary" style="cursor: pointer;">¿Qué reviso aquí?</summary>
+      <p class="mt-2 mb-2"><%= guide[:what] %></p>
+      <ul class="ps-3 mb-2"><% guide[:look].each { |l| %><li><%= l %></li><% } %></ul>
+      <%= link_to "Ver la guía completa", help_path, class: "small" %>
+    </details>
+    <div class="text-muted mt-3" style="font-size: .72rem;">
+      Atajos: <kbd>A</kbd> aprobar · <kbd>C</kbd> pedir cambios · <kbd>S</kbd> saltar · <kbd>P</kbd> anterior · <kbd>E</kbd> editar
+    </div>
+  </div>
+</div>

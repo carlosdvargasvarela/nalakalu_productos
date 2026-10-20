@@ -39,7 +39,7 @@
     <% if rules.any? %>
       <div class="p-4 border-top">
         <h6 class="fw-bold mb-3">
-          <i class="bi bi-palette me-2 text-info"></i>Variantes Compatibles
+          <i class="bi bi-palette me-2 text-info"></i>Opciones que se pueden elegir en cada paso
         </h6>
         <div class="d-flex flex-column gap-3">
           <% rules.each do |rule| %>
@@ -108,7 +108,7 @@
       <% end %>
       <%# Zona peligro %>
       <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-        <span class="x-small text-danger fw-bold">Zona de Peligro</span>
+        <span class="x-small text-muted">¿Ya no sirve este producto?</span>
         <%= link_to confirm_delete_path("product", product), class: "btn btn-sm btn-outline-danger rounded-pill px-3", title: "Eliminar" do %><i class="bi bi-trash me-1"></i>Eliminar<% end %>
       </div>
     </div>

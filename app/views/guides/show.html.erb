@@ -1,0 +1,81 @@
+<div class="container py-4" style="max-width: 980px;">
+  <h1 class="h3 fw-bold mb-1">Guía rápida para revisar</h1>
+  <p class="text-muted">Estamos preparando el catálogo para subirlo a Odoo. Tu trabajo: confirmar que cada registro está bien, o corregirlo.</p>
+
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+      <h5 class="fw-bold">Cómo se relaciona todo</h5>
+      <p class="small text-muted">Cada cuadro es una sección del menú. Debajo, cómo se llama la misma cosa en Odoo.</p>
+      <div class="row g-3 text-center align-items-stretch">
+        <div class="col-md-4"><div class="border rounded-3 p-3 h-100"><i class="bi bi-collection fs-3 text-primary"></i><div class="fw-bold">Familia</div><div class="small text-muted">Mesas de comedor</div><div class="badge bg-light text-dark border mt-2">Odoo: categoría</div></div></div>
+        <div class="col-md-4"><div class="border rounded-3 p-3 h-100"><i class="bi bi-box fs-3 text-primary"></i><div class="fw-bold">Producto</div><div class="small text-muted">Mesa Axel 4 personas</div><div class="badge bg-light text-dark border mt-2">Odoo: producto</div></div></div>
+        <div class="col-md-4"><div class="border rounded-3 p-3 h-100"><i class="bi bi-tags fs-3 text-primary"></i><div class="fw-bold">Tipo de variante</div><div class="small text-muted">Tonos de madera</div><div class="badge bg-light text-dark border mt-2">Odoo: atributo</div></div></div>
+        <div class="col-md-4 offset-md-4"><div class="border rounded-3 p-3 h-100"><i class="bi bi-palette fs-3 text-primary"></i><div class="fw-bold">Variante</div><div class="small text-muted">Miel, Almendra, Terra…</div><div class="badge bg-light text-dark border mt-2">Odoo: valor del atributo</div></div></div>
+      </div>
+      <hr>
+      <div class="row g-3 text-center">
+        <div class="col-md-6"><div class="border rounded-3 p-3 h-100"><i class="bi bi-building fs-3 text-success"></i><div class="fw-bold">Proveedor</div><div class="small text-muted">Granalto</div><div class="badge bg-light text-dark border mt-2">Odoo: contacto proveedor</div></div></div>
+        <div class="col-md-6"><div class="border rounded-3 p-3 h-100"><i class="bi bi-box-seam fs-3 text-success"></i><div class="fw-bold">Pieza de proveedor</div><div class="small text-muted">Sobre para mesa · código ACCGRA001 · ₡509.405</div><div class="badge bg-light text-dark border mt-2">Odoo: información del proveedor</div></div></div>
+      </div>
+      <p class="small text-muted mt-3 mb-0">Una <b>familia</b> tiene <b>productos</b>. Cada producto elige opciones de varios <b>tipos de variante</b>, y cada tipo tiene sus <b>variantes</b>. Aparte, un <b>proveedor</b> vende <b>piezas</b> que se usan en productos o variantes.</p>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+      <h5 class="fw-bold">El método, en 4 pasos</h5>
+      <ol class="mb-0">
+        <li class="mb-2"><b>Empieza por lo básico.</b> Orden recomendado: Tipos de variante → Variantes → Familias → Proveedores → Piezas → Productos. Así, cuando llegues a los productos, todo lo que usan ya está revisado.</li>
+        <li class="mb-2"><b>Pulsa «Empezar a revisar».</b> Te lleva al primer registro pendiente. A la derecha verás <i>¿Está listo para Odoo?</i>, con las verificaciones automáticas.</li>
+        <li class="mb-2"><b>Decide.</b> Si está bien, <kbd>A</kbd> (aprobar y pasar al siguiente). Si algo falla, corrígelo con <kbd>E</kbd> (editar) o pide cambios con <kbd>C</kbd> explicando qué falta.</li>
+        <li><b>Revisa «Por corregir»</b> de vez en cuando: ahí quedan los registros que alguien marcó con comentarios.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body">
+        <h5 class="fw-bold">Qué significa cada estado</h5>
+        <p class="mb-2"><span class="badge bg-secondary">Pendiente</span> nadie lo ha revisado.</p>
+        <p class="mb-2"><span class="badge bg-success">Aprobado</span> alguien confirmó que está listo para Odoo.</p>
+        <p class="mb-2"><span class="badge bg-danger">Requiere cambios</span> hay algo por corregir; el comentario dice qué.</p>
+        <p class="mb-0"><span class="badge bg-warning text-dark">Editado tras aprobar</span> alguien lo cambió después de aprobarlo; hay que mirarlo otra vez.</p>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body">
+        <h5 class="fw-bold">Atajos de teclado</h5>
+        <p class="small text-muted">Funcionan en la pantalla de un registro, cuando no estás escribiendo.</p>
+        <p class="mb-1"><kbd>A</kbd> aprobar y pasar al siguiente</p>
+        <p class="mb-1"><kbd>C</kbd> escribir un comentario / pedir cambios</p>
+        <p class="mb-1"><kbd>S</kbd> saltar al siguiente pendiente</p>
+        <p class="mb-1"><kbd>P</kbd> volver al anterior</p>
+        <p class="mb-0"><kbd>E</kbd> editar</p>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+      <h5 class="fw-bold">Herramientas para ordenar y corregir</h5>
+      <dl class="mb-0">
+        <dt>Editar en la lista</dt><dd class="small text-muted">En Productos y Piezas puedes escribir el precio, el costo, el código o el nombre directamente en la fila; se guarda solo al salir del campo (se pone verde).</dd>
+        <dt>Reorganizar</dt><dd class="small text-muted">En una familia, tipo de variante o proveedor: mueve productos, variantes o piezas a otro grupo, a uno nuevo (esto duplica el grupo sin duplicar lo de adentro), o <b>une</b> dos grupos ocultando el sobrante.</dd>
+        <dt>Duplicar</dt><dd class="small text-muted">En un producto o variante hace una copia con sus reglas. En una pieza, una copia por variante (por ejemplo, el mismo sobre en piedra A, B y C).</dd>
+        <dt>Cargar precios</dt><dd class="small text-muted">Descarga la plantilla de Excel, completa la columna Precio y súbela. Antes de aplicar ves exactamente qué cambia.</dd>
+        <dt>Historial y deshacer</dt><dd class="small text-muted">Todo cambio queda registrado. Si te equivocas, en <b>Revisión → Historial</b> puedes deshacerlo.</dd>
+        <dt>Problemas de calidad</dt><dd class="small text-muted">Listas ya preparadas de lo que suele fallar: productos sin precio, variantes repetidas, piezas sin código…</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body">
+      <h5 class="fw-bold">Casos que confunden</h5>
+      <p class="mb-2"><b>«Esta tela es la misma en una silla y en un sofá».</b> Es un código de proveedor propio de la variante: se vincula la pieza <i>solo a la variante</i>.</p>
+      <p class="mb-2"><b>«Esta pieza cambia según la piedra del sobre».</b> Depende del producto y de la variante: se duplica la pieza por variante y se vincula a <i>producto + variante</i>.</p>
+      <p class="mb-0"><b>«Hay dos grupos que son lo mismo».</b> Usa Reorganizar → <i>Unir todo en otro y ocultar este</i>. Nada se borra.</p>
+    </div>
+  </div>
+</div>

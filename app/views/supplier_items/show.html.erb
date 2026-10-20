@@ -1,5 +1,5 @@
-<%= render "reviews/bar", record: @supplier_item, back_path: supplier_items_path, back_label: "Piezas de proveedor", edit_path: edit_supplier_item_path(@supplier_item) %>
-<div class="container py-4" style="max-width: 960px;">
+<%= render layout: "reviews/layout", locals: {record: @supplier_item, back_path: supplier_items_path, back_label: "Piezas de proveedor", edit_path: edit_supplier_item_path(@supplier_item)} do %>
+<div>
   <div class="mb-3">
     <h2 class="fw-bold mb-1"><%= @supplier_item.name %></h2>
     <span class="text-muted"><i class="bi bi-building me-1"></i><%= link_to @supplier_item.provider.name, provider_path(@supplier_item.provider) %></span>
@@ -69,3 +69,4 @@
     </div>
   </div>
 </div>
+<% end %>

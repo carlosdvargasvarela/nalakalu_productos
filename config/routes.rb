@@ -74,6 +74,7 @@ Rails.application.routes.draw do
 
   # Revisión: marca aprobado / requiere cambios sobre cualquier registro revisable
   get "reviews/next", to: "reviews#next", as: :next_review
+  get "reviews/prev", to: "reviews#prev", as: :prev_review
   resources :reviews, only: [:index, :create] # index = pendientes de corrección
 
   # Eliminar con confirmación (conteo de lo que se pierde) u ocultar en su lugar
@@ -106,6 +107,8 @@ Rails.application.routes.draw do
   # Reorganizar: mover productos / variantes / piezas entre grupos (o a un grupo nuevo = duplicar el grupo)
   get "reorganizar/:kind/:id", to: "groupings#new", as: :reorganize, constraints: {kind: /family|variant_type|provider/}
   post "reorganizar/:kind/:id", to: "groupings#create", constraints: {kind: /family|variant_type|provider/}
+
+  get "ayuda", to: "guides#show", as: :help
 
   get "profile", to: "profiles#show", as: :profile
   patch "profile", to: "profiles#update"

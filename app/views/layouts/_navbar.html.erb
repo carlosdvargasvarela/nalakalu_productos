@@ -15,6 +15,7 @@
         <% end %>
       </ul>
       <div class="d-flex align-items-center gap-2">
+        <% if user_signed_in? %><%= link_to help_path, class: "btn btn-sm btn-outline-info rounded-pill px-3", title: "Guía y glosario" do %><i class="bi bi-question-circle me-1"></i>Ayuda<% end %><% end %>
         <% if user_signed_in? %>
           <%= link_to profile_path, class: "navbar-text text-white-50 small text-decoration-none" do %>
             <i class="bi bi-person-circle me-1"></i><%= current_user.email %>

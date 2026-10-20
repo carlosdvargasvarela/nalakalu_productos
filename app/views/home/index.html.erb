@@ -5,28 +5,57 @@
     <%= link_to "Iniciar sesión", new_user_session_path, class: "btn btn-primary btn-lg" %>
   </div>
 <% else %>
-  <h1 class="h3 fw-bold mb-1">Progreso de revisión</h1>
-  <p class="text-muted">Aprobado = un revisor confirmó que el registro está listo para Odoo.</p>
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+      <h1 class="h3 fw-bold mb-0">Hola, <%= current_user.email.split("@").first.capitalize %> 👋</h1>
+      <p class="text-muted mb-0">Estamos dejando el catálogo listo para Odoo. Tu trabajo es confirmar que cada registro está bien, o corregirlo.</p>
+    </div>
+    <% if @today > 0 %><span class="badge bg-success-subtle text-success-emphasis border fs-6"><i class="bi bi-check2-all"></i> Hoy llevas <%= @today %> revisados</span><% end %>
+  </div>
+
+  <% if @next_module %>
+    <div class="card border-0 shadow-sm rounded-4 mb-4 border-start border-4 border-success">
+      <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <div class="small text-uppercase text-muted fw-bold">Siguiente paso sugerido</div>
+          <div class="fs-5 fw-bold">Revisar <%= @next_module[:title].downcase %> <span class="text-muted fs-6">· <%= @next_module[:pending] %> pendientes</span></div>
+          <div class="small text-muted"><%= @next_module[:blurb] %></div>
+        </div>
+        <%= link_to next_review_path(type: @next_module[:type]), class: "btn btn-success btn-lg fw-bold" do %><i class="bi bi-play-fill"></i> Empezar<% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="alert alert-success"><i class="bi bi-trophy-fill me-1"></i> ¡Todo está revisado! Ya puedes <%= link_to "descargar los CSV para Odoo", odoo_exports_path, class: "alert-link" %>.</div>
+  <% end %>
+
+  <div class="row g-3 mb-4 text-center">
+    <% [["1", "Empieza por lo básico", "Sigue el orden de las tarjetas: así, cuando llegues a los productos, todo lo que usan ya está revisado."],
+        ["2", "Mira el panel de la derecha", "Te dice qué falta y qué mirar en cada registro. No tienes que adivinar."],
+        ["3", "Decide", "Si está bien, «Aprobar y siguiente». Si no, corrígelo o pide cambios con un comentario."]].each do |n, t, d| %>
+      <div class="col-md-4"><div class="p-3 h-100 bg-white rounded-4 shadow-sm"><span class="badge rounded-circle bg-primary mb-2"><%= n %></span><div class="fw-bold"><%= t %></div><div class="small text-muted"><%= d %></div></div></div>
+    <% end %>
+  </div>
+
+  <h2 class="h5 fw-bold mb-2">Progreso, en el orden recomendado</h2>
   <div class="row g-3 mb-4">
     <% @progress.each do |m| %>
       <% pct = m[:total].zero? ? 0 : (m[:approved] * 100.0 / m[:total]).round %>
       <div class="col-md-4">
-        <div class="card shadow-sm border-0 h-100">
+        <div class="card shadow-sm border-0 h-100 rounded-4 <%= "border border-success border-2" if m == @next_module %>">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-baseline">
-              <h5 class="fw-bold mb-0"><%= link_to m[:title], m[:path], class: "text-decoration-none" %></h5>
-              <span class="text-muted small"><%= m[:total] %> registros</span>
+            <div class="d-flex justify-content-between align-items-start">
+              <h5 class="fw-bold mb-0"><span class="badge rounded-circle bg-secondary me-2"><%= m[:n] %></span><%= link_to m[:title], m[:path], class: "text-decoration-none" %></h5>
+              <span class="text-muted small"><%= m[:total] %></span>
             </div>
-            <div class="progress my-3" style="height: 10px;">
-              <div class="progress-bar bg-success" style="width: <%= pct %>%"></div>
-            </div>
+            <div class="small text-muted my-2"><%= m[:blurb] %></div>
+            <div class="progress mb-2" style="height: 8px;"><div class="progress-bar bg-success" style="width: <%= pct %>%"></div></div>
             <div class="small d-flex gap-3 mb-3">
-              <span class="text-success"><i class="bi bi-check-circle"></i> <%= m[:approved] %> aprobados</span>
-              <span class="text-danger"><i class="bi bi-exclamation-circle"></i> <%= m[:needs_changes] %> con cambios</span>
+              <span class="text-success"><i class="bi bi-check-circle"></i> <%= m[:approved] %></span>
+              <span class="text-danger"><i class="bi bi-exclamation-circle"></i> <%= m[:needs_changes] %></span>
               <span class="text-muted"><i class="bi bi-hourglass"></i> <%= m[:pending] %> pendientes</span>
             </div>
             <% if m[:pending] > 0 %>
-              <%= link_to next_review_path(type: m[:type]), class: "btn btn-sm btn-success" do %><i class="bi bi-play-fill"></i> Empezar a revisar<% end %>
+              <%= link_to next_review_path(type: m[:type]), class: "btn btn-sm #{m == @next_module ? "btn-success" : "btn-outline-success"}" do %><i class="bi bi-play-fill"></i> Empezar a revisar<% end %>
             <% else %>
               <span class="text-success fw-bold small"><i class="bi bi-check-circle-fill"></i> Todo revisado</span>
             <% end %>
@@ -35,10 +64,12 @@
       </div>
     <% end %>
   </div>
-  <div class="d-flex gap-2">
-    <% fix = Review.where(status: "needs_changes").count %>
-    <%= link_to reviews_path, class: "btn btn-outline-danger" do %><i class="bi bi-flag me-1"></i>Por corregir<%= " (#{fix})" if fix > 0 %><% end %>
+
+  <div class="d-flex flex-wrap gap-2">
+    <%= link_to reviews_path, class: "btn btn-outline-danger" do %><i class="bi bi-flag me-1"></i>Por corregir<%= " (#{@to_fix})" if @to_fix > 0 %><% end %>
     <%= link_to quality_path, class: "btn btn-outline-warning" do %><i class="bi bi-shield-exclamation me-1"></i>Problemas de calidad<% end %>
+    <%= link_to price_imports_path, class: "btn btn-outline-secondary" do %><i class="bi bi-cash-coin me-1"></i>Cargar precios<% end %>
     <%= link_to odoo_exports_path, class: "btn btn-outline-primary" do %><i class="bi bi-download me-1"></i>CSV para Odoo<% end %>
+    <%= link_to help_path, class: "btn btn-outline-info" do %><i class="bi bi-question-circle me-1"></i>Guía y glosario<% end %>
   </div>
 <% end %>

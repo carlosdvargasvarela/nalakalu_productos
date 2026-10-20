@@ -6,7 +6,7 @@
     <thead class="bg-light"><tr><th class="ps-3">Tipo</th><th>Variante</th><th>Código CRM</th><th>Código proveedor</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @variants.each do |v| %>
-        <tr class="<%= "text-muted" unless v.active %>">
+        <tr class="<%= "text-muted" unless v.active %>" data-controller="row-link" data-row-link-url-value="<%= variant_path(v) %>" data-action="click->row-link#go">
           <td class="ps-3"><%= v.variant_type.name %></td>
           <td><%= link_to v.seller_name, variant_path(v), class: "fw-bold text-decoration-none" %></td>
           <td style="width: 170px;"><%= quick_field("variant", v, "code", placeholder: "—", css: "font-monospace") %></td>

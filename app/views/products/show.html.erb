@@ -1,4 +1,3 @@
-<%= render "reviews/bar", record: @product, back_path: products_path, back_label: "Productos", edit_path: edit_product_path(@product), dup_path: duplicate_product_path(@product), dup_post: true %>
-<div class="container-fluid px-4 py-4">
+<%= render layout: "reviews/layout", locals: {record: @product, back_path: products_path, back_label: "Productos", edit_path: edit_product_path(@product), dup_path: duplicate_product_path(@product), dup_post: true} do %>
   <%= render "detail_panel", product: @product %>
-</div>
+<% end %>

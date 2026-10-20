@@ -7,7 +7,7 @@
     <thead class="bg-light"><tr><th class="ps-3">Proveedor</th><th>Pieza</th><th>Código</th><th>Unidad</th><th class="text-end">Costo</th><th class="text-center">Vínculos</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @supplier_items.each do |i| %>
-        <tr class="<%= "text-muted" unless i.active %>">
+        <tr class="<%= "text-muted" unless i.active %>" data-controller="row-link" data-row-link-url-value="<%= supplier_item_path(i) %>" data-action="click->row-link#go">
           <td class="ps-3"><%= i.provider.name %></td>
           <td style="min-width: 300px;"><%= quick_name("supplier_item", i, supplier_item_path(i)) %></td>
           <td style="width: 190px;"><%= quick_field("supplier_item", i, "sku", placeholder: "Sin código", css: "font-monospace") %></td>
