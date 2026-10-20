@@ -44,4 +44,16 @@ class ReviewsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to product_path(nxt)
     assert_not_equal @product.id, nxt.id
   end
+
+  test "la lista de por corregir muestra el comentario y se filtra por revisor" do
+    post reviews_url, params: {reviewable_type: "Product", reviewable_id: @product.id, status: "needs_changes", note: "Falta el precio"}
+    get reviews_url
+    assert_response :success
+    assert_match "Falta el precio", response.body
+
+    get products_url(reviewer: users(:revisor).id)
+    assert_select "a[href=?]", product_path(@product)
+    get products_url(reviewer: users(:admin).id)
+    assert_select "a[href=?]", product_path(@product), count: 0
+  end
 end

@@ -1,10 +1,10 @@
-<%= render layout: "shared/index", locals: {title: "Proveedores", subtitle: "A quién se le compra.", model: Provider, new_path: new_provider_path, new_label: "Nuevo proveedor"} do %>
+<%= render layout: "shared/index", locals: {title: "Proveedores", subtitle: "A quién se le compra.", model: Provider, new_path: new_provider_path, new_label: "Nuevo proveedor", hideable: true} do %>
   <table class="table table-hover align-middle mb-0 small">
     <thead class="bg-light"><tr><th class="ps-3">Proveedor</th><th>Categoría</th><th>Contacto</th><th class="text-center">Piezas</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @providers.each do |p| %>
         <tr class="<%= "text-muted" unless p.active %>">
-          <td class="ps-3"><%= link_to p.name, provider_path(p), class: "fw-bold text-decoration-none" %></td>
+          <td class="ps-3"><%= link_to p.name, provider_path(p), class: "fw-bold text-decoration-none" %><%= content_tag(:span, "Oculto", class: "badge bg-secondary ms-2") unless p.active %></td>
           <td><%= p.category %></td>
           <td><%= [p.contact_name, p.email, p.phone].compact_blank.join(" · ").presence || content_tag(:span, "Sin contacto", class: "text-warning") %></td>
           <td class="text-center"><%= p.supplier_items.size %></td>

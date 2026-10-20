@@ -74,7 +74,7 @@ Rails.application.routes.draw do
 
   # Revisión: marca aprobado / requiere cambios sobre cualquier registro revisable
   get "reviews/next", to: "reviews#next", as: :next_review
-  resources :reviews, only: [:create]
+  resources :reviews, only: [:index, :create] # index = pendientes de corrección
 
   # Eliminar con confirmación (conteo de lo que se pierde) u ocultar en su lugar
   scope constraints: {kind: /product|variant|variant_type|family|provider|supplier_item/} do

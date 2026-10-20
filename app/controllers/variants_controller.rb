@@ -10,7 +10,7 @@ class VariantsController < ApplicationController
     scope = scope.where("variants.name LIKE ? OR variants.display_name LIKE ?", *["%#{params[:search].strip}%"] * 2) if params[:search].present?
     scope = scope.where(variant_type_id: params[:type_id]) if params[:type_id].present?
     scope = scope.where(active: false) if params[:filter] == "inactive"
-    scope = scope.review_is(params[:review])
+    scope = scope.review_is(params[:review]).review_by(params[:reviewer])
     @pagy, @variants = pagy(scope, limit: 50)
   end
 

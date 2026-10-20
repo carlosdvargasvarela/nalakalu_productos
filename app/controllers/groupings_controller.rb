@@ -24,6 +24,7 @@ class GroupingsController < ApplicationController
       target = (params[:dest] == "new") ? build_new : (params[:dest] == "existing" ? @kind.model.find(params[:target_id]) : nil)
       move(ids, target)
     end
+    @group.update!(active: false) if params[:hide_source] == "1" && target && target.id != @group.id
     redirect_to polymorphic_path(target || @group), notice: "Listo: #{ids.size} #{@kind.child_noun} #{target ? "movidos a «#{target.name}»" : "sin #{@kind.noun}"}."
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique, ActiveRecord::RecordNotFound => e
     redirect_to reorganize_path(params[:kind], @group), alert: "No se pudo: #{e.message}"

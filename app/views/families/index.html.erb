@@ -1,10 +1,10 @@
-<%= render layout: "shared/index", locals: {title: "Familias", subtitle: "Grupos de productos que comparten estructura de código.", model: Family, new_path: new_family_path, new_label: "Nueva familia"} do %>
+<%= render layout: "shared/index", locals: {title: "Familias", subtitle: "Grupos de productos que comparten estructura de código.", model: Family, new_path: new_family_path, new_label: "Nueva familia", hideable: true} do %>
   <table class="table table-hover align-middle mb-0 small">
     <thead class="bg-light"><tr><th class="ps-3">Familia</th><th class="text-center">Productos</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @families.each do |f| %>
         <tr>
-          <td class="ps-3"><%= link_to f.name, family_path(f), class: "fw-bold text-decoration-none" %><div class="text-muted"><%= f.description %></div></td>
+          <td class="ps-3"><%= link_to f.name, family_path(f), class: "fw-bold text-decoration-none" %><%= content_tag(:span, "Oculto", class: "badge bg-secondary ms-2") unless f.active %><div class="text-muted"><%= f.description %></div></td>
           <td class="text-center"><%= f.products.size %></td>
           <td><%= render "reviews/badge", record: f %></td>
         </tr>

@@ -44,10 +44,15 @@
       </div>
     </div>
 
+    <div class="form-check mb-3">
+      <%= check_box_tag :hide_source, "1", false, class: "form-check-input" %>
+      <label class="form-check-label" for="hide_source">Ocultar «<%= @group.name %>» al terminar (queda inactivo, no se borra)</label>
+    </div>
     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
       <input type="search" class="form-control form-control-sm" style="max-width: 320px;" placeholder="Filtrar por nombre o código…" data-grouping-target="search" data-action="input->grouping#filter">
       <button type="button" class="btn btn-sm btn-outline-secondary" data-action="grouping#moveAll" data-grouping-dir-param="go">Mover todos →</button>
       <button type="button" class="btn btn-sm btn-outline-secondary" data-action="grouping#moveAll" data-grouping-dir-param="stay">← Volver todos</button>
+      <button type="button" class="btn btn-sm btn-outline-primary ms-auto" data-action="grouping#merge" title="Mueve todo a otro grupo existente y oculta este"><i class="bi bi-intersect"></i> Unir todo en otro y ocultar este</button>
     </div>
     <div class="row g-3">
       <% [["stay", "Se quedan en «#{@group.name}»", "secondary"], ["go", "Se van", "success"]].each do |side, label, color| %>

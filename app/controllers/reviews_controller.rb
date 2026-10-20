@@ -2,6 +2,12 @@ class ReviewsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_catalog_editor!
 
+  # Registros marcados «requiere cambios», con el comentario del revisor
+  def index
+    @reviews = Review.where(status: "needs_changes").includes(:user, :reviewable).order(updated_at: :desc)
+    @reviews = @reviews.where(reviewable_type: params[:type]) if Reviewable::MODELS.include?(params[:type])
+  end
+
   def create
     record = model.find(params.require(:reviewable_id))
     review = record.review || record.build_review

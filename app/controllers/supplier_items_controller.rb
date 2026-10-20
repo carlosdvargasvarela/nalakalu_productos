@@ -13,7 +13,7 @@ class SupplierItemsController < ApplicationController
     scope = scope.where(provider_id: params[:provider_id]) if params[:provider_id].present?
     scope = scope.where(default_cost: nil) if params[:status] == "no_cost"
     scope = scope.where.missing(:supplier_links) if params[:status] == "no_links"
-    scope = scope.review_is(params[:review])
+    scope = scope.review_is(params[:review]).review_by(params[:reviewer])
     # ponytail: sin paginación; agregar pagy si el listado pasa de unos pocos miles
     @supplier_items = scope
     @providers = Provider.order(:name)

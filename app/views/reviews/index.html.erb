@@ -1,0 +1,31 @@
+<div class="container-fluid px-4 py-4" style="max-width: 1100px;">
+  <h1 class="h3 fw-bold mb-1">Por corregir</h1>
+  <p class="text-muted small">Registros que un revisor marcó como «requiere cambios». Al corregirlos y aprobarlos desaparecen de aquí.</p>
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <%= link_to "Todos", reviews_path, class: "btn btn-sm #{params[:type].blank? ? "btn-dark" : "btn-outline-secondary"}" %>
+    <% Reviewable::MODELS.each do |t| %>
+      <%= link_to t.constantize.model_name.human.pluralize, reviews_path(type: t), class: "btn btn-sm #{params[:type] == t ? "btn-dark" : "btn-outline-secondary"}" %>
+    <% end %>
+  </div>
+  <% if @reviews.empty? %>
+    <p class="text-success"><i class="bi bi-check-circle"></i> No hay nada por corregir.</p>
+  <% else %>
+    <div class="card border-0 shadow-sm rounded-4"><div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="bg-light"><tr><th class="ps-3">Tipo</th><th>Registro</th><th>Comentario</th><th>Revisor</th><th>Cuándo</th></tr></thead>
+        <tbody>
+          <% @reviews.each do |r| %>
+            <% rec = r.reviewable %>
+            <tr>
+              <td class="ps-3"><%= r.reviewable_type.constantize.model_name.human %></td>
+              <td><%= link_to record_title(rec), polymorphic_path(rec), class: "fw-bold text-decoration-none" %></td>
+              <td><%= r.note %></td>
+              <td><%= r.user&.email&.split("@")&.first %></td>
+              <td class="text-muted"><%= l r.updated_at.in_time_zone("Central America"), format: :short %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div></div>
+  <% end %>
+</div>

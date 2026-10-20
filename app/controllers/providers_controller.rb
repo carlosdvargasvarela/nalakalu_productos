@@ -6,7 +6,8 @@ class ProvidersController < ApplicationController
   def index
     scope = Provider.includes(:supplier_items, :review).order(:name)
     scope = scope.where("name LIKE ?", "%#{params[:search].strip}%") if params[:search].present?
-    @providers = scope.review_is(params[:review])
+    scope = scope.where(active: true) unless params[:hidden] == "1" # los grupos ocultos (inactivos) no estorban
+    @providers = scope.review_is(params[:review]).review_by(params[:reviewer])
   end
 
   def show

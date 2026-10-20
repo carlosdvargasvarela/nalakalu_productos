@@ -6,7 +6,8 @@ class VariantTypesController < ApplicationController
   def index
     scope = VariantType.includes(:variants, :review).order(:name)
     scope = scope.where("name LIKE ?", "%#{params[:search].strip}%") if params[:search].present?
-    @variant_types = scope.review_is(params[:review])
+    scope = scope.where(active: true) unless params[:hidden] == "1" # los grupos ocultos (inactivos) no estorban
+    @variant_types = scope.review_is(params[:review]).review_by(params[:reviewer])
   end
 
   def show

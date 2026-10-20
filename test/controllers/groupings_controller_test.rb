@@ -87,4 +87,18 @@ class GroupingsControllerTest < ActionDispatch::IntegrationTest
     get reorganize_url("variant_type", variant_types(:one))
     assert_response :success
   end
+
+  test "unir: mueve todo a otro grupo y oculta el origen sin borrarlo" do
+    a = Family.create!(name: "A")
+    b = Family.create!(name: "B")
+    p = Product.create!(name: "P", base_code: "P")
+    p.update_columns(family_id: a.id)
+    post reorganize_url("family", a), params: {dest: "existing", target_id: b.id, hide_source: "1", child_ids: [p.id]}
+    assert_equal b.id, p.reload.family_id
+    assert_not a.reload.active
+    get families_url
+    assert_no_match(/>A</, response.body)
+    get families_url(hidden: "1")
+    assert_match(/Oculto/, response.body)
+  end
 end

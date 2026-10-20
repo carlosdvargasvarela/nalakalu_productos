@@ -36,6 +36,8 @@
     <% end %>
   </div>
   <div class="d-flex gap-2">
+    <% fix = Review.where(status: "needs_changes").count %>
+    <%= link_to reviews_path, class: "btn btn-outline-danger" do %><i class="bi bi-flag me-1"></i>Por corregir<%= " (#{fix})" if fix > 0 %><% end %>
     <%= link_to quality_path, class: "btn btn-outline-warning" do %><i class="bi bi-shield-exclamation me-1"></i>Problemas de calidad<% end %>
     <%= link_to odoo_exports_path, class: "btn btn-outline-primary" do %><i class="bi bi-download me-1"></i>CSV para Odoo<% end %>
   </div>

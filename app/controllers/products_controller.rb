@@ -10,7 +10,7 @@ class ProductsController < ApplicationController
     scope = scope.where(family_id: params[:family_id]) if params[:family_id].present?
     scope = scope.where(list_price: nil) if params[:filter] == "no_price"
     scope = scope.where(active: false) if params[:filter] == "inactive"
-    scope = scope.review_is(params[:review])
+    scope = scope.review_is(params[:review]).review_by(params[:reviewer])
     @pagy, @products = pagy(scope, limit: 50)
   end
 

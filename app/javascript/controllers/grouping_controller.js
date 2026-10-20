@@ -13,8 +13,17 @@ export default class extends Controller {
     this.refresh()
   }
 
-  moveAll(event) {
-    const toGo = event.params.dir === "go"
+  moveAll(event) { this.moveAllTo(event.params.dir === "go") }
+
+  // Unir: todo al destino existente y ocultar este grupo
+  merge() {
+    this.moveAllTo(true)
+    document.querySelector("#dest_existing").checked = true
+    document.querySelector("#hide_source").checked = true
+    document.querySelector("#target_id")?.focus()
+  }
+
+  moveAllTo(toGo) {
     const from = toGo ? this.stayTarget : this.goTarget
     ;[...from.children].filter(r => !r.hidden).forEach(r => this.send(r, toGo))
     this.refresh()

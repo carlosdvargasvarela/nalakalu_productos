@@ -6,7 +6,8 @@ class FamiliesController < ApplicationController
   def index
     scope = Family.includes(:products, :review).order(:name)
     scope = scope.where("name LIKE ?", "%#{params[:search].strip}%") if params[:search].present?
-    @families = scope.review_is(params[:review])
+    scope = scope.where(active: true) unless params[:hidden] == "1" # los grupos ocultos (inactivos) no estorban
+    @families = scope.review_is(params[:review]).review_by(params[:reviewer])
   end
 
   def show

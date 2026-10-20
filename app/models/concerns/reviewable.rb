@@ -6,6 +6,8 @@ module Reviewable
   included do
     has_one :review, as: :reviewable, dependent: :destroy
 
+    scope :review_by, ->(user_id) { where(id: Review.where(reviewable_type: klass.name, user_id: user_id).select(:reviewable_id)) if user_id.present? }
+
     # nil = sin filtro
     scope :review_is, ->(status) do
       done = Review.where(reviewable_type: klass.name).where.not(status: "pending").select(:reviewable_id)
