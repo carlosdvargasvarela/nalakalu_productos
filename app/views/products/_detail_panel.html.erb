@@ -16,7 +16,7 @@
           <% if product.list_price.nil? %>
             <span class="badge bg-danger bg-opacity-10 text-danger">Sin precio</span>
           <% else %>
-            <span class="text-muted small"><%= number_to_currency(product.list_price, unit: "₡") %></span>
+            <span class="text-muted small"><%= number_to_currency(product.list_price, unit: "₡", format: "%u%n") %></span>
           <% end %>
           <% if product.family.present? %>
             <span class="text-muted small">
@@ -101,7 +101,7 @@
           <% links.each do |l| %>
             <% i = l.supplier_item %>
             <li><%= link_to i.name, supplier_item_path(i) %>
-              <span class="text-muted">· <%= i.provider.name %> · <%= i.sku.presence || "sin código" %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : "sin costo" %></span>
+              <span class="text-muted">· <%= i.provider.name %> · <%= i.sku.presence || "sin código" %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡", format: "%u%n") : "sin costo" %></span>
               <% if l.variant %><span class="badge bg-primary bg-opacity-10 text-primary"><%= l.variant.seller_name %></span><% end %></li>
           <% end %>
         </ul>

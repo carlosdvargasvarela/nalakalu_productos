@@ -57,7 +57,7 @@
           <ul class="list-group list-group-flush small">
             <% links.each do |l| i = l.supplier_item %>
               <li class="list-group-item"><%= link_to i.name, supplier_item_path(i) %>
-                <div class="text-muted"><%= i.provider.name %> · <%= i.sku.presence || "sin código" %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : "sin costo" %><%= " · solo en #{l.product.name}" if l.product %></div></li>
+                <div class="text-muted"><%= i.provider.name %> · <%= i.sku.presence || "sin código" %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡", format: "%u%n") : "sin costo" %><%= " · solo en #{l.product.name}" if l.product %></div></li>
             <% end %>
           </ul>
         <% end %>

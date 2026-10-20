@@ -10,7 +10,7 @@
       <%= link_to back_path, class: "btn btn-sm btn-light" do %><i class="bi bi-arrow-left"></i> <%= back_label %><% end %>
       <span class="fw-bold text-truncate" style="max-width: 320px;"><%= record_title(record) %></span>
       <span class="badge bg-<%= color %>"><%= record.review_stale? ? "Editado tras aprobar" : Review::LABELS[st] %></span>
-      <% if review && review.user %><span class="small text-muted d-none d-xl-inline"><%= review.user.email %> · <%= l review.updated_at, format: :short %></span><% end %>
+      <% if review && review.user %><span class="small text-muted d-none d-xl-inline"><%= review.user.email %> · <%= l review.updated_at.in_time_zone("Central America"), format: :short %></span><% end %>
       <span class="flex-grow-1"></span>
       <%= f.text_field :note, value: review&.note, class: "form-control form-control-sm", style: "width: 260px;", placeholder: "Comentario (obligatorio si requiere cambios)" %>
       <%= f.button name: "status", value: "approved", formaction: reviews_path(advance: 1), class: "btn btn-sm btn-success fw-bold" do %><i class="bi bi-check-lg"></i> Aprobar y siguiente<% end %>

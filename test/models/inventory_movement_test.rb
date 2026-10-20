@@ -28,13 +28,13 @@ class InventoryMovementTest < ActiveSupport::TestCase
   test "rejects unknown source" do
     movement = build_movement(source: "imported")
     assert_not movement.valid?
-    assert_includes movement.errors[:source], "is not included in the list"
+    assert_includes movement.errors[:source], "no está incluido en la lista"
   end
 
   test "rejects unknown flag but allows nil" do
     movement = build_movement(flag: "weird")
     assert_not movement.valid?
-    assert_includes movement.errors[:flag], "is not included in the list"
+    assert_includes movement.errors[:flag], "no está incluido en la lista"
 
     assert build_movement(flag: nil).valid?
   end

@@ -10,7 +10,7 @@
         <tr class="<%= "text-muted" unless p.active %>">
           <td class="ps-3"><%= link_to p.name, product_path(p), class: "fw-bold text-decoration-none" %> <code class="text-muted ms-1"><%= p.base_code %></code></td>
           <td><%= p.family&.name || content_tag(:span, "Sin familia", class: "text-warning") %></td>
-          <td class="text-end"><%= p.list_price ? number_to_currency(p.list_price, unit: "₡") : content_tag(:span, "Sin precio", class: "badge bg-danger bg-opacity-10 text-danger") %></td>
+          <td class="text-end"><%= p.list_price ? number_to_currency(p.list_price, unit: "₡", format: "%u%n") : content_tag(:span, "Sin precio", class: "badge bg-danger bg-opacity-10 text-danger") %></td>
           <td class="text-center"><%= p.product_variant_rules.size.zero? ? content_tag(:span, "0", class: "text-warning fw-bold") : p.product_variant_rules.size %></td>
           <td class="text-center"><%= p.supplier_links.size %></td>
           <td><%= render "reviews/badge", record: p %></td>

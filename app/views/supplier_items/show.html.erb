@@ -10,7 +10,7 @@
       <div class="col-md-4"><div class="small text-muted">Código del proveedor</div><code><%= @supplier_item.sku.presence || "—" %></code></div>
       <div class="col-md-4"><div class="small text-muted">Unidad</div><%= @supplier_item.unit %></div>
       <div class="col-md-4"><div class="small text-muted">Costo</div>
-        <%= @supplier_item.default_cost ? number_to_currency(@supplier_item.default_cost, unit: "₡") : content_tag(:span, "Sin costo", class: "badge bg-danger bg-opacity-10 text-danger") %></div>
+        <%= @supplier_item.default_cost ? number_to_currency(@supplier_item.default_cost, unit: "₡", format: "%u%n") : content_tag(:span, "Sin costo", class: "badge bg-danger bg-opacity-10 text-danger") %></div>
     </div>
   </div>
   <div class="card border-0 shadow-sm rounded-4">

@@ -12,7 +12,7 @@
           <td><%= link_to i.name, supplier_item_path(i), class: "fw-bold text-decoration-none" %></td>
           <td><code><%= i.sku.presence || "—" %></code></td>
           <td><%= i.unit %></td>
-          <td class="text-end"><%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : content_tag(:span, "Sin costo", class: "badge bg-danger bg-opacity-10 text-danger") %></td>
+          <td class="text-end"><%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡", format: "%u%n") : content_tag(:span, "Sin costo", class: "badge bg-danger bg-opacity-10 text-danger") %></td>
           <td class="text-center"><%= i.supplier_links.size.zero? ? content_tag(:span, "0", class: "badge bg-warning bg-opacity-25 text-warning") : i.supplier_links.size %></td>
           <td><%= render "reviews/badge", record: i %></td>
         </tr>

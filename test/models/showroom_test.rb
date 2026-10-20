@@ -10,15 +10,15 @@ class ShowroomTest < ActiveSupport::TestCase
   test "requires name and code" do
     showroom = Showroom.new
     assert_not showroom.valid?
-    assert_includes showroom.errors[:name], "can't be blank"
-    assert_includes showroom.errors[:code], "can't be blank"
+    assert_includes showroom.errors[:name], "no puede estar en blanco"
+    assert_includes showroom.errors[:code], "no puede estar en blanco"
   end
 
   test "code must be unique case-insensitively" do
     Showroom.create!(name: "Sala Palmares Dup", code: "spd")
     dup = Showroom.new(name: "Otra", code: "SPD")
     assert_not dup.valid?
-    assert_includes dup.errors[:code], "has already been taken"
+    assert_includes dup.errors[:code], "ya está en uso"
   end
 
   test "activating is_main demotes any other main showroom" do

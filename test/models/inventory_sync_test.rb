@@ -23,7 +23,7 @@ class InventorySyncTest < ActiveSupport::TestCase
   test "rejects unknown kind" do
     sync = build_sync(kind: "weird")
     assert_not sync.valid?
-    assert_includes sync.errors[:kind], "is not included in the list"
+    assert_includes sync.errors[:kind], "no está incluido en la lista"
   end
 
   test "stores import_errors as an array" do
