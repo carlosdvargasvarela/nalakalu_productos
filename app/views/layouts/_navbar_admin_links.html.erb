@@ -22,6 +22,7 @@
   </a>
   <ul class="dropdown-menu dropdown-menu-dark border-0 shadow-lg">
     <li><%= link_to root_path, class: "dropdown-item" do %><i class="bi bi-speedometer2 me-2"></i>Progreso<% end %></li>
+    <li><%= link_to price_imports_path, class: "dropdown-item" do %><i class="bi bi-cash-coin me-2"></i>Cargar precios<% end %></li>
     <li><%= link_to reviews_path, class: "dropdown-item d-flex justify-content-between" do %><span><i class="bi bi-flag me-2"></i>Por corregir</span><% n = Review.where(status: "needs_changes").count %><% if n > 0 %><span class="badge bg-danger"><%= n %></span><% end %><% end %></li>
     <li><%= link_to quality_path, class: "dropdown-item" do %><i class="bi bi-shield-exclamation me-2"></i>Problemas de calidad<% end %></li>
     <li><%= link_to changes_path, class: "dropdown-item" do %><i class="bi bi-clock-history me-2"></i>Historial<% end %></li>

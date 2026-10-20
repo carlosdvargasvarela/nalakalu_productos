@@ -1,0 +1,37 @@
+<div class="container py-4" style="max-width: 980px;">
+  <%= link_to price_imports_path, class: "btn btn-sm btn-light mb-3" do %><i class="bi bi-arrow-left"></i> Volver<% end %>
+  <h1 class="h4 fw-bold mb-3">Vista previa de precios</h1>
+  <div class="d-flex gap-3 mb-3">
+    <span class="badge bg-success fs-6"><%= @result[:changes].size %> cambios</span>
+    <span class="badge bg-secondary fs-6"><%= @result[:unchanged] %> sin cambio</span>
+    <span class="badge bg-<%= @result[:errors].any? ? "danger" : "light text-muted border" %> fs-6"><%= @result[:errors].size %> con problemas</span>
+  </div>
+  <% if @result[:errors].any? %>
+    <div class="alert alert-danger small">
+      <b>Estas filas no se aplicarán:</b>
+      <ul class="mb-0"><% @result[:errors].first(30).each do |e| %><li><%= e %></li><% end %></ul>
+      <% if @result[:errors].size > 30 %>…y <%= @result[:errors].size - 30 %> más.<% end %>
+    </div>
+  <% end %>
+  <% if @result[:changes].any? %>
+    <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="table-responsive" style="max-height: 460px; overflow-y: auto;">
+      <table class="table table-sm align-middle mb-0 small">
+        <thead class="bg-light sticky-top"><tr><th class="ps-3">Código</th><th>Producto</th><th class="text-end">Precio actual</th><th class="text-end pe-3">Precio nuevo</th></tr></thead>
+        <tbody>
+          <% @result[:changes].each do |c| %>
+            <tr><td class="ps-3"><code><%= c[:code] %></code></td><td><%= c[:name] %></td>
+              <td class="text-end text-muted"><%= c[:old] ? number_to_currency(c[:old], unit: "₡", format: "%u%n") : "Sin precio" %></td>
+              <td class="text-end fw-bold pe-3"><%= number_to_currency(c[:new], unit: "₡", format: "%u%n") %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div></div>
+    <%= form_with url: price_apply_path, class: "d-flex gap-2" do |f| %>
+      <%= f.hidden_field :changes, value: @result[:changes].map { _1.slice(:id, :new) }.to_json %>
+      <%= f.submit "Aplicar #{@result[:changes].size} cambios", class: "btn btn-primary", data: {turbo_confirm: "¿Actualizar #{@result[:changes].size} precios?"} %>
+      <%= link_to "Cancelar", price_imports_path, class: "btn btn-light" %>
+    <% end %>
+  <% else %>
+    <p class="text-muted">No hay nada que aplicar.</p>
+  <% end %>
+</div>

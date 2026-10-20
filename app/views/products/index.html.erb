@@ -2,7 +2,7 @@
   <div class="col-md-2"><%= select_tag :family_id, options_from_collection_for_select(Family.order(:name), :id, :name, params[:family_id]), include_blank: "Toda familia", class: "form-select form-select-sm" %></div>
   <div class="col-md-2"><%= select_tag :filter, options_for_select([["Sin precio", "no_price"], ["Inactivos", "inactive"]], params[:filter]), include_blank: "Cualquier estado", class: "form-select form-select-sm" %></div>
 <% end %>
-<%= render layout: "shared/index", locals: {title: "Productos", subtitle: "Cada producto con su código base, familia, precio y estructura de variantes.", model: Product, new_path: new_product_path, new_label: "Nuevo producto", filters: filters, pagy: @pagy} do %>
+<%= render layout: "shared/index", locals: {title: "Productos", subtitle: "Cada producto con su código base, familia, precio y estructura de variantes.", model: Product, new_path: new_product_path, new_label: "Nuevo producto", filters: filters, pagy: @pagy, extra: link_to(price_imports_path, class: "btn btn-outline-secondary") { tag.i(class: "bi bi-cash-coin") + " Cargar precios" }} do %>
   <table class="table table-hover align-middle mb-0 small">
     <thead class="bg-light"><tr><th class="ps-3">Producto</th><th>Familia</th><th class="text-end">Precio</th><th class="text-center">Variantes</th><th class="text-center">Piezas</th><th>Revisión</th></tr></thead>
     <tbody>

@@ -1,0 +1,23 @@
+<div class="container py-4" style="max-width: 820px;">
+  <%= link_to products_path, class: "btn btn-sm btn-light mb-3" do %><i class="bi bi-arrow-left"></i> Productos<% end %>
+  <h1 class="h4 fw-bold mb-1">Cargar precios</h1>
+  <p class="text-muted">Actualiza los precios de venta de muchos productos de una vez, desde Excel o CSV. Antes de aplicar verás exactamente qué va a cambiar.</p>
+  <div class="card border-0 shadow-sm rounded-4 mb-3">
+    <div class="card-body">
+      <h6 class="fw-bold">1. Descarga la plantilla</h6>
+      <p class="small text-muted mb-2">Trae todos los productos con su precio actual. Edita solo la columna <b>Precio</b> (deja vacío para no tocar un producto).</p>
+      <%= link_to price_template_path(format: "xlsx"), class: "btn btn-sm btn-success" do %><i class="bi bi-file-earmark-excel"></i> Excel (.xlsx)<% end %>
+      <%= link_to price_template_path(format: "csv"), class: "btn btn-sm btn-outline-secondary" do %><i class="bi bi-filetype-csv"></i> CSV<% end %>
+    </div>
+  </div>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body">
+      <h6 class="fw-bold">2. Sube el archivo</h6>
+      <p class="small text-muted">Necesita las columnas <b>Código base</b> y <b>Precio</b>. Acepta <code>450000</code>, <code>450.000</code>, <code>450.000,50</code> o <code>₡450000</code>.</p>
+      <%= form_with url: price_preview_path, multipart: true, class: "d-flex gap-2" do |f| %>
+        <%= f.file_field :file, accept: ".csv,.xlsx", class: "form-control form-control-sm" %>
+        <%= f.submit "Ver qué cambiaría", class: "btn btn-sm btn-primary text-nowrap" %>
+      <% end %>
+    </div>
+  </div>
+</div>

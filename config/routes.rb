@@ -86,6 +86,12 @@ Rails.application.routes.draw do
   # Edición rápida de un campo desde las listas
   patch "rapido/:kind/:id", to: "quick_edits#update", as: :quick_edit, constraints: {kind: /product|variant|supplier_item|provider|family|variant_type/}
 
+  # Carga masiva de precios (CSV o Excel)
+  get "precios", to: "price_imports#new", as: :price_imports
+  get "precios/plantilla", to: "price_imports#template", as: :price_template
+  post "precios/vista_previa", to: "price_imports#preview", as: :price_preview
+  post "precios/aplicar", to: "price_imports#apply", as: :price_apply
+
   # Historial de cambios y deshacer
   get "historial", to: "changes#index", as: :changes
   post "historial/:id/deshacer", to: "changes#undo", as: :undo_change

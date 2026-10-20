@@ -16,6 +16,7 @@
       <% if pr[:pending] > 0 %>
         <%= link_to next_review_path(type: model.name), class: "btn btn-success fw-bold" do %><i class="bi bi-play-fill"></i> Empezar a revisar (<%= pr[:pending] %> pendientes)<% end %>
       <% end %>
+      <%= local_assigns[:extra] %>
       <%= link_to new_path, class: "btn btn-outline-primary" do %><i class="bi bi-plus-lg"></i> <%= new_label %><% end %>
     </div>
   </div>
