@@ -140,4 +140,12 @@ class BulkActionsControllerTest < ActionDispatch::IntegrationTest
     post bulk_url("product"), params: {ids: [@a.id], bulk_action: "show", return_to: "//malo.example"}
     assert_redirected_to products_path
   end
+
+  test "los selectores de la barra son nativos: el buscador (TomSelect) se abriría fuera de la pantalla" do
+    %w[products variants supplier_items].each do |list|
+      get public_send("#{list}_url")
+      assert_select "#bulk-form select[name=target_id]:not([data-no-tomselect])", count: 0
+      assert_select "#bulk-form select[name=target_id][data-no-tomselect]", count: 1
+    end
+  end
 end
