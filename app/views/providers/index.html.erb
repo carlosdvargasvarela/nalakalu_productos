@@ -1,9 +1,9 @@
-<%= render layout: "shared/index", locals: {title: "Proveedores", subtitle: "A quién se le compra.", model: Provider, new_path: new_provider_path, new_label: "Nuevo proveedor", hideable: true} do %>
+<%= render layout: "shared/index", locals: {bulk: "provider", all_ids: @providers.map(&:id), title: "Proveedores", subtitle: "A quién se le compra.", model: Provider, new_path: new_provider_path, new_label: "Nuevo proveedor", hideable: true} do %>
   <table class="table table-hover align-middle mb-0 small">
-    <thead class="bg-light"><tr><th class="ps-3">Proveedor</th><th>Categoría</th><th>Contacto</th><th class="text-center">Piezas</th><th>Revisión</th></tr></thead>
+    <thead class="bg-light"><tr><th class="ps-3" style="width: 34px;"><%= bulk_check_all %></th><th>Proveedor</th><th>Categoría</th><th>Contacto</th><th class="text-center">Piezas</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @providers.each do |p| %>
-        <tr class="<%= "text-muted" unless p.active %>" data-controller="row-link" data-row-link-url-value="<%= provider_path(p) %>" data-action="click->row-link#go">
+        <tr class="<%= "text-muted" unless p.active %>" data-controller="row-link" data-row-link-url-value="<%= provider_path(p) %>" data-action="click->row-link#go"><td class="ps-3"><%= bulk_check(p) %></td>
           <td class="ps-3" style="min-width: 260px;"><%= quick_name("provider", p, provider_path(p)) %><%= content_tag(:span, "Oculto", class: "badge bg-secondary ms-2") unless p.active %></td>
           <td><%= p.category %></td>
           <td><%= [p.contact_name, p.email, p.phone].compact_blank.join(" · ").presence || content_tag(:span, "Sin contacto", class: "text-warning") %></td>

@@ -93,6 +93,12 @@ Rails.application.routes.draw do
   post "precios/vista_previa", to: "price_imports#preview", as: :price_preview
   post "precios/aplicar", to: "price_imports#apply", as: :price_apply
 
+  # Acciones en masa desde las listas
+  scope constraints: {kind: /product|variant|variant_type|family|provider|supplier_item/} do
+    post "masivo/:kind", to: "bulk_actions#create", as: :bulk
+    post "masivo/:kind/confirmar_eliminar", to: "bulk_actions#confirm_delete", as: :bulk_confirm_delete
+  end
+
   # Historial de cambios y deshacer
   get "historial", to: "changes#index", as: :changes
   post "historial/:id/deshacer", to: "changes#undo", as: :undo_change

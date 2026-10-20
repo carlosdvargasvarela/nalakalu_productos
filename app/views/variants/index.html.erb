@@ -1,12 +1,12 @@
 <% filters = capture do %>
   <div class="col-md-2"><%= select_tag :type_id, options_from_collection_for_select(VariantType.order(:name), :id, :name, params[:type_id]), include_blank: "Todo tipo", class: "form-select form-select-sm" %></div>
 <% end %>
-<%= render layout: "shared/index", locals: {title: "Variantes", subtitle: "Las opciones de cada tipo (telas, maderas, piedras...).", model: Variant, new_path: new_variant_path, new_label: "Nueva variante", filters: filters, pagy: @pagy} do %>
+<%= render layout: "shared/index", locals: {bulk: "variant", all_ids: @all_ids, title: "Variantes", subtitle: "Las opciones de cada tipo (telas, maderas, piedras...).", model: Variant, new_path: new_variant_path, new_label: "Nueva variante", filters: filters, pagy: @pagy} do %>
   <table class="table table-hover align-middle mb-0 small">
-    <thead class="bg-light"><tr><th class="ps-3">Tipo</th><th>Variante</th><th>Código CRM</th><th>Código proveedor</th><th>Revisión</th></tr></thead>
+    <thead class="bg-light"><tr><th class="ps-3" style="width: 34px;"><%= bulk_check_all %></th><th>Tipo</th><th>Variante</th><th>Código CRM</th><th>Código proveedor</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @variants.each do |v| %>
-        <tr class="<%= "text-muted" unless v.active %>" data-controller="row-link" data-row-link-url-value="<%= variant_path(v) %>" data-action="click->row-link#go">
+        <tr class="<%= "text-muted" unless v.active %>" data-controller="row-link" data-row-link-url-value="<%= variant_path(v) %>" data-action="click->row-link#go"><td class="ps-3"><%= bulk_check(v) %></td>
           <td class="ps-3"><%= v.variant_type.name %></td>
           <td><%= link_to v.seller_name, variant_path(v), class: "fw-bold text-decoration-none" %></td>
           <td style="width: 170px;"><%= quick_field("variant", v, "code", placeholder: "—", css: "font-monospace") %></td>

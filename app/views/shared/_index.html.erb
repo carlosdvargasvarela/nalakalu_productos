@@ -7,7 +7,7 @@
   .quick-field:focus { background: #fff; }
   tr[data-controller~="row-link"] { cursor: pointer; }
 </style>
-<div class="container-fluid px-4 py-4">
+<div class="container-fluid px-4 py-4 pb-5" <%= tag.attributes(data: (local_assigns[:bulk] ? {controller: "bulk-actions", bulk_actions_all_ids_value: all_ids.to_json} : {})) %>>
   <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
     <div>
       <h1 class="h3 fw-bold mb-0"><%= title %></h1>
@@ -44,6 +44,7 @@
   <div class="card border-0 shadow-sm rounded-4">
     <div class="table-responsive"><%= yield %></div>
   </div>
+  <%= render "shared/bulk_bar", kind: bulk, all_ids: all_ids if local_assigns[:bulk] %>
   <% if local_assigns[:pagy] && pagy.pages > 1 %>
     <%= render "shared/pager", pagy: pagy %>
   <% end %>

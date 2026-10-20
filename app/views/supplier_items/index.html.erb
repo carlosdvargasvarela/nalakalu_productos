@@ -2,12 +2,12 @@
   <div class="col-md-2"><%= select_tag :provider_id, options_from_collection_for_select(@providers, :id, :name, params[:provider_id]), include_blank: "Todo proveedor", class: "form-select form-select-sm" %></div>
   <div class="col-md-2"><%= select_tag :status, options_for_select([["Sin costo", "no_cost"], ["Sin vínculos", "no_links"], ["De QuickBooks", "from_qb"]], params[:status]), include_blank: "Cualquier estado", class: "form-select form-select-sm" %></div>
 <% end %>
-<%= render layout: "shared/index", locals: {title: "Piezas de proveedor", subtitle: "Lo que se compra a cada proveedor, con su código y costo, y dónde se usa.", model: SupplierItem, new_path: new_supplier_item_path, new_label: "Nueva pieza", filters: filters} do %>
+<%= render layout: "shared/index", locals: {bulk: "supplier_item", all_ids: @supplier_items.map(&:id), title: "Piezas de proveedor", subtitle: "Lo que se compra a cada proveedor, con su código y costo, y dónde se usa.", model: SupplierItem, new_path: new_supplier_item_path, new_label: "Nueva pieza", filters: filters} do %>
   <table class="table table-hover align-middle mb-0 small">
-    <thead class="bg-light"><tr><th class="ps-3">Proveedor</th><th>Pieza</th><th>Código</th><th>Unidad</th><th class="text-end">Costo</th><th class="text-center">Vínculos</th><th>Revisión</th></tr></thead>
+    <thead class="bg-light"><tr><th class="ps-3" style="width: 34px;"><%= bulk_check_all %></th><th>Proveedor</th><th>Pieza</th><th>Código</th><th>Unidad</th><th class="text-end">Costo</th><th class="text-center">Vínculos</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @supplier_items.each do |i| %>
-        <tr class="<%= "text-muted" unless i.active %>" data-controller="row-link" data-row-link-url-value="<%= supplier_item_path(i) %>" data-action="click->row-link#go">
+        <tr class="<%= "text-muted" unless i.active %>" data-controller="row-link" data-row-link-url-value="<%= supplier_item_path(i) %>" data-action="click->row-link#go"><td class="ps-3"><%= bulk_check(i) %></td>
           <td class="ps-3"><%= i.provider.name %></td>
           <td style="min-width: 300px;"><%= quick_name("supplier_item", i, supplier_item_path(i)) %><%= content_tag(:span, "QuickBooks", class: "badge bg-info bg-opacity-25 text-info-emphasis ms-1", title: "Importada desde QuickBooks") if i.source == "quickbooks" %></td>
           <td style="width: 190px;"><%= quick_field("supplier_item", i, "sku", placeholder: "Sin código", css: "font-monospace") %></td>

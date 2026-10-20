@@ -1,0 +1,37 @@
+<%# Barra de acciones en masa. locals: kind, all_ids %>
+<%= form_with url: bulk_path(kind), id: "bulk-form", method: :post, data: {turbo: false} do %>
+  <%= hidden_field_tag :all_mode, "0", data: {bulk_actions_target: "allMode"}, id: nil %>
+  <%= hidden_field_tag :all_ids, "", data: {bulk_actions_target: "allIds"}, id: nil %>
+  <div class="d-none shadow-lg" data-bulk-actions-target="bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 1030; background: #212529; color: #fff;">
+    <div class="container-fluid px-4 py-2 d-flex flex-wrap align-items-center gap-2">
+      <span class="fw-bold" data-bulk-actions-target="count">0 seleccionados</span>
+      <a href="#" class="small text-info d-none" data-bulk-actions-target="everyone" data-action="bulk-actions#selectEveryone"></a>
+      <a href="#" class="small text-white-50" data-action="bulk-actions#clear">Limpiar</a>
+      <span class="vr mx-1"></span>
+      <button name="bulk_action" value="approve" class="btn btn-sm btn-success" data-turbo-confirm="¿Aprobar los seleccionados sin revisarlos uno a uno?"><i class="bi bi-check-lg"></i> Aprobar</button>
+      <button name="bulk_action" value="pending" class="btn btn-sm btn-outline-light">Pendiente</button>
+      <input type="text" name="note" class="form-control form-control-sm" style="width: 190px;" placeholder="Comentario para pedir cambios">
+      <button name="bulk_action" value="needs_changes" class="btn btn-sm btn-outline-warning"><i class="bi bi-flag"></i> Pedir cambios</button>
+      <span class="vr mx-1"></span>
+      <button name="bulk_action" value="hide" class="btn btn-sm btn-outline-light"><i class="bi bi-eye-slash"></i> Ocultar</button>
+      <button name="bulk_action" value="show" class="btn btn-sm btn-outline-light"><i class="bi bi-eye"></i> Activar</button>
+      <% case kind
+         when "product" %>
+        <span class="vr mx-1"></span>
+        <select name="target_id" class="form-select form-select-sm" style="width: 190px;"><option value="">Familia…</option><%= options_from_collection_for_select(Family.where(active: true).order(:name), :id, :name) %></select>
+        <button name="bulk_action" value="assign_family" class="btn btn-sm btn-outline-info">Asignar</button>
+        <button name="bulk_action" value="unassign_family" class="btn btn-sm btn-outline-info">Sin familia</button>
+      <% when "variant" %>
+        <span class="vr mx-1"></span>
+        <select name="target_id" class="form-select form-select-sm" style="width: 190px;"><option value="">Tipo…</option><%= options_from_collection_for_select(VariantType.order(:name), :id, :name) %></select>
+        <button name="bulk_action" value="move_type" class="btn btn-sm btn-outline-info">Mover a tipo</button>
+      <% when "supplier_item" %>
+        <span class="vr mx-1"></span>
+        <select name="target_id" class="form-select form-select-sm" style="width: 210px;"><option value="">Proveedor…</option><%= options_from_collection_for_select(Provider.order(:name), :id, :name) %></select>
+        <button name="bulk_action" value="move_provider" class="btn btn-sm btn-outline-info">Mover a proveedor</button>
+      <% end %>
+      <span class="flex-grow-1"></span>
+      <button name="bulk_action" value="delete" formaction="<%= bulk_confirm_delete_path(kind) %>" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Eliminar…</button>
+    </div>
+  </div>
+<% end %>

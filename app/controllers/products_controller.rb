@@ -11,6 +11,7 @@ class ProductsController < ApplicationController
     scope = scope.where(list_price: nil) if params[:filter] == "no_price"
     scope = scope.where(active: false) if params[:filter] == "inactive"
     scope = scope.review_is(params[:review]).review_by(params[:reviewer])
+    @all_ids = scope.unscope(:includes).reorder(nil).distinct.pluck("products.id") # todos los resultados del filtro, para «seleccionar todos»
     @pagy, @products = pagy(scope, limit: 50)
   end
 

@@ -2,12 +2,12 @@
   <div class="col-md-2"><%= select_tag :family_id, options_from_collection_for_select(Family.order(:name), :id, :name, params[:family_id]), include_blank: "Toda familia", class: "form-select form-select-sm" %></div>
   <div class="col-md-2"><%= select_tag :filter, options_for_select([["Sin precio", "no_price"], ["Inactivos", "inactive"]], params[:filter]), include_blank: "Cualquier estado", class: "form-select form-select-sm" %></div>
 <% end %>
-<%= render layout: "shared/index", locals: {title: "Productos", subtitle: "Cada producto con su código base, familia, precio y estructura de variantes.", model: Product, new_path: new_product_path, new_label: "Nuevo producto", filters: filters, pagy: @pagy, extra: link_to(price_imports_path, class: "btn btn-outline-secondary") { tag.i(class: "bi bi-cash-coin") + " Cargar precios" }} do %>
+<%= render layout: "shared/index", locals: {bulk: "product", all_ids: @all_ids, title: "Productos", subtitle: "Cada producto con su código base, familia, precio y estructura de variantes.", model: Product, new_path: new_product_path, new_label: "Nuevo producto", filters: filters, pagy: @pagy, extra: link_to(price_imports_path, class: "btn btn-outline-secondary") { tag.i(class: "bi bi-cash-coin") + " Cargar precios" }} do %>
   <table class="table table-hover align-middle mb-0 small">
-    <thead class="bg-light"><tr><th class="ps-3">Producto</th><th>Familia</th><th class="text-end">Precio</th><th class="text-center">Variantes</th><th class="text-center">Piezas</th><th>Revisión</th></tr></thead>
+    <thead class="bg-light"><tr><th class="ps-3" style="width: 34px;"><%= bulk_check_all %></th><th>Producto</th><th>Familia</th><th class="text-end">Precio</th><th class="text-center">Variantes</th><th class="text-center">Piezas</th><th>Revisión</th></tr></thead>
     <tbody>
       <% @products.each do |p| %>
-        <tr class="<%= "text-muted" unless p.active %>" data-controller="row-link" data-row-link-url-value="<%= product_path(p) %>" data-action="click->row-link#go">
+        <tr class="<%= "text-muted" unless p.active %>" data-controller="row-link" data-row-link-url-value="<%= product_path(p) %>" data-action="click->row-link#go"><td class="ps-3"><%= bulk_check(p) %></td>
           <td class="ps-3" style="min-width: 320px;"><%= quick_name("product", p, product_path(p)) %><code class="text-muted ms-2"><%= p.base_code %></code></td>
           <td><%= p.family&.name || content_tag(:span, "Sin familia", class: "text-warning") %></td>
           <td class="text-end" style="width: 170px;"><%= quick_field("product", p, "list_price", type: "number", step: "0.01", placeholder: "Sin precio", css: "text-end") %></td>

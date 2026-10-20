@@ -12,4 +12,14 @@ module ApplicationHelper
         link_to(tag.i(class: "bi bi-box-arrow-up-right"), path, class: "text-muted small", title: "Abrir")
     end
   end
+
+  # Casilla de selección en masa (se envía con el formulario #bulk-form de shared/_bulk_bar)
+  def bulk_check(record)
+    tag.input(type: "checkbox", name: "ids[]", value: record.id, form: "bulk-form", class: "form-check-input",
+      data: {bulk_actions_target: "row", action: "change->bulk-actions#rowChanged"})
+  end
+
+  def bulk_check_all
+    tag.input(type: "checkbox", class: "form-check-input", title: "Seleccionar toda la página", data: {bulk_actions_target: "all", action: "change->bulk-actions#toggleAll"})
+  end
 end

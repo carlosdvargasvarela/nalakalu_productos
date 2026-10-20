@@ -11,6 +11,7 @@ class VariantsController < ApplicationController
     scope = scope.where(variant_type_id: params[:type_id]) if params[:type_id].present?
     scope = scope.where(active: false) if params[:filter] == "inactive"
     scope = scope.review_is(params[:review]).review_by(params[:reviewer])
+    @all_ids = scope.unscope(:includes).reorder(nil).distinct.pluck("variants.id")
     @pagy, @variants = pagy(scope, limit: 50)
   end
 
