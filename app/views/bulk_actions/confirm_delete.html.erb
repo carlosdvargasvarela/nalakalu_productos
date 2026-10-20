@@ -24,6 +24,7 @@
       <%= form_with url: bulk_path(@kind), method: :post do %>
         <% ids.each { |i| %><%= hidden_field_tag "ids[]", i, id: nil %><% } %>
         <%= hidden_field_tag :bulk_action, "hide" %>
+        <%= hidden_field_tag :return_to, params[:return_to], id: nil %>
         <button class="btn btn-success btn-sm"><i class="bi bi-eye-slash"></i> Ocultar <%= @records.size %></button>
       <% end %>
     </div></div></div>
@@ -34,9 +35,10 @@
         <% ids.each { |i| %><%= hidden_field_tag "ids[]", i, id: nil %><% } %>
         <%= hidden_field_tag :bulk_action, "delete" %>
         <%= hidden_field_tag :confirmed, "1" %>
+        <%= hidden_field_tag :return_to, params[:return_to], id: nil %>
         <button class="btn btn-danger btn-sm" data-turbo-confirm="¿Eliminar <%= @records.size %> <%= noun %>?"><i class="bi bi-trash"></i> Eliminar <%= @records.size %></button>
       <% end %>
     </div></div></div>
   </div>
-  <div class="mt-3"><%= link_to "Cancelar", polymorphic_path(@model), class: "btn btn-light" %></div>
+  <div class="mt-3"><%= link_to "Cancelar", return_path, class: "btn btn-light" %></div>
 </div>

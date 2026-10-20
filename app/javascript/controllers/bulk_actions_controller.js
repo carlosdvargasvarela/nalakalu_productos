@@ -34,6 +34,11 @@ export default class extends Controller {
     this.update()
   }
 
+  // El formulario va sin Turbo (muestra páginas completas), así que la confirmación es el confirm del navegador
+  confirm(event) {
+    if (!window.confirm(event.params.message)) event.preventDefault()
+  }
+
   update() {
     const allMode = this.allModeTarget.value === "1"
     const checked = this.rowTargets.filter(box => box.checked).length

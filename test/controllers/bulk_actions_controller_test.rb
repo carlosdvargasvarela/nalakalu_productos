@@ -41,13 +41,12 @@ class BulkActionsControllerTest < ActionDispatch::IntegrationTest
     otro = VariantType.create!(name: "Maderas")
     Variant.create!(variant_type: otro, name: "M1", active: false)
 
-    post bulk_confirm_delete_url("variant_type"), params: {ids: [tipo.id, otro.id], bulk_action: "delete"}
+    post bulk_url("variant_type"), params: {ids: [tipo.id, otro.id], bulk_action: "delete"}
     assert_response :success
     assert_match "Eliminar 2 tipos de variante", response.body
     assert_select ".badge.bg-danger", text: "3" # 3 variantes se eliminan junto con los tipos
 
-    post bulk_url("variant_type"), params: {ids: [tipo.id, otro.id], bulk_action: "delete"} # sin confirmar
-    assert VariantType.exists?(tipo.id)
+    assert VariantType.exists?(tipo.id), "sin confirmar no se borra"
 
     post bulk_url("variant_type"), params: {ids: [tipo.id, otro.id], bulk_action: "delete", confirmed: "1"}
     assert_not VariantType.exists?(tipo.id)
@@ -107,5 +106,38 @@ class BulkActionsControllerTest < ActionDispatch::IntegrationTest
     ids = JSON.parse(css_select("[data-bulk-actions-all-ids-value]").first["data-bulk-actions-all-ids-value"])
     assert_equal ids.uniq, ids
     assert_equal Product.count, ids.size
+  end
+
+  test "los botones no cambian de destino (el token CSRF es por formulario) y el borrado funciona con CSRF activo" do
+    ActionController::Base.allow_forgery_protection = true
+    get products_url
+    assert_select "#bulk-form button[formaction]", count: 0
+    token = css_select("#bulk-form input[name=authenticity_token]").first["value"]
+    post bulk_url("product"), params: {authenticity_token: token, ids: [@a.id], bulk_action: "delete"}
+    assert_response :success
+    assert_match "Eliminar 1 producto", response.body
+    assert Product.exists?(@a.id)
+  ensure
+    ActionController::Base.allow_forgery_protection = false
+  end
+
+  test "vuelve a la lista de origen con sus filtros, nunca a la pantalla de confirmación" do
+    post bulk_url("product"), params: {ids: [@a.id], bulk_action: "hide", return_to: "/products?filter=no_price"}
+    assert_redirected_to "/products?filter=no_price"
+
+    # flujo completo: lista -> confirmación -> eliminar; el Referer es la confirmación (solo POST)
+    post bulk_url("product"), params: {ids: [@b.id], bulk_action: "delete", return_to: "/products?review=pending"}
+    assert_match "/products?review=pending", css_select("input[name=return_to]").first["value"]
+    post bulk_url("product"), params: {ids: [@b.id], bulk_action: "delete", confirmed: "1", return_to: "/products?review=pending"},
+      headers: {"HTTP_REFERER" => "http://www.example.com/masivo/product"}
+    assert_redirected_to "/products?review=pending"
+    assert_not Product.exists?(@b.id)
+  end
+
+  test "return_to solo acepta rutas internas" do
+    post bulk_url("product"), params: {ids: [@a.id], bulk_action: "hide", return_to: "https://malo.example/robar"}
+    assert_redirected_to products_path
+    post bulk_url("product"), params: {ids: [@a.id], bulk_action: "show", return_to: "//malo.example"}
+    assert_redirected_to products_path
   end
 end

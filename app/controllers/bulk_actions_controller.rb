@@ -9,17 +9,20 @@ class BulkActionsController < ApplicationController
   KINDS = DeletionsController::KINDS
   ACTIONS = %w[approve pending needs_changes hide show delete assign_family unassign_family move_type move_provider].freeze
 
-  # Paso previo a eliminar: muestra el impacto total y ofrece ocultar en su lugar.
-  def confirm_delete
+  def confirm_delete_page
     @impact = Hash.new(0)
     @records.first(2000).each { |r| DeleteImpact.for(r).each { |text, n, loses| @impact[[text, loses]] += n } }
     @sample = @records.first(12)
+    render :confirm_delete
   end
 
+  # delete sin confirmar muestra el impacto total y ofrece ocultar en su lugar (confirm_delete_page)
   def create
     action = params[:bulk_action].to_s
     return back(alert: "Acción no válida.") unless ACTIONS.include?(action)
     return back(alert: "No elegiste ningún registro.") if @records.empty?
+
+    return confirm_delete_page if action == "delete" && params[:confirmed] != "1"
 
     message = send("do_#{action}")
     back(notice: "#{message} Puedes deshacerlo desde el Historial.")
@@ -38,20 +41,30 @@ class BulkActionsController < ApplicationController
     @records = @model.where(id: ids.map(&:to_i).uniq).order(:id).to_a
   end
 
+  # Vuelve a la lista de origen (con sus filtros). Nunca al Referer: tras la pantalla de confirmación sería una URL que solo acepta POST.
+  # "1 aprobado" / "3 aprobados"
+  def n_(n, one, many = "#{one}s") = (n == 1) ? "1 #{one}" : "#{n} #{many}"
+
   def back(**flash)
-    redirect_back_or_to polymorphic_path(@model), status: :see_other, **flash
+    redirect_to return_path, status: :see_other, **flash
   end
 
+  def return_path
+    to = params[:return_to].to_s
+    (to.start_with?("/") && !to.start_with?("//")) ? to : polymorphic_path(@model)
+  end
+  helper_method :return_path
+
   # ── Revisión ───────────────────────────────────────────────────────────
-  def do_approve = set_review("approved", nil, "aprobados")
-  def do_pending = set_review("pending", nil, "marcados como pendientes")
+  def do_approve = set_review("approved", nil, "aprobado")
+  def do_pending = set_review("pending", nil, "marcado como pendiente", "marcados como pendientes")
 
   def do_needs_changes
     raise Refused, "Escribe un comentario: es obligatorio para pedir cambios." if params[:note].to_s.strip.empty?
-    set_review("needs_changes", params[:note].to_s.strip, "marcados «requiere cambios»")
+    set_review("needs_changes", params[:note].to_s.strip, "marcado «requiere cambios»", "marcados «requiere cambios»")
   end
 
-  def set_review(status, note, label)
+  def set_review(status, note, one, many = "#{one}s")
     @records.each do |r|
       review = r.review || r.build_review
       before = review.persisted? ? review.attributes.slice("status", "note", "user_id") : nil
@@ -61,25 +74,23 @@ class BulkActionsController < ApplicationController
       # Review no es Tracked; en lote sí se registra para poder deshacerlo.
       before ? ChangeLog.log(review, "update", before, review.attributes.slice("status", "note", "user_id")) : ChangeLog.log(review, "create", nil, review.attributes)
     end
-    "#{@records.size} #{label}."
+    "#{n_(@records.size, one, many)}."
   end
 
   # ── Ocultar / activar ──────────────────────────────────────────────────
-  def do_hide = set_active(false, "ocultos")
-  def do_show = set_active(true, "activados")
+  def do_hide = set_active(false, "oculto")
+  def do_show = set_active(true, "activado")
 
-  def set_active(value, label)
+  def set_active(value, one)
     @records.each { _1.update!(active: value) }
-    "#{@records.size} #{label}."
+    "#{n_(@records.size, one)}."
   end
 
   # ── Eliminar (requiere confirmación previa) ────────────────────────────
   def do_delete
-    raise Refused, "Falta confirmar la eliminación." unless params[:confirmed] == "1"
-
     failed = @records.reject(&:destroy)
-    msg = "#{@records.size - failed.size} eliminados."
-    msg += " No se pudieron eliminar #{failed.size} (tienen dependencias que lo impiden)." if failed.any?
+    msg = "#{n_(@records.size - failed.size, "eliminado")}."
+    msg += " No se pudo eliminar #{n_(failed.size, "registro")} (tiene dependencias que lo impiden)." if failed.any?
     msg
   end
 
@@ -87,12 +98,12 @@ class BulkActionsController < ApplicationController
   def do_assign_family
     family = Family.find(params[:target_id])
     n = ChangeLog.bulk_update(Product.where(id: @records.map(&:id)), family_id: family.id) # solo agrupa: conserva sus reglas
-    "#{n} productos asignados a «#{family.name}»."
+    "#{n_(n, "producto asignado", "productos asignados")} a «#{family.name}»."
   end
 
   def do_unassign_family
     n = ChangeLog.bulk_update(Product.where(id: @records.map(&:id)), family_id: nil)
-    "#{n} productos sin familia."
+    "#{n_(n, "producto")} sin familia."
   end
 
   # ── Variantes: tipo ────────────────────────────────────────────────────
@@ -102,13 +113,13 @@ class BulkActionsController < ApplicationController
     @records.group_by(&:variant_type).each do |type, variants|
       moved += type.move_variants_to!(target, variants.map(&:id)) unless type.id == target.id
     end
-    "#{moved} variantes movidas a «#{target.name}»."
+    "#{n_(moved, "variante movida", "variantes movidas")} a «#{target.name}»."
   end
 
   # ── Piezas: proveedor ──────────────────────────────────────────────────
   def do_move_provider
     target = Provider.find(params[:target_id])
     n = ChangeLog.bulk_update(SupplierItem.where(id: @records.map(&:id)), provider_id: target.id)
-    "#{n} piezas movidas a «#{target.name}»."
+    "#{n_(n, "pieza movida", "piezas movidas")} a «#{target.name}»."
   end
 end

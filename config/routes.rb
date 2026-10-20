@@ -96,7 +96,6 @@ Rails.application.routes.draw do
   # Acciones en masa desde las listas
   scope constraints: {kind: /product|variant|variant_type|family|provider|supplier_item/} do
     post "masivo/:kind", to: "bulk_actions#create", as: :bulk
-    post "masivo/:kind/confirmar_eliminar", to: "bulk_actions#confirm_delete", as: :bulk_confirm_delete
   end
 
   # Historial de cambios y deshacer
