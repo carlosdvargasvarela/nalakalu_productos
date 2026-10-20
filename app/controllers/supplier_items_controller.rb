@@ -1,7 +1,7 @@
 class SupplierItemsController < ApplicationController
   before_action :authenticate_user!
   before_action :authorize_catalog_editor!
-  before_action :set_supplier_item, only: %i[show edit update destroy]
+  before_action :set_supplier_item, only: %i[show edit update destroy duplicate]
 
   def index
     scope = SupplierItem.joins(:provider).includes(:provider, :review, :supplier_links)
@@ -20,6 +20,25 @@ class SupplierItemsController < ApplicationController
   end
 
   def show
+  end
+
+  # Una copia por variante: misma pieza base, vinculada al/los mismos productos + esa variante.
+  # El código (sku) queda vacío: cada variante tiene el suyo.
+  def duplicate
+    variants = Variant.where(id: Array(params[:variant_ids]).compact_blank).includes(:variant_type)
+    return redirect_to(@supplier_item, alert: "Elige al menos una variante.") if variants.empty?
+
+    product_ids = @supplier_item.supplier_links.where.not(product_id: nil).where(variant_id: nil).pluck(:product_id)
+    SupplierItem.transaction do
+      variants.each do |v|
+        copy = @supplier_item.dup
+        copy.assign_attributes(name: "#{@supplier_item.name} · #{v.seller_name}", sku: nil)
+        copy.save!
+        (product_ids.presence || [nil]).each { |pid| copy.supplier_links.create!(product_id: pid, variant: v) }
+      end
+    end
+    redirect_to supplier_items_path(search: @supplier_item.name),
+      notice: "Se crearon #{variants.size} copias. Completa el código y el costo de cada una."
   end
 
   def new

@@ -61,6 +61,7 @@ Rails.application.routes.draw do
   end
 
   resources :supplier_items do
+    member { post :duplicate }
     collection { post :import }
   end
   resources :supplier_links, only: [:create, :destroy]
