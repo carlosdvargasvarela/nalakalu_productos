@@ -1,0 +1,30 @@
+<%# Variantes y productos que se parecen a una pieza. locals: suggestions, item %>
+<% if suggestions.any? %>
+  <div class="card border-0 shadow-sm rounded-4 mb-4 border-start border-4 border-warning">
+    <div class="card-header bg-white py-2">
+      <div class="fw-bold"><i class="bi bi-lightbulb text-warning me-1"></i>Se encontraron variantes y productos que se parecen</div>
+      <div class="small text-muted">Por parecido de nombre. «Solo variante» sirve para cosas como un textil que se usa en cualquier producto; «solo producto» si la pieza es de ese producto.</div>
+    </div>
+    <ul class="list-group list-group-flush small">
+      <% suggestions.each do |s| %>
+        <% r = s.record %>
+        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+          <div class="min-width-0">
+            <% if r.is_a?(Variant) %>
+              <span class="badge bg-info">Variante · <%= r.variant_type.name %></span> <%= link_to r.seller_name, variant_path(r), class: "fw-bold text-decoration-none" %>
+            <% else %>
+              <span class="badge bg-secondary">Producto</span> <%= link_to r.name, product_path(r), class: "fw-bold text-decoration-none" %> <code class="text-muted"><%= r.base_code %></code>
+            <% end %>
+            <span class="badge bg-warning bg-opacity-25 text-warning-emphasis" title="Palabras en común: <%= s.common.join(", ") %>"><%= s.percent %>%</span>
+          </div>
+          <%= form_with url: supplier_links_path, method: :post, class: "m-0" do %>
+            <%= hidden_field_tag "supplier_link[supplier_item_id]", item.id, id: nil %>
+            <%= hidden_field_tag(r.is_a?(Variant) ? "supplier_link[variant_id]" : "supplier_link[product_id]", r.id, id: nil) %>
+            <%= hidden_field_tag :return_to, request.fullpath, id: nil %>
+            <button class="btn btn-sm btn-outline-success text-nowrap"><i class="bi bi-link-45deg"></i> Vincular</button>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

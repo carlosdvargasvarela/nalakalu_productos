@@ -85,6 +85,9 @@ class ReviewGuide
     if v.variant_type.own_supplier_code
       out << (v.supplier_links.any? ? ok("Tiene su pieza de proveedor") : bad("Falta su pieza de proveedor", "Este tipo se compra con código propio. Crea o vincula la pieza (Piezas de proveedor → Dónde se usa)."))
     end
+    if v.supplier_links.empty? && (sug = NameMatcher.new.pieces_for_variant(v).size) > 0
+      out << warn("#{(sug == 1) ? "Se encontró 1 pieza que se parece" : "Se encontraron #{sug} piezas que se parecen"} por el nombre", "Míralas en «Código de proveedor» y vincula la que corresponda con un clic.")
+    end
     out << info("Código CRM: #{v.code.presence || "—"}")
     out
   end
@@ -127,7 +130,8 @@ class ReviewGuide
     out << (i.sku.present? ? ok("Código del proveedor: #{i.sku}") : bad("Sin código del proveedor", "Es lo que identifica la pieza al comprar. Escríbelo en la lista (columna Código)."))
     out << (i.default_cost ? ok("Costo: #{money(i.default_cost)} por #{i.unit}") : bad("Sin costo", "Escríbelo en la lista (columna Costo)."))
     links = i.supplier_links.to_a
-    out << (links.any? ? ok("Vinculada a #{pl(links.size, "producto o variante", "productos o variantes")}") : bad("No está vinculada a ningún producto ni variante", "Sin vínculo no se puede exportar. Agrégalo en «Dónde se usa»."))
+    sug = links.empty? ? NameMatcher.new.targets_for_piece(i).size : 0
+    out << (links.any? ? ok("Vinculada a #{pl(links.size, "producto o variante", "productos o variantes")}") : bad("No está vinculada a ningún producto ni variante", sug > 0 ? "Hay #{pl(sug, "sugerencia", "sugerencias")} por parecido de nombre justo arriba: vincúlala con un clic." : "Sin vínculo no se puede exportar. Agrégalo en «Dónde se usa»."))
     out << info("Proveedor: #{i.provider.name}")
     out.concat(qb_item_checks(i))
     out

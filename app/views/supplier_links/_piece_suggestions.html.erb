@@ -1,0 +1,28 @@
+<%# Piezas que se parecen a una variante o a un producto. locals: suggestions, variant: nil, product: nil %>
+<% if suggestions.any? %>
+  <div class="card border-0 shadow-sm rounded-4 mb-3 border-start border-4 border-warning">
+    <div class="card-header bg-white py-2">
+      <div class="fw-bold"><i class="bi bi-lightbulb text-warning me-1"></i>Piezas que se parecen</div>
+      <div class="small text-muted">Por parecido de nombre. Revisa y vincula la que corresponda.</div>
+    </div>
+    <ul class="list-group list-group-flush small">
+      <% suggestions.each do |s| %>
+        <% i = s.record %>
+        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+          <div class="min-width-0">
+            <%= link_to i.name, supplier_item_path(i), class: "fw-bold text-decoration-none" %>
+            <span class="badge bg-warning bg-opacity-25 text-warning-emphasis" title="Palabras en común: <%= s.common.join(", ") %>"><%= s.percent %>%</span>
+            <div class="text-muted"><%= i.provider.name %> · <%= i.sku.presence || "sin código" %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡", format: "%u%n") : "sin costo" %></div>
+          </div>
+          <%= form_with url: supplier_links_path, method: :post, class: "m-0" do %>
+            <%= hidden_field_tag "supplier_link[supplier_item_id]", i.id, id: nil %>
+            <%= hidden_field_tag "supplier_link[variant_id]", variant.id, id: nil if variant %>
+            <%= hidden_field_tag "supplier_link[product_id]", product.id, id: nil if product %>
+            <%= hidden_field_tag :return_to, request.fullpath, id: nil %>
+            <button class="btn btn-sm btn-outline-success text-nowrap"><i class="bi bi-link-45deg"></i> Vincular</button>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

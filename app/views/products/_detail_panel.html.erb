@@ -96,6 +96,7 @@
           <% end %>
         </ul>
       <% end %>
+      <%= render "supplier_links/piece_suggestions", suggestions: NameMatcher.new.pieces_for_product(product), variant: nil, product: product %>
       <%# Zona peligro %>
       <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
         <span class="x-small text-muted">¿Ya no sirve este producto?</span>

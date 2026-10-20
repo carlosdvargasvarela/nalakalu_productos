@@ -84,4 +84,31 @@ class ReviewPanelTest < ActionDispatch::IntegrationTest
     assert_match "Variantes del producto", response.body
     assert_no_match(/Estructura DNA|Agregar Paso/, response.body)
   end
+
+  test "sugerencias por parecido de nombre: en la variante, la pieza y el producto, con vínculo de un clic que vuelve a la pantalla de origen" do
+    tipo = VariantType.create!(name: "Tiraderas")
+    v = Variant.create!(variant_type: tipo, name: "TIRADERA 10", active: false)
+    item = SupplierItem.create!(provider: providers(:one), name: "Tiradera Cerámica Beige/Blanca (TIR-10)", sku: "TIRCER010")
+    Rails.cache.clear
+
+    get variant_url(v)
+    assert_match "Piezas que se parecen", response.body
+    assert_match "Tiradera Cerámica Beige/Blanca (TIR-10)", response.body
+    assert_match "Se encontró 1 pieza que se parece", response.body
+
+    get supplier_item_url(item)
+    assert_match "variantes y productos que se parecen", response.body
+    assert_match "Hay 1 sugerencia", response.body
+    assert_select "form[action=?] input[name='supplier_link[variant_id]'][value=?]", supplier_links_path, v.id.to_s
+
+    post supplier_links_url, params: {supplier_link: {supplier_item_id: item.id, variant_id: v.id}, return_to: variant_path(v)}
+    assert_redirected_to variant_path(v)
+    assert_equal [v.id], item.supplier_links.pluck(:variant_id)
+    Rails.cache.clear
+    get variant_url(v)
+    assert_no_match(/Piezas que se parecen/, response.body, "ya vinculada: no se vuelve a sugerir")
+
+    post supplier_links_url, params: {supplier_link: {supplier_item_id: item.id, variant_id: v.id}, return_to: "//malo.example"}
+    assert_redirected_to supplier_item_path(item) # return_to externo se ignora
+  end
 end
