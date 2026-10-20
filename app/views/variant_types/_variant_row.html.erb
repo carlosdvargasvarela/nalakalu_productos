@@ -29,7 +29,6 @@
     <div class="btn-group shadow-sm rounded-pill overflow-hidden">
       <%# Editar — abre modal inline, sin turbo_frame externo %>
       <%= link_to edit_variant_path(variant),
-          data: { action: "click->variant-modal#openEdit" },
           class: "btn btn-sm btn-white border-end", title: "Editar" do %>
         <i class="bi bi-pencil text-primary"></i>
       <% end %>
