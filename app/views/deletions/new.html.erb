@@ -1,0 +1,36 @@
+<% name = record_title(@record) %>
+<div class="container py-4" style="max-width: 760px;">
+  <%= link_to polymorphic_path(@record), class: "btn btn-sm btn-light mb-3" do %><i class="bi bi-arrow-left"></i> Volver a «<%= name %>»<% end %>
+  <h1 class="h4 fw-bold mb-1">Eliminar «<%= name %>»</h1>
+  <p class="text-muted"><%= @record.class.model_name.human %> · esto es lo que se verá afectado:</p>
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <ul class="list-group list-group-flush">
+      <% @impact.each do |text, count, loses| %>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span><%= text %></span>
+          <span class="badge rounded-pill bg-<%= count.zero? ? "light text-muted border" : (loses ? "danger" : "warning text-dark") %>"><%= count %></span>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-4 border-success">
+        <div class="card-body">
+          <h6 class="fw-bold">Ocultar (recomendado)</h6>
+          <p class="small text-muted">Queda inactivo y no se borra nada. Se puede volver a activar editándolo.</p>
+          <%= button_to hide_record_path(params[:kind], @record), method: :patch, class: "btn btn-success btn-sm" do %><i class="bi bi-eye-slash"></i> Ocultar<% end %>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-4 border-danger">
+        <div class="card-body">
+          <h6 class="fw-bold">Eliminar definitivamente</h6>
+          <p class="small text-muted">Se borra todo lo marcado en rojo. Puedes deshacerlo desde el <%= link_to "Historial", changes_path, target: "_blank" %> mientras no haya cambios posteriores.</p>
+          <%= button_to confirm_delete_path(params[:kind], @record), method: :delete, class: "btn btn-danger btn-sm", data: {turbo_confirm: "¿Eliminar «#{name}» y lo marcado en rojo?"} do %><i class="bi bi-trash"></i> Eliminar<% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

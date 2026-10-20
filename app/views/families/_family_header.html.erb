@@ -16,10 +16,7 @@
           <%= link_to edit_family_path(family), class: "btn btn-white border shadow-sm rounded-pill px-4" do %>
             <i class="bi bi-pencil-square me-2"></i>Editar DNA
           <% end %>
-          <%= button_to family, method: :delete, class: "btn btn-outline-danger rounded-circle p-2", 
-              form: { data: { turbo_confirm: "¿Eliminar esta familia y desvincular sus productos?" } } do %>
-            <i class="bi bi-trash"></i>
-          <% end %>
+          <%= link_to confirm_delete_path("family", family), class: "btn btn-outline-danger rounded-circle p-2", title: "Eliminar" do %><i class="bi bi-trash"></i><% end %>
         </div>
       </div>
     </div>

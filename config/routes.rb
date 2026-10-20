@@ -76,6 +76,13 @@ Rails.application.routes.draw do
   get "reviews/next", to: "reviews#next", as: :next_review
   resources :reviews, only: [:create]
 
+  # Eliminar con confirmación (conteo de lo que se pierde) u ocultar en su lugar
+  scope constraints: {kind: /product|variant|variant_type|family|provider|supplier_item/} do
+    get "eliminar/:kind/:id", to: "deletions#new", as: :confirm_delete
+    delete "eliminar/:kind/:id", to: "deletions#destroy"
+    patch "ocultar/:kind/:id", to: "deletions#hide", as: :hide_record
+  end
+
   # Historial de cambios y deshacer
   get "historial", to: "changes#index", as: :changes
   post "historial/:id/deshacer", to: "changes#undo", as: :undo_change

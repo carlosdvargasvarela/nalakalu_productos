@@ -40,11 +40,7 @@
           class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm" do %>
         <i class="bi bi-pencil"></i>
       <% end %>
-      <%= button_to variant_path(variant), method: :delete,
-          form: { data: { turbo_confirm: "¿Eliminar '#{variant.display_name.presence || variant.name}'? Se borrarán sus compatibilidades y reglas. Esta acción no se puede deshacer." } },
-          class: "btn btn-sm btn-light rounded-pill px-3 border shadow-sm text-danger" do %>
-        <i class="bi bi-trash"></i>
-      <% end %>
+      <%= link_to confirm_delete_path("variant", variant), class: "btn btn-sm btn-white text-danger", title: "Eliminar" do %><i class="bi bi-trash"></i><% end %>
     </div>
   </td>
 </tr>

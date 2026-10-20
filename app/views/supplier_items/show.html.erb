@@ -4,6 +4,7 @@
     <h2 class="fw-bold mb-1"><%= @supplier_item.name %></h2>
     <span class="text-muted"><i class="bi bi-building me-1"></i><%= link_to @supplier_item.provider.name, provider_path(@supplier_item.provider) %></span>
     <span class="badge bg-<%= @supplier_item.active ? "success" : "secondary" %> ms-2"><%= @supplier_item.active ? "Activa" : "Inactiva" %></span>
+    <%= link_to confirm_delete_path("supplier_item", @supplier_item), class: "btn btn-sm btn-outline-danger ms-2", title: "Eliminar" do %><i class="bi bi-trash"></i> Eliminar<% end %>
   </div>
   <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body row g-3">

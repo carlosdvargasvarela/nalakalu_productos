@@ -33,11 +33,7 @@
               class: "btn btn-info text-white rounded-pill px-3 fw-bold shadow-sm btn-sm" do %>
             <i class="bi bi-plus-lg me-1"></i>Nueva Variante
           <% end %>
-          <%= button_to variant_type_path(variant_type), method: :delete,
-              class: "btn btn-outline-danger rounded-pill px-3 btn-sm",
-              form: { data: { turbo_confirm: "¿Eliminar '#{variant_type.name}'? Esto podría afectar reglas de productos existentes." } } do %>
-            <i class="bi bi-trash"></i>
-          <% end %>
+          <%= link_to confirm_delete_path("variant_type", variant_type), class: "btn btn-outline-danger rounded-pill px-3 btn-sm shadow-sm", title: "Eliminar" do %><i class="bi bi-trash"></i><% end %>
         </div>
       </div>
     </div>

@@ -30,11 +30,7 @@
             title="Mover a otro tipo">
             <i class="bi bi-arrow-left-right me-1"></i>Mover
           </button>
-          <%= button_to variant_path(variant), method: :delete,
-              form: { data: { turbo_confirm: "ATENCIÓN: Se eliminarán todos los precios y compatibilidades de esta variante. ¿Continuar?" } },
-              class: "btn btn-outline-danger rounded-pill px-3 btn-sm shadow-sm" do %>
-            <i class="bi bi-trash"></i>
-          <% end %>
+          <%= link_to confirm_delete_path("variant", variant), class: "btn btn-outline-danger rounded-pill px-3 btn-sm shadow-sm", title: "Eliminar" do %><i class="bi bi-trash"></i><% end %>
         </div>
       </div>
     </div>
