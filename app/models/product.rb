@@ -8,7 +8,8 @@ class Product < ApplicationRecord
 
   # Relaciones de proveeduría
   has_many :supply_rules, dependent: :destroy
-  has_and_belongs_to_many :supplier_items, join_table: :product_supplier_items
+  has_many :supplier_links, dependent: :destroy
+  has_many :supplier_items, -> { distinct }, through: :supplier_links
 
   before_save :flag_family_change, if: :will_save_change_to_family_id?
   after_save :sync_variant_rules_from_family, if: -> { @should_sync_rules }

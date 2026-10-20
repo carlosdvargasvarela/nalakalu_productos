@@ -1,3 +1,4 @@
-<%= turbo_frame_tag "product_workspace" do %>
+<%= render "reviews/bar", record: @product, back_path: products_path, back_label: "Productos", edit_path: edit_product_path(@product) %>
+<div class="container-fluid px-4 py-4">
   <%= render "detail_panel", product: @product %>
-<% end %>
+</div>

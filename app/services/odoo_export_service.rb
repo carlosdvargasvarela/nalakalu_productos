@@ -34,8 +34,12 @@ class OdooExportService
       (lines.presence || [[nil, nil]]).each_with_index.map { |(a, v), i| (i.zero? ? head : [nil] * 7) + [a, v] }
     end
 
-    sinfo = products.flat_map do |p|
-      p.supplier_items.includes(:provider).map { |s| ["nk_sinfo_#{s.id}_#{p.id}", s.provider.name, "nk_prod_#{p.base_code}", s.name, s.sku, s.default_cost] }
+    links = SupplierLink.includes(:product, :supplier_item, variant: :variant_type, supplier_item: :provider)
+    # Solo producto -> supplierinfo de la plantilla. Con variante no hay equivalente directo en Odoo (pendiente de decidir).
+    sinfo = links.select { _1.product && !_1.variant }.map { |l| s = l.supplier_item; ["nk_sinfo_#{s.id}_#{l.product_id}", s.provider.name, "nk_prod_#{l.product.base_code}", s.name, s.sku, s.default_cost] }
+    por_variante = links.select(&:variant).map do |l|
+      s = l.supplier_item
+      [l.kind == :variant ? "Solo variante" : "Producto + variante", l.variant.variant_type.name, l.variant.seller_name, l.product&.name, s.provider.name, s.sku, s.name, s.default_cost]
     end
 
     {
@@ -43,7 +47,8 @@ class OdooExportService
       "2_product_attribute.csv" => csv(%w[id name display_type create_variant], attrs.map { [attr_xid.(_1), _1, "select", "dynamic"] }),
       "3_product_attribute_value.csv" => csv(%w[id attribute_id/id name], pairs.map { |a, v| [val_xid.(a, v), attr_xid.(a), v] }),
       "4_product_template.csv" => csv(%w[id name default_code type categ_id/id active list_price attribute_line_ids/attribute_id/id attribute_line_ids/value_ids/id], rows),
-      "5_product_supplierinfo.csv" => csv(%w[id partner_id product_tmpl_id/id product_name product_code price], sinfo)
+      "5_product_supplierinfo.csv" => csv(%w[id partner_id product_tmpl_id/id product_name product_code price], sinfo),
+      "referencia_codigos_por_variante.csv" => csv(%w[vinculo tipo_variante variante producto proveedor codigo pieza costo], por_variante)
     }
   end
 

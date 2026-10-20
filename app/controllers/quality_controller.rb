@@ -35,9 +35,14 @@ class QualityController < ApplicationController
       "types_empty" => {title: "Tipos de variante sin variantes", rows: -> {
         VariantType.where.missing(:variants).order(:name).map { |t| [t.name, variant_type_path(t)] }
       }},
+      "variants_no_code" => {title: "Variantes de tipos con código de proveedor propio que no tienen pieza", rows: -> {
+        Variant.joins(:variant_type).where(variant_types: {own_supplier_code: true})
+          .where.not(id: SupplierLink.where.not(variant_id: nil).select(:variant_id)).includes(:variant_type).order("variant_types.name", "variants.name")
+          .map { |v| ["#{v.variant_type.name} → #{v.seller_name}", variant_path(v)] }
+      }},
       "items_no_price" => {title: "Piezas de proveedor sin costo", rows: -> { SupplierItem.where(default_cost: nil).includes(:provider).map { |s| ["#{s.provider.name} → #{s.name}", supplier_item_path(s)] } }},
       "items_no_sku" => {title: "Piezas de proveedor sin código", rows: -> { SupplierItem.where(sku: [nil, ""]).includes(:provider).map { |s| ["#{s.provider.name} → #{s.name}", supplier_item_path(s)] } }},
-      "items_no_products" => {title: "Piezas de proveedor sin producto relacionado", rows: -> { SupplierItem.where.missing(:products).includes(:provider).map { |s| ["#{s.provider.name} → #{s.name}", supplier_item_path(s)] } }},
+      "items_no_products" => {title: "Piezas de proveedor sin ningún vínculo (producto o variante)", rows: -> { SupplierItem.where.missing(:supplier_links).includes(:provider).map { |s| ["#{s.provider.name} → #{s.name}", supplier_item_path(s)] } }},
       "providers_no_items" => {title: "Proveedores sin piezas", rows: -> { Provider.where.missing(:supplier_items).order(:name).map { |pr| [pr.name, provider_path(pr)] } }}
     }
   end

@@ -1,5 +1,4 @@
-<%= turbo_frame_tag "provider_workspace" do %>
-  <%= render "providers/show_panel",
-      provider: @provider,
-      supplier_items: @supplier_items %>
-<% end %>
+<%= render "reviews/bar", record: @provider, back_path: providers_path, back_label: "Proveedores", edit_path: edit_provider_path(@provider) %>
+<div class="container-fluid px-4 py-4">
+  <%= render "providers/show_panel", provider: @provider, supplier_items: @supplier_items %>
+</div>

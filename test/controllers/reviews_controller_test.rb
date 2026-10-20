@@ -37,4 +37,11 @@ class ReviewsControllerTest < ActionDispatch::IntegrationTest
     get users_url
     assert_redirected_to root_path
   end
+
+  test "aprobar y siguiente salta al próximo pendiente" do
+    post reviews_url(advance: 1), params: {reviewable_type: "Product", reviewable_id: @product.id, status: "approved"}
+    nxt = Product.review_is("pending").order(:name, :id).first
+    assert_redirected_to product_path(nxt)
+    assert_not_equal @product.id, nxt.id
+  end
 end

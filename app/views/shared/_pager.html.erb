@@ -1,0 +1,8 @@
+<nav class="d-flex justify-content-between align-items-center mt-3">
+  <small class="text-muted"><%= pagy.count %> resultados · página <%= pagy.page %> de <%= pagy.pages %></small>
+  <ul class="pagination pagination-sm mb-0">
+    <% (([pagy.page - 2, 1].max)..([pagy.page + 2, pagy.pages].min)).each do |n| %>
+      <li class="page-item <%= "active" if n == pagy.page %>"><%= link_to n, url_for(request.query_parameters.merge(page: n)), class: "page-link" %></li>
+    <% end %>
+  </ul>
+</nav>

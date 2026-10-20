@@ -5,6 +5,15 @@ module Reviewable
 
   included do
     has_one :review, as: :reviewable, dependent: :destroy
+
+    # nil = sin filtro
+    scope :review_is, ->(status) do
+      done = Review.where(reviewable_type: klass.name).where.not(status: "pending").select(:reviewable_id)
+      case status
+      when "pending" then where.not(id: done)
+      when "approved", "needs_changes" then where(id: Review.where(reviewable_type: klass.name, status: status).select(:reviewable_id))
+      end
+    end
   end
 
   def review_status

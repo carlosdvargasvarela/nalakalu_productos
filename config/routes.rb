@@ -63,8 +63,10 @@ Rails.application.routes.draw do
   resources :supplier_items do
     collection { post :import }
   end
+  resources :supplier_links, only: [:create, :destroy]
 
   # Revisión: marca aprobado / requiere cambios sobre cualquier registro revisable
+  get "reviews/next", to: "reviews#next", as: :next_review
   resources :reviews, only: [:create]
 
   # Problemas de calidad de datos antes de migrar a Odoo

@@ -24,7 +24,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
       post products_url, params: { product: { active: @product.active, base_code: "PRODUCT-NUEVO", name: "Producto Nuevo" } }
     end
 
-    assert_redirected_to products_path(selected_id: Product.last.id)
+    assert_redirected_to product_path(Product.last)
   end
 
   test "crear producto no falla aunque el broadcast de ActionCable falle (ej. Redis mal configurado)" do
@@ -39,7 +39,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to products_path(selected_id: Product.last.id)
+    assert_redirected_to product_path(Product.last)
   end
 
   test "should show product" do
@@ -54,7 +54,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update product" do
     patch product_url(@product), params: { product: { active: @product.active, base_code: @product.base_code, name: @product.name } }
-    assert_redirected_to products_path(selected_id: @product.id)
+    assert_redirected_to product_path(@product)
   end
 
   test "should destroy product" do

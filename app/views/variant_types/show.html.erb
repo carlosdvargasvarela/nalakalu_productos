@@ -1,4 +1,4 @@
-<%# Turbo Frame wrapper — carga dentro del workspace del index %>
-<%= turbo_frame_tag "vt_workspace" do %>
+<%= render "reviews/bar", record: @variant_type, back_path: variant_types_path, back_label: "Tipos de variante", edit_path: edit_variant_type_path(@variant_type) %>
+<div class="container-fluid px-4 py-4">
   <%= render "variant_types/detail_panel", variant_type: @variant_type %>
-<% end %>
+</div>

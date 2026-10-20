@@ -23,7 +23,7 @@ class ProvidersControllerTest < ActionDispatch::IntegrationTest
       post providers_url, params: { provider: { active: @provider.active, contact_name: @provider.contact_name, email: @provider.email, name: "Proveedor Nuevo", notes: @provider.notes, phone: @provider.phone } }
     end
 
-    assert_redirected_to providers_path(selected_id: Provider.last.id)
+    assert_redirected_to provider_path(Provider.last)
   end
 
   test "should show provider" do
@@ -38,7 +38,7 @@ class ProvidersControllerTest < ActionDispatch::IntegrationTest
 
   test "should update provider" do
     patch provider_url(@provider), params: { provider: { active: @provider.active, contact_name: @provider.contact_name, email: @provider.email, name: @provider.name, notes: @provider.notes, phone: @provider.phone } }
-    assert_redirected_to providers_path(selected_id: @provider.id)
+    assert_redirected_to provider_path(@provider)
   end
 
   test "should destroy provider" do

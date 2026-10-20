@@ -1,25 +1,3 @@
-<%= turbo_frame_tag "product_workspace" do %>
-  <div class="card border-0 shadow-sm rounded-4">
-    <div class="card-header bg-white border-bottom p-4 rounded-top-4">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h5 class="fw-bold mb-0">
-            <i class="bi bi-pencil-square me-2 text-primary"></i>Editando: <%= @product.name %>
-          </h5>
-          <code class="text-muted small"><%= @product.base_code %></code>
-        </div>
-        <%= link_to products_path(selected_id: @product.id),
-            class: "btn btn-sm btn-outline-secondary rounded-pill px-3",
-            data: { turbo_frame: "product_workspace" } do %>
-          <i class="bi bi-x-lg me-1"></i>Cancelar
-        <% end %>
-      </div>
-    </div>
-    <div class="card-body p-4">
-      <%= render "form", product: @product %>
-    </div>
-  </div>
+<%= render layout: "shared/form_page", locals: {title: "Editando: #{@product.name}", back_path: product_path(@product), back_label: "Volver"} do %>
+  <%= render "form", product: @product %>
 <% end %>
-<style>
-  .rounded-top-4 { border-radius: 1rem 1rem 0 0 !important; }
-</style>

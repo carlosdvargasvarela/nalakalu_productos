@@ -1,18 +1,3 @@
-<%= turbo_frame_tag "provider_workspace" do %>
-  <div class="card border-0 shadow-sm rounded-4">
-    <div class="card-header bg-white py-3 border-bottom">
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0 small">
-          <li class="breadcrumb-item">
-            <%= link_to "Proveedores", providers_path, class: "text-decoration-none" %>
-          </li>
-          <li class="breadcrumb-item active fw-bold">Nuevo Proveedor</li>
-        </ol>
-      </nav>
-      <h5 class="fw-bold mb-0 mt-2">Registrar Nuevo Proveedor</h5>
-    </div>
-    <div class="card-body p-4">
-      <%= render "form", provider: @provider %>
-    </div>
-  </div>
+<%= render layout: "shared/form_page", locals: {title: "Nuevo proveedor", back_path: providers_path, back_label: "Proveedores"} do %>
+  <%= render "form", provider: @provider %>
 <% end %>

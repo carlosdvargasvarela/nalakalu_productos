@@ -1,6 +1,4 @@
-<%# Turbo Frame wrapper — carga dentro del workspace del index %>
-<%= turbo_frame_tag "variant_workspace" do %>
-  <%= render "variants/show_panel",
-      variant: @variant,
-      compatible_products: @compatible_products %>
-<% end %>
+<%= render "reviews/bar", record: @variant, back_path: variants_path, back_label: "Variantes", edit_path: edit_variant_path(@variant) %>
+<div class="container-fluid px-4 py-4">
+  <%= render "variants/show_panel", variant: @variant, compatible_products: @compatible_products %>
+</div>

@@ -1,5 +1,4 @@
 <div id="provider-show-<%= provider.id %>">
-  <%= render "reviews/box", record: provider %>
   <%# ── HEADER ── %>
   <div class="card border-0 shadow-sm rounded-4 mb-3">
     <div class="card-body p-4">
@@ -32,11 +31,6 @@
             data: { turbo_frame: "_top" },
             class: "btn btn-sm btn-outline-primary rounded-pill px-4" do %>
             <i class="bi bi-plus-lg me-1"></i>Nueva Pieza
-          <% end %>
-          <%= link_to edit_provider_path(provider),
-              data: { turbo_frame: "provider_workspace" },
-              class: "btn btn-outline-primary rounded-pill px-3 btn-sm shadow-sm" do %>
-            <i class="bi bi-pencil me-1"></i>Editar
           <% end %>
           <%= button_to provider_path(provider), method: :delete,
               form: { data: { turbo_confirm: "¿Eliminar este proveedor? Se eliminarán también sus piezas y reglas asociadas." } },

@@ -1,38 +1,22 @@
-<div class="container-fluid py-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h1 class="h3 fw-bold mb-0"><i class="bi bi-box-seam-fill text-primary me-2"></i>Piezas de proveedor</h1>
-      <p class="text-muted small mb-0">Lo que se compra a cada proveedor: código, costo y productos relacionados. <%= @supplier_items.size %> piezas.</p>
-    </div>
-    <%= link_to new_supplier_item_path, class: "btn btn-primary btn-sm fw-bold" do %><i class="bi bi-plus-lg me-1"></i>Nueva pieza<% end %>
-  </div>
-  <%= form_with url: supplier_items_path, method: :get, class: "row g-2 mb-3" do |f| %>
-    <div class="col-md-4"><%= f.text_field :search, value: params[:search], class: "form-control form-control-sm", placeholder: "Buscar por nombre o código..." %></div>
-    <div class="col-md-3"><%= f.select :provider_id, @providers.map { [_1.name, _1.id] }, {include_blank: "Todos los proveedores", selected: params[:provider_id]}, class: "form-select form-select-sm" %></div>
-    <div class="col-md-3"><%= f.select :status, [["Sin costo", "no_cost"], ["Sin producto relacionado", "no_products"]], {include_blank: "Todas", selected: params[:status]}, class: "form-select form-select-sm" %></div>
-    <div class="col-md-2"><%= f.submit "Filtrar", class: "btn btn-sm btn-outline-secondary w-100" %></div>
-  <% end %>
-  <div class="card border-0 shadow-sm rounded-4">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0 small">
-        <thead class="bg-light"><tr>
-          <th class="ps-3">Proveedor</th><th>Pieza</th><th>Código</th><th>Unidad</th><th class="text-end">Costo</th><th class="text-center">Productos</th><th>Revisión</th><th></th>
-        </tr></thead>
-        <tbody>
-          <% @supplier_items.each do |i| %>
-            <tr class="<%= 'text-muted' unless i.active %>">
-              <td class="ps-3"><%= i.provider.name %></td>
-              <td class="fw-bold"><%= link_to i.name, supplier_item_path(i), class: "text-decoration-none" %></td>
-              <td><code><%= i.sku.presence || "—" %></code></td>
-              <td><%= i.unit %></td>
-              <td class="text-end"><%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : content_tag(:span, "Sin costo", class: "badge bg-danger bg-opacity-10 text-danger") %></td>
-              <td class="text-center"><%= i.products.size.zero? ? content_tag(:span, "0", class: "badge bg-warning bg-opacity-25 text-warning") : i.products.size %></td>
-              <td><%= render "reviews/badge", record: i %></td>
-              <td class="text-end pe-3"><%= link_to edit_supplier_item_path(i), class: "btn btn-sm btn-light border" do %><i class="bi bi-pencil"></i><% end %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+<% filters = capture do %>
+  <div class="col-md-2"><%= select_tag :provider_id, options_from_collection_for_select(@providers, :id, :name, params[:provider_id]), include_blank: "Todo proveedor", class: "form-select form-select-sm" %></div>
+  <div class="col-md-2"><%= select_tag :status, options_for_select([["Sin costo", "no_cost"], ["Sin vínculos", "no_links"]], params[:status]), include_blank: "Cualquier estado", class: "form-select form-select-sm" %></div>
+<% end %>
+<%= render layout: "shared/index", locals: {title: "Piezas de proveedor", subtitle: "Lo que se compra a cada proveedor, con su código y costo, y dónde se usa.", model: SupplierItem, new_path: new_supplier_item_path, new_label: "Nueva pieza", filters: filters} do %>
+  <table class="table table-hover align-middle mb-0 small">
+    <thead class="bg-light"><tr><th class="ps-3">Proveedor</th><th>Pieza</th><th>Código</th><th>Unidad</th><th class="text-end">Costo</th><th class="text-center">Vínculos</th><th>Revisión</th></tr></thead>
+    <tbody>
+      <% @supplier_items.each do |i| %>
+        <tr class="<%= "text-muted" unless i.active %>">
+          <td class="ps-3"><%= i.provider.name %></td>
+          <td><%= link_to i.name, supplier_item_path(i), class: "fw-bold text-decoration-none" %></td>
+          <td><code><%= i.sku.presence || "—" %></code></td>
+          <td><%= i.unit %></td>
+          <td class="text-end"><%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : content_tag(:span, "Sin costo", class: "badge bg-danger bg-opacity-10 text-danger") %></td>
+          <td class="text-center"><%= i.supplier_links.size.zero? ? content_tag(:span, "0", class: "badge bg-warning bg-opacity-25 text-warning") : i.supplier_links.size %></td>
+          <td><%= render "reviews/badge", record: i %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

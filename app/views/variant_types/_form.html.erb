@@ -34,6 +34,16 @@
       <%# ── Posición fija en el código ── %>
       <div class="mb-4 p-3 border rounded-3 bg-light">
         <div class="form-check form-switch mb-1">
+          <%= f.check_box :own_supplier_code, class: "form-check-input", role: "switch", id: "own_supplier_code_toggle" %>
+          <%= f.label :own_supplier_code, for: "own_supplier_code_toggle", class: "form-check-label fw-bold" do %>
+            <i class="bi bi-upc me-1 text-success"></i>Sus variantes tienen código de proveedor propio
+          <% end %>
+        </div>
+        <p class="text-muted small ms-4 ps-2 mb-3">
+          Actívalo si cada variante se compra con su propio código sin importar el producto (ej: Textiles).
+          Déjalo apagado si la pieza depende del producto (ej: el sobre en fibra de cada mesa).
+        </p>
+        <div class="form-check form-switch mb-1">
           <%= f.check_box :keep_position,
               class: "form-check-input",
               role: "switch",

@@ -20,11 +20,16 @@
             <div class="progress my-3" style="height: 10px;">
               <div class="progress-bar bg-success" style="width: <%= pct %>%"></div>
             </div>
-            <div class="small d-flex gap-3">
+            <div class="small d-flex gap-3 mb-3">
               <span class="text-success"><i class="bi bi-check-circle"></i> <%= m[:approved] %> aprobados</span>
               <span class="text-danger"><i class="bi bi-exclamation-circle"></i> <%= m[:needs_changes] %> con cambios</span>
               <span class="text-muted"><i class="bi bi-hourglass"></i> <%= m[:pending] %> pendientes</span>
             </div>
+            <% if m[:pending] > 0 %>
+              <%= link_to next_review_path(type: m[:type]), class: "btn btn-sm btn-success" do %><i class="bi bi-play-fill"></i> Empezar a revisar<% end %>
+            <% else %>
+              <span class="text-success fw-bold small"><i class="bi bi-check-circle-fill"></i> Todo revisado</span>
+            <% end %>
           </div>
         </div>
       </div>

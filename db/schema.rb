@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_20_100000) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_21_100000) do
   create_table "code_settings", force: :cascade do |t|
     t.string "name", default: "Configuración General"
     t.integer "max_chars_per_line", default: 30
@@ -142,16 +142,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_20_100000) do
     t.index ["supplier_item_id", "origin_order_number"], name: "index_procurement_req_unique", unique: true
     t.index ["supplier_item_id"], name: "index_procurement_requirements_on_supplier_item_id"
     t.index ["supply_rule_id"], name: "index_procurement_requirements_on_supply_rule_id"
-  end
-
-  create_table "product_supplier_items", force: :cascade do |t|
-    t.integer "product_id", null: false
-    t.integer "supplier_item_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["product_id", "supplier_item_id"], name: "index_product_supplier_items_unique", unique: true
-    t.index ["product_id"], name: "index_product_supplier_items_on_product_id"
-    t.index ["supplier_item_id"], name: "index_product_supplier_items_on_supplier_item_id"
   end
 
   create_table "product_variant_rules", force: :cascade do |t|
@@ -306,6 +296,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_20_100000) do
     t.index ["provider_id"], name: "index_supplier_items_on_provider_id"
   end
 
+  create_table "supplier_links", force: :cascade do |t|
+    t.integer "product_id"
+    t.integer "supplier_item_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "variant_id"
+    t.index ["product_id"], name: "index_supplier_links_on_product_id"
+    t.index ["supplier_item_id"], name: "index_supplier_links_on_supplier_item_id"
+    t.index ["variant_id"], name: "index_supplier_links_on_variant_id"
+  end
+
   create_table "supply_rule_quantities", force: :cascade do |t|
     t.integer "supply_rule_id", null: false
     t.integer "product_id", null: false
@@ -361,6 +362,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_20_100000) do
     t.integer "position", default: 0
     t.string "procurement_strategy", default: "individual", null: false
     t.boolean "keep_position", default: false, null: false
+    t.boolean "own_supplier_code", default: false, null: false
   end
 
   create_table "variants", force: :cascade do |t|
@@ -383,8 +385,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_20_100000) do
   add_foreign_key "inventory_movements", "showrooms"
   add_foreign_key "procurement_requirements", "purchase_order_items"
   add_foreign_key "procurement_requirements", "supplier_items"
-  add_foreign_key "product_supplier_items", "products"
-  add_foreign_key "product_supplier_items", "supplier_items"
   add_foreign_key "product_variant_rules", "products"
   add_foreign_key "product_variant_rules", "variant_types"
   add_foreign_key "products", "families"
@@ -398,6 +398,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_20_100000) do
   add_foreign_key "supplier_item_properties", "property_values"
   add_foreign_key "supplier_item_properties", "supplier_items"
   add_foreign_key "supplier_items", "providers"
+  add_foreign_key "supplier_links", "products"
+  add_foreign_key "supplier_links", "supplier_items"
+  add_foreign_key "supplier_links", "variants"
   add_foreign_key "supply_rule_quantities", "products"
   add_foreign_key "supply_rule_quantities", "supply_rules"
   add_foreign_key "supply_rules", "products"

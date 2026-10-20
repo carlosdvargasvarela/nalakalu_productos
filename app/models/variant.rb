@@ -7,7 +7,8 @@ class Variant < ApplicationRecord
   has_many :reverse_compatibilities, as: :compatible, class_name: "Compatibility"
 
   has_many :supply_rules, dependent: :destroy
-  has_many :supplier_items, through: :supply_rules
+  has_many :supplier_links, dependent: :destroy
+  has_many :supplier_items, -> { distinct }, through: :supplier_links
 
   validates :name, presence: true
 

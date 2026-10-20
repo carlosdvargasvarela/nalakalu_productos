@@ -23,7 +23,7 @@ class VariantsControllerTest < ActionDispatch::IntegrationTest
       post variants_url, params: { variant: { active: @variant.active, code: @variant.code, display_name: @variant.display_name, name: @variant.name, technical_description: @variant.technical_description, variant_type_id: @variant.variant_type_id } }
     end
 
-    assert_redirected_to variants_path(selected_id: Variant.last.id)
+    assert_redirected_to variant_path(Variant.last)
   end
 
   test "should show variant" do
@@ -38,7 +38,7 @@ class VariantsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update variant" do
     patch variant_url(@variant), params: { variant: { active: @variant.active, code: @variant.code, display_name: @variant.display_name, name: @variant.name, technical_description: @variant.technical_description, variant_type_id: @variant.variant_type_id } }
-    assert_redirected_to variants_path(selected_id: @variant.id)
+    assert_redirected_to variant_path(@variant)
   end
 
   test "should destroy variant" do

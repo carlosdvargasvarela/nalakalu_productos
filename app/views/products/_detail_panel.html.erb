@@ -27,18 +27,13 @@
         </div>
       </div>
       <div class="d-flex gap-2 flex-shrink-0">
-        <%= link_to edit_product_path(product),
-            class: "btn btn-sm btn-outline-primary rounded-pill px-3",
-            data: { turbo_frame: "product_workspace" } do %>
-          <i class="bi bi-pencil me-1"></i>Editar
-        <% end %>
+
       </div>
     </div>
   </div>
   <div class="card-body p-0">
     <%# ── DNA ── %>
     <%= render "dna_section", product: product %>
-    <div class="p-4 border-top"><%= render "reviews/box", record: product %></div>
     <%# ── VARIANTES COMPATIBLES ── %>
     <% rules = product.effective_rules %>
     <% if rules.any? %>
@@ -98,14 +93,16 @@
     <%# ── PIEZAS DE PROVEEDOR ── %>
     <div class="p-4 border-top bg-light bg-opacity-50 rounded-bottom-4">
       <h6 class="fw-bold mb-3"><i class="bi bi-box-seam me-2 text-success"></i>Piezas de proveedor</h6>
-      <% items = product.supplier_items.includes(:provider).order(:name) %>
-      <% if items.empty? %>
+      <% links = product.supplier_links.includes(:variant, supplier_item: :provider).sort_by(&:label) %>
+      <% if links.empty? %>
         <p class="small text-muted fst-italic mb-0">Sin piezas relacionadas.</p>
       <% else %>
         <ul class="list-unstyled small mb-0">
-          <% items.each do |i| %>
-            <li><%= link_to i.name, supplier_item_path(i), data: {turbo_frame: "_top"} %>
-              <span class="text-muted">· <%= i.provider.name %> · <%= i.sku %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : "sin costo" %></span></li>
+          <% links.each do |l| %>
+            <% i = l.supplier_item %>
+            <li><%= link_to i.name, supplier_item_path(i) %>
+              <span class="text-muted">· <%= i.provider.name %> · <%= i.sku.presence || "sin código" %> · <%= i.default_cost ? number_to_currency(i.default_cost, unit: "₡") : "sin costo" %></span>
+              <% if l.variant %><span class="badge bg-primary bg-opacity-10 text-primary"><%= l.variant.seller_name %></span><% end %></li>
           <% end %>
         </ul>
       <% end %>

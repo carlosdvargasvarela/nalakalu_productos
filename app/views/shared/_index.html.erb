@@ -1,0 +1,36 @@
+<%# Layout de listas. locals: title, subtitle, model, new_path, new_label, filters (html), pagy (opcional) %>
+<% pr = review_progress(model) %>
+<% pct = pr[:total].zero? ? 0 : (pr[:approved] * 100.0 / pr[:total]).round %>
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+      <h1 class="h3 fw-bold mb-0"><%= title %></h1>
+      <p class="text-muted small mb-0"><%= local_assigns[:subtitle] %></p>
+    </div>
+    <div class="d-flex gap-2">
+      <% if pr[:pending] > 0 %>
+        <%= link_to next_review_path(type: model.name), class: "btn btn-success fw-bold" do %><i class="bi bi-play-fill"></i> Empezar a revisar (<%= pr[:pending] %> pendientes)<% end %>
+      <% end %>
+      <%= link_to new_path, class: "btn btn-outline-primary" do %><i class="bi bi-plus-lg"></i> <%= new_label %><% end %>
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-3 mb-3 small">
+    <div class="progress flex-grow-1" style="height: 8px; max-width: 360px;"><div class="progress-bar bg-success" style="width: <%= pct %>%"></div></div>
+    <span class="text-success"><%= pr[:approved] %> aprobados</span>
+    <span class="text-danger"><%= pr[:needs_changes] %> con cambios</span>
+    <span class="text-muted"><%= pr[:pending] %> pendientes</span>
+  </div>
+  <%= form_with url: request.path, method: :get, class: "row g-2 mb-3" do |f| %>
+    <div class="col-md-4"><%= f.text_field :search, value: params[:search], class: "form-control form-control-sm", placeholder: "Buscar...", autocomplete: "off" %></div>
+    <%= local_assigns[:filters] %>
+    <div class="col-md-2"><%= f.select :review, [["Pendientes", "pending"], ["Aprobados", "approved"], ["Requieren cambios", "needs_changes"]], {include_blank: "Toda revisión", selected: params[:review]}, class: "form-select form-select-sm" %></div>
+    <div class="col-auto"><%= f.submit "Filtrar", class: "btn btn-sm btn-outline-secondary" %>
+      <% if request.query_parameters.any? %><%= link_to "Limpiar", request.path, class: "btn btn-sm btn-link" %><% end %></div>
+  <% end %>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="table-responsive"><%= yield %></div>
+  </div>
+  <% if local_assigns[:pagy] && pagy.pages > 1 %>
+    <%= render "shared/pager", pagy: pagy %>
+  <% end %>
+</div>

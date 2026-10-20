@@ -6,76 +6,33 @@ class VariantsController < ApplicationController
   helper_method :compatible_products_for
 
   def index
-    scope = Variant
-      .includes(:variant_type, :compatibilities)
-      .joins(:variant_type)
-      .order("variant_types.name, variants.name")
-
-    # Filtros server-side
-    if params[:search].present?
-      term = "%#{params[:search].strip}%"
-      scope = scope.where("variants.name LIKE ? OR variants.display_name LIKE ?", term, term)
-    end
-
+    scope = Variant.includes(:variant_type, :review, :supplier_links).joins(:variant_type).order("variant_types.name, variants.name")
+    scope = scope.where("variants.name LIKE ? OR variants.display_name LIKE ?", *["%#{params[:search].strip}%"] * 2) if params[:search].present?
     scope = scope.where(variant_type_id: params[:type_id]) if params[:type_id].present?
-
-    case params[:status]
-    when "active" then scope = scope.where(active: true)
-    when "inactive" then scope = scope.where(active: false)
-    when "approved", "needs_changes"
-      scope = scope.where(id: Review.where(reviewable_type: "Variant", status: params[:status]).select(:reviewable_id))
-    when "pending"
-      scope = scope.where.not(id: Review.where(reviewable_type: "Variant").where.not(status: "pending").select(:reviewable_id))
-    end
-
-    @pagy, @variants = pagy(scope, limit: 100)
-
-    @selected = params[:selected_id].present? ? Variant.find_by(id: params[:selected_id]) : nil
-
-    @stats = {
-      total: Variant.count,
-      active: Variant.where(active: true).count,
-      types: VariantType.count
-    }
+    scope = scope.where(active: false) if params[:filter] == "inactive"
+    scope = scope.review_is(params[:review])
+    @pagy, @variants = pagy(scope, limit: 50)
   end
 
   def show
     @compatible_products = compatible_products_for(@variant)
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
-  end
+      end
 
   def new
     @variant = Variant.new(variant_type_id: params[:variant_type_id], active: true)
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
-  end
+      end
 
   def edit
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
-  end
+      end
 
   def create
     @variant = Variant.new(variant_params)
 
     if @variant.save
       sync_compatible_variants
-      respond_to do |format|
-        format.html { redirect_to variants_path(selected_id: @variant.id), notice: "Variante creada." }
-        format.turbo_stream
-      end
+      redirect_to variant_path(@variant), notice: "Variante creada."
     else
-      respond_to do |format|
-        format.html { render :new, status: :unprocessable_entity }
-        format.turbo_stream { render :new, status: :unprocessable_entity }
-      end
+      render :new, status: :unprocessable_entity
     end
   end
 
@@ -84,25 +41,16 @@ class VariantsController < ApplicationController
 
     if @variant.save
       sync_compatible_variants
-      respond_to do |format|
-        format.html { redirect_to variants_path(selected_id: @variant.id), notice: "Variante actualizada." }
-        format.turbo_stream
-      end
+      redirect_to variant_path(@variant), notice: "Variante actualizada."
     else
-      respond_to do |format|
-        format.html { render :edit, status: :unprocessable_entity }
-        format.turbo_stream { render :edit, status: :unprocessable_entity }
-      end
+      render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
     type = @variant.variant_type
     @variant.destroy
-    respond_to do |format|
-      format.html { redirect_to variants_path, notice: "Variante eliminada." }
-      format.turbo_stream
-    end
+    redirect_to variants_path, notice: "Variante eliminada."
   end
 
   def move_to_type
@@ -124,10 +72,10 @@ class VariantsController < ApplicationController
           compatible_id: rule.id
         )
       end
-      redirect_to variants_path(selected_id: @variant.id),
+      redirect_to variant_path(@variant),
         notice: "Variante movida a '#{new_type.name}' exitosamente."
     else
-      redirect_to variants_path(selected_id: @variant.id),
+      redirect_to variant_path(@variant),
         alert: "No se pudo mover la variante."
     end
   end

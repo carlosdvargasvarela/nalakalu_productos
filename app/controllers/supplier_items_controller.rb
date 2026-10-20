@@ -4,7 +4,7 @@ class SupplierItemsController < ApplicationController
   before_action :set_supplier_item, only: %i[show edit update destroy]
 
   def index
-    scope = SupplierItem.joins(:provider).includes(:provider, :review, :products)
+    scope = SupplierItem.joins(:provider).includes(:provider, :review, :supplier_links)
       .order("providers.name ASC, supplier_items.name ASC")
     if params[:search].present?
       term = "%#{params[:search].strip}%"
@@ -12,7 +12,8 @@ class SupplierItemsController < ApplicationController
     end
     scope = scope.where(provider_id: params[:provider_id]) if params[:provider_id].present?
     scope = scope.where(default_cost: nil) if params[:status] == "no_cost"
-    scope = scope.where.missing(:products) if params[:status] == "no_products"
+    scope = scope.where.missing(:supplier_links) if params[:status] == "no_links"
+    scope = scope.review_is(params[:review])
     # ponytail: sin paginación; agregar pagy si el listado pasa de unos pocos miles
     @supplier_items = scope
     @providers = Provider.order(:name)
@@ -85,6 +86,6 @@ class SupplierItemsController < ApplicationController
   end
 
   def supplier_item_params
-    params.require(:supplier_item).permit(:provider_id, :name, :sku, :unit, :default_cost, :active, product_ids: [])
+    params.require(:supplier_item).permit(:provider_id, :name, :sku, :unit, :default_cost, :active)
   end
 end

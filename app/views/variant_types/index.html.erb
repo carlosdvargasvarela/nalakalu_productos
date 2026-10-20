@@ -1,95 +1,15 @@
-<%# Workspace: panel izquierdo (lista) + panel derecho (detalle via Turbo Frame) %>
-<div class="container-fluid py-4" data-controller="vt-filters">
-  <%# ── HEADER ── %>
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h4 class="fw-bold mb-0 text-dark">Tipos de Variante</h4>
-      <p class="text-muted mb-0 small">
-        <%= @stats[:total] %> tipos ·
-        <span class="text-success fw-bold"><%= @stats[:active] %> variantes activas</span>
-        de <%= @stats[:variants] %> totales
-      </p>
-    </div>
-    <div class="d-flex gap-2">
-      <%= link_to new_variant_type_path,
-          class: "btn btn-primary shadow-sm rounded-pill px-4 fw-bold" do %>
-        <i class="bi bi-plus-lg me-2"></i>Nuevo Tipo
+<%= render layout: "shared/index", locals: {title: "Tipos de variante", subtitle: "Los grupos de opciones (Textiles, Maderas, Piedras...).", model: VariantType, new_path: new_variant_type_path, new_label: "Nuevo tipo"} do %>
+  <table class="table table-hover align-middle mb-0 small">
+    <thead class="bg-light"><tr><th class="ps-3">Tipo</th><th class="text-center">Variantes</th><th>¿Código de proveedor propio?</th><th>Revisión</th></tr></thead>
+    <tbody>
+      <% @variant_types.each do |t| %>
+        <tr>
+          <td class="ps-3"><%= link_to t.name, variant_type_path(t), class: "fw-bold text-decoration-none" %></td>
+          <td class="text-center"><%= t.variants.size %></td>
+          <td><%= t.own_supplier_code ? content_tag(:span, "Sí", class: "badge bg-success bg-opacity-10 text-success") : "No" %></td>
+          <td><%= render "reviews/badge", record: t %></td>
+        </tr>
       <% end %>
-    </div>
-  </div>
-  <% if @variant_types.empty? %>
-    <div class="text-center py-5 text-muted">
-      <i class="bi bi-tags d-block fs-1 mb-3 opacity-25"></i>
-      <p class="fw-bold">No hay tipos de variante registrados aún.</p>
-      <p class="small mb-3">Los tipos agrupan las opciones: Tela, Madera, Acabado, Color, etc.</p>
-      <%= link_to new_variant_type_path, class: "btn btn-primary rounded-pill px-4" do %>
-        <i class="bi bi-plus-lg me-2"></i>Crear primer tipo
-      <% end %>
-    </div>
-  <% else %>
-    <div class="row g-4" style="min-height: 70vh;">
-      <%# ── PANEL IZQUIERDO ── %>
-      <div class="col-lg-4 col-xl-3">
-        <div class="card border-0 shadow-sm rounded-4 h-100">
-          <div class="card-header bg-white py-3 border-bottom">
-            <div class="input-group input-group-sm">
-              <span class="input-group-text bg-light border-0 rounded-start-3">
-                <i class="bi bi-search text-muted"></i>
-              </span>
-              <input type="text"
-                     class="form-control bg-light border-0 shadow-none rounded-end-3"
-                     placeholder="Filtrar tipos..."
-                     data-vt-filters-target="search"
-                     data-action="input->vt-filters#filter">
-            </div>
-          </div>
-          <div class="card-body p-0 overflow-auto" style="max-height: calc(100vh - 260px);">
-            <div class="list-group list-group-flush" id="vt-list">
-              <% @variant_types.each do |vt| %>
-                <%= render "variant_types/variant_type_row",
-                    vt: vt,
-                    selected: @selected&.id == vt.id %>
-              <% end %>
-            </div>
-          </div>
-          <%# Importador CSV %>
-          <div class="card-footer bg-white border-top p-3">
-            <%= form_with url: import_variant_types_path, multipart: true, local: true do |f| %>
-              <p class="small text-muted fw-bold mb-2">
-                <i class="bi bi-file-earmark-spreadsheet me-1 text-info"></i>Importar CSV
-                <span class="fw-normal opacity-75">(columna: nombre)</span>
-              </p>
-              <div class="input-group input-group-sm shadow-sm">
-                <%= f.file_field :file,
-                    class: "form-control rounded-start-pill small", accept: ".csv" %>
-                <button class="btn btn-info text-white rounded-end-pill fw-bold px-3" type="submit">
-                  <i class="bi bi-cloud-upload"></i>
-                </button>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      </div>
-      <%# ── PANEL DERECHO (Turbo Frame) ── %>
-      <div class="col-lg-8 col-xl-9">
-        <%= turbo_frame_tag "vt_workspace" do %>
-          <% if @selected %>
-            <%= render "variant_types/detail_panel", variant_type: @selected %>
-          <% else %>
-            <%= render "variant_types/workspace_placeholder" %>
-          <% end %>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
-</div>
-<style>
-  .vt-row-active { background-color: #f0f7ff; border-left: 3px solid #0d6efd !important; }
-  .vt-row        { border-left: 3px solid transparent; transition: background 0.15s; }
-  .vt-row:hover  { background-color: #f8f9fa; }
-  .bg-success-soft   { background-color: #e1f6eb; }
-  .bg-secondary-soft { background-color: #f0f2f5; }
-  .bg-info-soft      { background-color: #e0f4ff; }
-  .bg-warning-soft   { background-color: #fff8e1; }
-  .hover-shadow:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-</style>
+    </tbody>
+  </table>
+<% end %>

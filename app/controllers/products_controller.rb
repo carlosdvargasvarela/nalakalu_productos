@@ -5,38 +5,13 @@ class ProductsController < ApplicationController
   before_action :set_product, only: %i[show edit update destroy update_compatibilities]
 
   def index
-    scope = Product
-      .includes(:family, product_variant_rules: :variant_type)
-      .order(:name)
-
-    if params[:search].present?
-      term = "%#{params[:search].strip}%"
-      scope = scope.where("products.name LIKE ? OR products.base_code LIKE ?", term, term)
-    end
-
+    scope = Product.includes(:family, :review, :product_variant_rules, :supplier_links).order(:name)
+    scope = scope.where("products.name LIKE ? OR products.base_code LIKE ?", *["%#{params[:search].strip}%"] * 2) if params[:search].present?
     scope = scope.where(family_id: params[:family_id]) if params[:family_id].present?
-
-    case params[:status]
-    when "active" then scope = scope.where(active: true)
-    when "inactive" then scope = scope.where(active: false)
-    when "no_price" then scope = scope.where(list_price: nil)
-    when "pending", "approved", "needs_changes"
-      ids = Review.where(reviewable_type: "Product", status: params[:status]).select(:reviewable_id)
-      scope = (params[:status] == "pending") ? scope.where.not(id: Review.where(reviewable_type: "Product").where.not(status: "pending").select(:reviewable_id)) : scope.where(id: ids)
-    end
-
-    @pagy, @products = pagy(scope.includes(:review), limit: 150)
-
-    @selected_product = Product.find_by(id: params[:selected_id])
-
-    active_counts = Product.group(:active).count
-    @stats = {
-      total:              active_counts.values.sum,
-      active:             active_counts[true].to_i,
-      no_price:           Product.where(list_price: nil).count,
-      no_variants:        Product.left_joins(:product_variant_rules)
-                            .where(product_variant_rules: {id: nil}).count
-    }
+    scope = scope.where(list_price: nil) if params[:filter] == "no_price"
+    scope = scope.where(active: false) if params[:filter] == "inactive"
+    scope = scope.review_is(params[:review])
+    @pagy, @products = pagy(scope, limit: 50)
   end
 
   def show
@@ -57,7 +32,7 @@ class ProductsController < ApplicationController
   def create
     @product = Product.new(product_params)
     if @product.save
-      redirect_to products_path(selected_id: @product.id), notice: "Producto creado exitosamente."
+      redirect_to product_path(@product), notice: "Producto creado exitosamente."
     else
       render :new, status: :unprocessable_entity
     end
@@ -65,7 +40,7 @@ class ProductsController < ApplicationController
 
   def update
     if @product.update(product_params)
-      redirect_to products_path(selected_id: @product.id), notice: "Producto actualizado."
+      redirect_to product_path(@product), notice: "Producto actualizado."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -83,7 +58,7 @@ class ProductsController < ApplicationController
       end
     end
 
-    redirect_to products_path(selected_id: @product.id),
+    redirect_to product_path(@product),
       notice: "Variantes de \"#{rule.display_name}\" actualizadas."
   end
 

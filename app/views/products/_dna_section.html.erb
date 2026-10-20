@@ -5,8 +5,7 @@
       <i class="bi bi-diagram-3-fill me-2 text-primary"></i>Estructura DNA del Código
     </h6>
     <%= link_to edit_product_path(product),
-        class: "btn btn-xs btn-outline-secondary rounded-pill px-2",
-        data: { turbo_frame: "product_workspace" } do %>
+        class: "btn btn-xs btn-outline-secondary rounded-pill px-2" do %>
       <i class="bi bi-pencil me-1"></i><span class="x-small">Modificar</span>
     <% end %>
   </div>
@@ -88,8 +87,7 @@
       <i class="bi bi-exclamation-circle d-block fs-2 mb-2 opacity-25"></i>
       <p class="small mb-2">Sin estructura de código definida.</p>
       <%= link_to edit_product_path(product),
-          class: "btn btn-sm btn-primary rounded-pill px-4",
-          data: { turbo_frame: "product_workspace" } do %>
+          class: "btn btn-sm btn-primary rounded-pill px-4" do %>
         <i class="bi bi-plus-lg me-1"></i>Definir estructura
       <% end %>
     </div>

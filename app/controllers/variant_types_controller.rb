@@ -4,13 +4,9 @@ class VariantTypesController < ApplicationController
   before_action :set_variant_type, only: %i[show edit update destroy variants]
 
   def index
-    @variant_types = VariantType.includes(:variants).order(:name)
-    @selected = params[:selected_id].present? ? VariantType.find_by(id: params[:selected_id]) : nil
-    @stats = {
-      total: @variant_types.size,
-      variants: Variant.count,
-      active: Variant.where(active: true).count
-    }
+    scope = VariantType.includes(:variants, :review).order(:name)
+    scope = scope.where("name LIKE ?", "%#{params[:search].strip}%") if params[:search].present?
+    @variant_types = scope.review_is(params[:review])
   end
 
   def show
@@ -30,7 +26,7 @@ class VariantTypesController < ApplicationController
   def create
     @variant_type = VariantType.new(variant_type_params)
     if @variant_type.save
-      redirect_to variant_types_path(selected_id: @variant_type.id),
+      redirect_to variant_type_path(@variant_type),
         notice: "Tipo de variante creado exitosamente."
     else
       render :new, status: :unprocessable_entity
@@ -39,7 +35,7 @@ class VariantTypesController < ApplicationController
 
   def update
     if @variant_type.update(variant_type_params)
-      redirect_to variant_types_path(selected_id: @variant_type.id),
+      redirect_to variant_type_path(@variant_type),
         notice: "Tipo de variante actualizado exitosamente."
     else
       render :edit, status: :unprocessable_entity
@@ -140,6 +136,6 @@ class VariantTypesController < ApplicationController
   end
 
   def variant_type_params
-    params.require(:variant_type).permit(:name, :description, :active, :procurement_strategy, :keep_position)
+    params.require(:variant_type).permit(:name, :description, :active, :procurement_strategy, :keep_position, :own_supplier_code)
   end
 end

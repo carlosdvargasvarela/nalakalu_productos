@@ -4,80 +4,45 @@ class ProvidersController < ApplicationController
   before_action :set_provider, only: %i[show edit update destroy]
 
   def index
-    @providers = Provider.includes(:supplier_items).order(:name)
-    @selected = params[:selected_id].present? ? Provider.find_by(id: params[:selected_id]) : nil
-
-    @stats = {
-      total: Provider.count,
-      active: Provider.where(active: true).count,
-      internal: Provider.where(category: "interno").count,
-      external: Provider.where(category: "externo").count
-    }
+    scope = Provider.includes(:supplier_items, :review).order(:name)
+    scope = scope.where("name LIKE ?", "%#{params[:search].strip}%") if params[:search].present?
+    @providers = scope.review_is(params[:review])
   end
 
   def show
     @supplier_items = @provider.supplier_items.active
       .includes(:supplier_item_properties)
       .order(:name)
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
-  end
+      end
 
   def new
     @provider = Provider.new(active: true, category: "externo")
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
-  end
+      end
 
   def edit
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
-  end
+      end
 
   def create
     @provider = Provider.new(provider_params)
 
     if @provider.save
-      respond_to do |format|
-        format.html { redirect_to providers_path(selected_id: @provider.id), notice: "Proveedor creado." }
-        format.turbo_stream
-      end
+      redirect_to provider_path(@provider), notice: "Proveedor creado."
     else
-      respond_to do |format|
-        format.html { render :new, status: :unprocessable_entity }
-        format.turbo_stream { render :new, status: :unprocessable_entity }
-      end
+      render :new, status: :unprocessable_entity
     end
   end
 
   def update
     if @provider.update(provider_params)
-      @supplier_items = @provider.supplier_items.active
-        .includes(:supplier_item_properties).order(:name)
-      respond_to do |format|
-        format.html { redirect_to providers_path(selected_id: @provider.id), notice: "Proveedor actualizado." }
-        format.turbo_stream
-      end
+      redirect_to provider_path(@provider), notice: "Proveedor actualizado."
     else
-      respond_to do |format|
-        format.html { render :edit, status: :unprocessable_entity }
-        format.turbo_stream { render :edit, status: :unprocessable_entity }
-      end
+      render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
     @provider.destroy!
-    respond_to do |format|
-      format.html { redirect_to providers_path, notice: "Proveedor eliminado." }
-      format.turbo_stream
-    end
+    redirect_to providers_path, notice: "Proveedor eliminado."
   end
 
   def import

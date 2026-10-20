@@ -4,7 +4,9 @@ class FamiliesController < ApplicationController
   before_action :set_family, only: %i[show edit update destroy assign_products unassign_product]
 
   def index
-    @families = Family.all.includes(:products, family_variant_rules: :variant_type)
+    scope = Family.includes(:products, :review).order(:name)
+    scope = scope.where("name LIKE ?", "%#{params[:search].strip}%") if params[:search].present?
+    @families = scope.review_is(params[:review])
   end
 
   def show
@@ -20,7 +22,7 @@ class FamiliesController < ApplicationController
   def create
     @family = Family.new(family_params)
     if @family.save
-      redirect_to families_path, notice: "Familia creada exitosamente."
+      redirect_to @family, notice: "Familia creada exitosamente."
     else
       render :new, status: :unprocessable_entity
     end
@@ -28,7 +30,7 @@ class FamiliesController < ApplicationController
 
   def update
     if @family.update(family_params)
-      redirect_to families_path, notice: "Familia actualizada exitosamente."
+      redirect_to @family, notice: "Familia actualizada exitosamente."
     else
       render :edit, status: :unprocessable_entity
     end

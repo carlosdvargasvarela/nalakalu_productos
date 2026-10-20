@@ -1,22 +1,3 @@
-<%# Turbo Frame aware: si viene del workspace carga dentro del frame %>
-<%= turbo_frame_tag "vt_workspace" do %>
-  <div class="card border-0 shadow-sm rounded-4">
-    <div class="card-header bg-white py-3 border-bottom">
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0 small">
-          <li class="breadcrumb-item">
-            <%= link_to "Tipos de Variante", variant_types_path, class: "text-decoration-none" %>
-          </li>
-          <li class="breadcrumb-item active fw-bold">Nuevo Tipo</li>
-        </ol>
-      </nav>
-      <h5 class="fw-bold mb-0 mt-2">Nuevo Tipo de Variante</h5>
-      <p class="text-muted small mb-0">
-        Define una categoría para agrupar opciones similares (Ej: Acabado, Tela, Madera).
-      </p>
-    </div>
-    <div class="card-body p-4">
-      <%= render "form", variant_type: @variant_type %>
-    </div>
-  </div>
+<%= render layout: "shared/form_page", locals: {title: "Nuevo tipo de variante", back_path: variant_types_path, back_label: "Tipos de variante"} do %>
+  <%= render "form", variant_type: @variant_type %>
 <% end %>

@@ -1,5 +1,5 @@
+<%= render "reviews/bar", record: @family, back_path: families_path, back_label: "Familias", edit_path: edit_family_path(@family) %>
 <div class="container-fluid py-4">
-  <%= render "reviews/box", record: @family %>
   <!-- Header -->
   <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body p-4">
@@ -23,9 +23,6 @@
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
           <div class="d-flex gap-2 justify-content-md-end">
-            <%= link_to edit_family_path(@family), class: "btn btn-outline-primary rounded-pill px-4 shadow-sm" do %>
-              <i class="bi bi-pencil-square me-2"></i>Editar Familia
-            <% end %>
           </div>
         </div>
       </div>

@@ -23,7 +23,7 @@ class FamiliesControllerTest < ActionDispatch::IntegrationTest
       post families_url, params: { family: { active: @family.active, description: @family.description, name: "Familia Nueva" } }
     end
 
-    assert_redirected_to families_path
+    assert_redirected_to family_path(Family.last)
   end
 
   test "should show family" do
@@ -38,7 +38,7 @@ class FamiliesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update family" do
     patch family_url(@family), params: { family: { active: @family.active, description: @family.description, name: @family.name } }
-    assert_redirected_to families_path
+    assert_redirected_to family_path(@family)
   end
 
   test "should destroy family" do

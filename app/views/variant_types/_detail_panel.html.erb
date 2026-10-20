@@ -5,7 +5,6 @@
 <% vt_total_count  = all_variants.size %>
 <% vt_inactive_count = vt_total_count - vt_active_count %>
 <div data-controller="variant-modal bulk-select">
-  <%= render "reviews/box", record: variant_type %>
 
   <%# ── HEADER DEL PANEL ── %>
   <div class="card border-0 shadow-sm rounded-4 mb-3">
@@ -33,10 +32,6 @@
               data: { action: "click->variant-modal#openNew" },
               class: "btn btn-info text-white rounded-pill px-3 fw-bold shadow-sm btn-sm" do %>
             <i class="bi bi-plus-lg me-1"></i>Nueva Variante
-          <% end %>
-          <%= link_to edit_variant_type_path(variant_type),
-              class: "btn btn-outline-primary rounded-pill px-3 btn-sm" do %>
-            <i class="bi bi-pencil me-1"></i>Editar
           <% end %>
           <%= button_to variant_type_path(variant_type), method: :delete,
               class: "btn btn-outline-danger rounded-pill px-3 btn-sm",
@@ -116,7 +111,6 @@
 
     <%# ── SIDEBAR STATS ── %>
     <div class="col-lg-4">
-      <%= render "variant_types/sidebar_stats", variant_type: variant_type %>
     </div>
   </div>
 

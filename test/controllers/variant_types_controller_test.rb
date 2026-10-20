@@ -23,7 +23,7 @@ class VariantTypesControllerTest < ActionDispatch::IntegrationTest
       post variant_types_url, params: { variant_type: { name: "Tipo de Variante Nuevo" } }
     end
 
-    assert_redirected_to variant_types_path(selected_id: VariantType.last.id)
+    assert_redirected_to variant_type_path(VariantType.last)
   end
 
   test "should show variant_type" do
@@ -38,7 +38,7 @@ class VariantTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update variant_type" do
     patch variant_type_url(@variant_type), params: { variant_type: { name: @variant_type.name } }
-    assert_redirected_to variant_types_path(selected_id: @variant_type.id)
+    assert_redirected_to variant_type_path(@variant_type)
   end
 
   test "should destroy variant_type" do

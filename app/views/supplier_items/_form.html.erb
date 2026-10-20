@@ -13,8 +13,6 @@
       <%= f.select :unit, SupplierItem::UNITS, {}, class: "form-select" %></div>
     <div class="col-md-4"><%= f.label :default_cost, "Costo (₡)", class: "form-label small fw-bold" %>
       <%= f.number_field :default_cost, step: "0.01", min: 0, class: "form-control", placeholder: "Sin costo" %></div>
-    <div class="col-12"><%= f.label :product_ids, "Productos relacionados", class: "form-label small fw-bold" %>
-      <%= f.collection_select :product_ids, Product.order(:name), :id, ->(p) { "#{p.name} (#{p.base_code})" }, {}, multiple: true, class: "form-select" %></div>
     <div class="col-12 form-check ms-2"><%= f.check_box :active, class: "form-check-input" %> <%= f.label :active, "Activo", class: "form-check-label" %></div>
   </div>
   <div class="mt-4 d-flex gap-2">

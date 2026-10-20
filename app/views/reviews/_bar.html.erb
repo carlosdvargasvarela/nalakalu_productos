@@ -1,0 +1,22 @@
+<%# Barra fija de revisión. locals: record, back_path, back_label, edit_path %>
+<% review = record.review %>
+<% st = record.review_status %>
+<% color = {"approved" => "success", "needs_changes" => "danger"}.fetch(st, "secondary") %>
+<div class="bg-white border-bottom shadow-sm" style="position: sticky; top: 56px; z-index: 1020;">
+  <div class="container-fluid px-4 py-2">
+    <%= form_with url: reviews_path, class: "d-flex flex-wrap align-items-center gap-2" do |f| %>
+      <%= f.hidden_field :reviewable_type, value: record.class.name %>
+      <%= f.hidden_field :reviewable_id, value: record.id %>
+      <%= link_to back_path, class: "btn btn-sm btn-light" do %><i class="bi bi-arrow-left"></i> <%= back_label %><% end %>
+      <span class="fw-bold text-truncate" style="max-width: 320px;"><%= record_title(record) %></span>
+      <span class="badge bg-<%= color %>"><%= record.review_stale? ? "Editado tras aprobar" : Review::LABELS[st] %></span>
+      <% if review && review.user %><span class="small text-muted d-none d-xl-inline"><%= review.user.email %> · <%= l review.updated_at, format: :short %></span><% end %>
+      <span class="flex-grow-1"></span>
+      <%= f.text_field :note, value: review&.note, class: "form-control form-control-sm", style: "width: 260px;", placeholder: "Comentario (obligatorio si requiere cambios)" %>
+      <%= f.button name: "status", value: "approved", formaction: reviews_path(advance: 1), class: "btn btn-sm btn-success fw-bold" do %><i class="bi bi-check-lg"></i> Aprobar y siguiente<% end %>
+      <%= f.button name: "status", value: "needs_changes", class: "btn btn-sm btn-danger" do %><i class="bi bi-flag"></i> Requiere cambios<% end %>
+      <%= link_to next_review_path(type: record.class.name, after: record.id), class: "btn btn-sm btn-outline-secondary", title: "Ir al siguiente pendiente sin cambiar el estado" do %>Saltar <i class="bi bi-arrow-right"></i><% end %>
+      <%= link_to edit_path, class: "btn btn-sm btn-primary" do %><i class="bi bi-pencil"></i> Editar<% end %>
+    <% end %>
+  </div>
+</div>
