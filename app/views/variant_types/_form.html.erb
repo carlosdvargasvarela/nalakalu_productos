@@ -79,7 +79,7 @@
   <div class="d-flex gap-2">
     <%= f.submit variant_type.new_record? ? "Crear Tipo de Variante" : "Guardar Cambios",
         class: "btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow" %>
-    <%= link_to "Cancelar", variant_types_path,
+    <%= link_to "Cancelar", form_back(variant_types_path),
         class: "btn btn-link text-muted text-decoration-none fw-bold" %>
   </div>
 <% end %>

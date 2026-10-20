@@ -1,6 +1,6 @@
 <%# locals: title, back_path, back_label, subtitle (opcional) %>
 <div class="container py-4" style="max-width: 960px;">
-  <%= link_to back_path, class: "btn btn-sm btn-light mb-3" do %><i class="bi bi-arrow-left"></i> <%= back_label %><% end %>
+  <%= link_to form_back(back_path), class: "btn btn-sm btn-light mb-3" do %><i class="bi bi-arrow-left"></i> <%= back_label %><% end %>
   <h2 class="h4 fw-bold mb-1"><%= title %></h2>
   <p class="text-muted small"><%= local_assigns[:subtitle] %></p>
   <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4"><%= yield %></div></div>

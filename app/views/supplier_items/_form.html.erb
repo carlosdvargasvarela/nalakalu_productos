@@ -17,6 +17,6 @@
   </div>
   <div class="mt-4 d-flex gap-2">
     <%= f.submit "Guardar", class: "btn btn-primary rounded-pill px-4" %>
-    <%= link_to "Cancelar", (supplier_item.persisted? ? supplier_item_path(supplier_item) : supplier_items_path), class: "btn btn-light rounded-pill px-4" %>
+    <%= link_to "Cancelar", form_back(supplier_item.persisted? ? supplier_item_path(supplier_item) : supplier_items_path), class: "btn btn-light rounded-pill px-4" %>
   </div>
 <% end %>

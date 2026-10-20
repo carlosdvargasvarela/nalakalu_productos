@@ -111,4 +111,14 @@ class ReviewPanelTest < ActionDispatch::IntegrationTest
     post supplier_links_url, params: {supplier_link: {supplier_item_id: item.id, variant_id: v.id}, return_to: "//malo.example"}
     assert_redirected_to supplier_item_path(item) # return_to externo se ignora
   end
+
+  test "Volver y Cancelar de un formulario regresan a la pantalla de origen" do
+    v = Variant.create!(variant_type: VariantType.create!(name: "Cintas"), name: "Verde 1", active: true)
+    get edit_variant_url(v), headers: {"HTTP_REFERER" => "http://www.example.com/variant_types/1?page=2"}
+    assert_select "a.btn[href=?]", "/variant_types/1?page=2", text: /Volver/
+    patch variant_url(v), params: {variant: {name: ""}} # con errores se vuelve a mostrar
+    assert_select "a.btn[href=?]", "/variant_types/1?page=2", text: /Volver/
+    get edit_variant_url(v) # sin referer: destino por defecto
+    assert_select "a.btn[href=?]", variant_path(v), text: /Volver/
+  end
 end
