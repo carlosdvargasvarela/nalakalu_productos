@@ -9,7 +9,7 @@
         <tr class="<%= "text-muted" unless v.active %>">
           <td class="ps-3"><%= v.variant_type.name %></td>
           <td><%= link_to v.seller_name, variant_path(v), class: "fw-bold text-decoration-none" %></td>
-          <td><code><%= v.code.presence || "—" %></code></td>
+          <td style="width: 170px;"><%= quick_field("variant", v, "code", placeholder: "—", css: "font-monospace") %></td>
           <td><% n = v.supplier_links.size %><%= n.zero? ? (v.variant_type.own_supplier_code ? content_tag(:span, "Falta", class: "badge bg-danger bg-opacity-10 text-danger") : "—") : "#{n} pieza(s)" %></td>
           <td><%= render "reviews/badge", record: v %></td>
         </tr>

@@ -4,7 +4,7 @@
     <tbody>
       <% @providers.each do |p| %>
         <tr class="<%= "text-muted" unless p.active %>">
-          <td class="ps-3"><%= link_to p.name, provider_path(p), class: "fw-bold text-decoration-none" %><%= content_tag(:span, "Oculto", class: "badge bg-secondary ms-2") unless p.active %></td>
+          <td class="ps-3" style="min-width: 260px;"><%= quick_name("provider", p, provider_path(p)) %><%= content_tag(:span, "Oculto", class: "badge bg-secondary ms-2") unless p.active %></td>
           <td><%= p.category %></td>
           <td><%= [p.contact_name, p.email, p.phone].compact_blank.join(" · ").presence || content_tag(:span, "Sin contacto", class: "text-warning") %></td>
           <td class="text-center"><%= p.supplier_items.size %></td>

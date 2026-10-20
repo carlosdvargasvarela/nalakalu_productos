@@ -1,0 +1,30 @@
+- generic [ref=f8e4]:
+  - generic [ref=f8e5]:
+    - generic [ref=f8e6]: 
+    - heading "Nalakalú" [level=2] [ref=f8e7]
+    - paragraph [ref=f8e8]: Gestión de Productos e Inventario
+  - generic [ref=f8e10]:
+    - heading "Iniciar Sesión" [level=4] [ref=f8e11]
+    - generic [ref=f8e12]:
+      - generic [ref=f8e13]:
+        - generic [ref=f8e14]: Correo Electrónico
+        - generic [ref=f8e15]:
+          - generic [ref=f8e16]: 
+          - textbox "Correo Electrónico" [active] [ref=f8e18]:
+            - /placeholder: nombre@ejemplo.com
+            - text: revisor@test.local
+      - generic [ref=f8e19]:
+        - generic [ref=f8e20]:
+          - generic [ref=f8e21]: Contraseña
+          - link "¿Olvidaste tu contraseña?" [ref=f8e22] [cursor=pointer]:
+            - /url: /users/password/new
+        - generic [ref=f8e23]:
+          - generic [ref=f8e24]: 
+          - textbox "Contraseña" [ref=f8e26]:
+            - /placeholder: ••••••••
+            - text: password123
+      - generic [ref=f8e27]:
+        - checkbox "Recordarme en este equipo" [ref=f8e28]
+        - generic [ref=f8e29]: Recordarme en este equipo
+      - button "Entrar al Sistema" [ref=f8e31] [cursor=pointer]
+  - paragraph [ref=f8e33]: © 2026 Nalakalú — Sistema Interno

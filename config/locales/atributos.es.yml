@@ -1,0 +1,21 @@
+es:
+  activerecord:
+    models:
+      product: {one: Producto, other: Productos}
+      variant: {one: Variante, other: Variantes}
+      variant_type: {one: Tipo de variante, other: Tipos de variante}
+      family: {one: Familia, other: Familias}
+      provider: {one: Proveedor, other: Proveedores}
+      supplier_item: {one: Pieza de proveedor, other: Piezas de proveedor}
+      supplier_link: {one: Vínculo, other: Vínculos}
+      compatibility: {one: Compatibilidad, other: Compatibilidades}
+      product_variant_rule: {one: Regla de código, other: Reglas de código}
+      family_variant_rule: {one: Regla de familia, other: Reglas de familia}
+    attributes:
+      product: {name: Nombre, base_code: Código base, list_price: Precio, description: Descripción}
+      variant: {name: Nombre, display_name: Nombre comercial, code: Código}
+      variant_type: {name: Nombre}
+      family: {name: Nombre, description: Descripción}
+      provider: {name: Nombre, email: Correo, phone: Teléfono, category: Categoría}
+      supplier_item: {name: Nombre, sku: Código del proveedor, default_cost: Costo, unit: Unidad}
+      review: {note: Comentario}

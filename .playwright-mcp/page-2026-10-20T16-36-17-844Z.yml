@@ -1,0 +1,208 @@
+- generic [active] [ref=f9e1]:
+  - navigation [ref=f9e2]:
+    - generic [ref=f9e3]:
+      - link " Nalakalú Productos" [ref=f9e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f9e5]: 
+        - text: Nalakalú Productos
+      - generic [ref=f9e6]:
+        - list [ref=f9e7]:
+          - listitem [ref=f9e8]:
+            - link " Familias 24" [ref=f9e9] [cursor=pointer]:
+              - /url: /families
+              - generic [ref=f9e10]: 
+              - generic [ref=f9e11]: Familias
+              - generic [ref=f9e12]: "24"
+          - listitem [ref=f9e13]:
+            - link " Productos 592" [ref=f9e14] [cursor=pointer]:
+              - /url: /products
+              - generic [ref=f9e15]: 
+              - generic [ref=f9e16]: Productos
+              - generic [ref=f9e17]: "592"
+          - listitem [ref=f9e18]:
+            - link " Tipos de variante 21" [ref=f9e19] [cursor=pointer]:
+              - /url: /variant_types
+              - generic [ref=f9e20]: 
+              - generic [ref=f9e21]: Tipos de variante
+              - generic [ref=f9e22]: "21"
+          - listitem [ref=f9e23]:
+            - link " Variantes 261" [ref=f9e24] [cursor=pointer]:
+              - /url: /variants
+              - generic [ref=f9e25]: 
+              - generic [ref=f9e26]: Variantes
+              - generic [ref=f9e27]: "261"
+          - listitem [ref=f9e28]:
+            - link " Proveedores 3" [ref=f9e29] [cursor=pointer]:
+              - /url: /providers
+              - generic [ref=f9e30]: 
+              - generic [ref=f9e31]: Proveedores
+              - generic [ref=f9e32]: "3"
+          - listitem [ref=f9e33]:
+            - link " Piezas 4" [ref=f9e34] [cursor=pointer]:
+              - /url: /supplier_items
+              - generic [ref=f9e35]: 
+              - generic [ref=f9e36]: Piezas
+              - generic [ref=f9e37]: "4"
+          - listitem [ref=f9e38]:
+            - button " Revisión" [ref=f9e39] [cursor=pointer]:
+              - generic [ref=f9e40]: 
+              - text: Revisión
+            - text:     
+        - generic [ref=f9e41]:
+          - link " revisor@test.local" [ref=f9e42] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=f9e43]: 
+            - text: revisor@test.local
+          - generic [ref=f9e44]: revisor
+          - button " Salir" [ref=f9e46] [cursor=pointer]:
+            - generic [ref=f9e47]: 
+            - text: Salir
+  - main [ref=f9e48]:
+    - alert [ref=f9e50]:
+      - generic [ref=f9e51]: 
+      - text: Sesión iniciada.
+      - button [ref=f9e52] [cursor=pointer]
+    - heading "Progreso de revisión" [level=1] [ref=f9e53]
+    - paragraph [ref=f9e54]: Aprobado = un revisor confirmó que el registro está listo para Odoo.
+    - generic [ref=f9e55]:
+      - generic [ref=f9e58]:
+        - generic [ref=f9e59]:
+          - heading [level=5] [ref=f9e60]:
+            - link "Familias" [ref=f9e61] [cursor=pointer]:
+              - /url: /families
+          - generic [ref=f9e62]: 24 registros
+        - generic [ref=f9e64]:
+          - generic [ref=f9e65]:
+            - generic [ref=f9e66]: 
+            - text: 0 aprobados
+          - generic [ref=f9e67]:
+            - generic [ref=f9e68]: 
+            - text: 0 con cambios
+          - generic [ref=f9e69]:
+            - generic [ref=f9e70]: 
+            - text: 24 pendientes
+        - link " Empezar a revisar" [ref=f9e71] [cursor=pointer]:
+          - /url: /reviews/next?type=Family
+          - generic [ref=f9e72]: 
+          - text: Empezar a revisar
+      - generic [ref=f9e75]:
+        - generic [ref=f9e76]:
+          - heading [level=5] [ref=f9e77]:
+            - link "Productos" [ref=f9e78] [cursor=pointer]:
+              - /url: /products
+          - generic [ref=f9e79]: 592 registros
+        - generic [ref=f9e81]:
+          - generic [ref=f9e82]:
+            - generic [ref=f9e83]: 
+            - text: 0 aprobados
+          - generic [ref=f9e84]:
+            - generic [ref=f9e85]: 
+            - text: 0 con cambios
+          - generic [ref=f9e86]:
+            - generic [ref=f9e87]: 
+            - text: 592 pendientes
+        - link " Empezar a revisar" [ref=f9e88] [cursor=pointer]:
+          - /url: /reviews/next?type=Product
+          - generic [ref=f9e89]: 
+          - text: Empezar a revisar
+      - generic [ref=f9e92]:
+        - generic [ref=f9e93]:
+          - heading [level=5] [ref=f9e94]:
+            - link "Tipos de variante" [ref=f9e95] [cursor=pointer]:
+              - /url: /variant_types
+          - generic [ref=f9e96]: 21 registros
+        - generic [ref=f9e98]:
+          - generic [ref=f9e99]:
+            - generic [ref=f9e100]: 
+            - text: 0 aprobados
+          - generic [ref=f9e101]:
+            - generic [ref=f9e102]: 
+            - text: 0 con cambios
+          - generic [ref=f9e103]:
+            - generic [ref=f9e104]: 
+            - text: 21 pendientes
+        - link " Empezar a revisar" [ref=f9e105] [cursor=pointer]:
+          - /url: /reviews/next?type=VariantType
+          - generic [ref=f9e106]: 
+          - text: Empezar a revisar
+      - generic [ref=f9e109]:
+        - generic [ref=f9e110]:
+          - heading [level=5] [ref=f9e111]:
+            - link "Variantes" [ref=f9e112] [cursor=pointer]:
+              - /url: /variants
+          - generic [ref=f9e113]: 261 registros
+        - generic [ref=f9e115]:
+          - generic [ref=f9e116]:
+            - generic [ref=f9e117]: 
+            - text: 0 aprobados
+          - generic [ref=f9e118]:
+            - generic [ref=f9e119]: 
+            - text: 0 con cambios
+          - generic [ref=f9e120]:
+            - generic [ref=f9e121]: 
+            - text: 261 pendientes
+        - link " Empezar a revisar" [ref=f9e122] [cursor=pointer]:
+          - /url: /reviews/next?type=Variant
+          - generic [ref=f9e123]: 
+          - text: Empezar a revisar
+      - generic [ref=f9e126]:
+        - generic [ref=f9e127]:
+          - heading [level=5] [ref=f9e128]:
+            - link "Proveedores" [ref=f9e129] [cursor=pointer]:
+              - /url: /providers
+          - generic [ref=f9e130]: 3 registros
+        - generic [ref=f9e132]:
+          - generic [ref=f9e133]:
+            - generic [ref=f9e134]: 
+            - text: 0 aprobados
+          - generic [ref=f9e135]:
+            - generic [ref=f9e136]: 
+            - text: 0 con cambios
+          - generic [ref=f9e137]:
+            - generic [ref=f9e138]: 
+            - text: 3 pendientes
+        - link " Empezar a revisar" [ref=f9e139] [cursor=pointer]:
+          - /url: /reviews/next?type=Provider
+          - generic [ref=f9e140]: 
+          - text: Empezar a revisar
+      - generic [ref=f9e143]:
+        - generic [ref=f9e144]:
+          - heading [level=5] [ref=f9e145]:
+            - link "Piezas de proveedor" [ref=f9e146] [cursor=pointer]:
+              - /url: /supplier_items
+          - generic [ref=f9e147]: 4 registros
+        - generic [ref=f9e149]:
+          - generic [ref=f9e150]:
+            - generic [ref=f9e151]: 
+            - text: 0 aprobados
+          - generic [ref=f9e152]:
+            - generic [ref=f9e153]: 
+            - text: 0 con cambios
+          - generic [ref=f9e154]:
+            - generic [ref=f9e155]: 
+            - text: 4 pendientes
+        - link " Empezar a revisar" [ref=f9e156] [cursor=pointer]:
+          - /url: /reviews/next?type=SupplierItem
+          - generic [ref=f9e157]: 
+          - text: Empezar a revisar
+    - generic [ref=f9e158]:
+      - link " Por corregir" [ref=f9e159] [cursor=pointer]:
+        - /url: /reviews
+        - generic [ref=f9e160]: 
+        - text: Por corregir
+      - link " Problemas de calidad" [ref=f9e161] [cursor=pointer]:
+        - /url: /quality
+        - generic [ref=f9e162]: 
+        - text: Problemas de calidad
+      - link " CSV para Odoo" [ref=f9e163] [cursor=pointer]:
+        - /url: /odoo_exports
+        - generic [ref=f9e164]: 
+        - text: CSV para Odoo
+  - contentinfo [ref=f9e165]:
+    - generic [ref=f9e167]:
+      - generic [ref=f9e168]:
+        - generic [ref=f9e169]: 
+        - generic [ref=f9e170]: Nalakalú Productos
+        - generic [ref=f9e171]: "|"
+        - generic [ref=f9e172]: Sistema Interno
+      - generic [ref=f9e173]: © 2026 — Nalakalú

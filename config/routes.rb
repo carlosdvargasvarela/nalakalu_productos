@@ -83,6 +83,9 @@ Rails.application.routes.draw do
     patch "ocultar/:kind/:id", to: "deletions#hide", as: :hide_record
   end
 
+  # Edición rápida de un campo desde las listas
+  patch "rapido/:kind/:id", to: "quick_edits#update", as: :quick_edit, constraints: {kind: /product|variant|supplier_item|provider|family|variant_type/}
+
   # Historial de cambios y deshacer
   get "historial", to: "changes#index", as: :changes
   post "historial/:id/deshacer", to: "changes#undo", as: :undo_change
